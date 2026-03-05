@@ -1,0 +1,1 @@
+Modulare Struktur. App startet den mvn Server. auth-service handled die Benutzerverwaltung. Weitere notwendige Module können im Verlauf des Projektes hinzugefügt werden. Notwendige Abhängigkeiten werden über die pom files geregelt.
