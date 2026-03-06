@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aufgabe X</title>
+    <link rel="stylesheet" href="levelDummy.css">
+</head>
+<body>
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+            <span>PLS</span>
+            </div>
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="home.html">Hauptseite</a></li>
+                <li><a href="levelSelection.html">Level Auswahl</a></li>
+                <li><a href="profile.html">Benutzer Profil</a></li>
+                <li><a href="/logout" id="logout-btn">Log out</a></li>
+            </ul>
+        </aside>
+
+    <!-- Main Content -->
+    <div class="level-container">
+
+        <h1>Level X</h1>
+        <p class="subtitle">
+            Aufgabenstellung: ...
+        </p>
+
+        <!-- empty grid – it will fill the remaining height -->
+        <div class="box-grid">
+            <div class="box box-top" id="item-source" data-cols="4">
+                <div class="box-header">Code‑Blöcke</div>
+                <div class="draggable-item" id="item-1" draggable="true">Item 1</div>
+                <div class="draggable-item" id="item-2" draggable="true">Item 2</div>
+                <div class="draggable-item" id="item-3" draggable="true">Item 3</div>
+                <div class="draggable-item" id="item-4" draggable="true">Item 4</div>
+                <div class="draggable-item" id="item-5" draggable="true">Item 5</div>
+                <div class="draggable-item" id="item-6" draggable="true">Item 6</div>
+            </div>
+
+            <div class="box box-bottom" id="drop-zone" data-cols="4">
+                <div class="box-header">Arbeitsbereich</div>
+                <!-- initially empty; items can be dropped here -->
+            </div>
+        </div>
+
+    </div>    
+    <script src="levelDummy.js"></script>
+</body>
+</html>
