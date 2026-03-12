@@ -16,8 +16,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.boot.version}</version>
         </dependency>
+
+        <dependency>
+        <groupId>de.lernspiel</groupId>
+        <artifactId>auth-service</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </dependency>
     </dependencies>
 
     <build>
@@ -25,7 +30,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.boot.version}</version>
             </plugin>
         </plugins>
     </build>
