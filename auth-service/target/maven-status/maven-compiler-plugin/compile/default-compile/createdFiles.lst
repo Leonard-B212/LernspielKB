@@ -7,4 +7,5 @@ de\lernspiel\auth\security\JwtUtils.class
 de\lernspiel\auth\controller\UserController.class
 de\lernspiel\auth\repository\UserRepository.class
 de\lernspiel\auth\config\SecurityConfig.class
+de\lernspiel\auth\controller\DebugController.class
 de\lernspiel\auth\entity\User.class
