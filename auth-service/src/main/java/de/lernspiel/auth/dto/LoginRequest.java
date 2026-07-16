@@ -3,22 +3,22 @@ package de.lernspiel.auth.dto;
 //Objekt um Loginanfragen zu handeln -selbsterklärend / Boilerplate
 
 public class LoginRequest{
-    private String email;
+    private int userID;
     private String password;
 
     public LoginRequest() {}
     
-    public LoginRequest(String email, String password) {
-        this.email = email;
+    public LoginRequest(int userID, String password) {
+        this.userID = userID;
         this.password = password;
     }
     
-    public String getEmail() {
-        return email;
+    public int getUserID() {
+        return userID;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 
     public String getPassword() {

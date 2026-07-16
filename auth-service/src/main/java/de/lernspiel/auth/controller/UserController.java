@@ -30,6 +30,14 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    private UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+            user.getUserID(),
+            user.getType(),
+            user.getClassID()
+        );
+    }
+
 
     /*
      *  Bereitstellung des Benutzerprofils:
