@@ -30,26 +30,6 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    // TIMM - Benutzer nach Username finden wurde durch /me im verlauf der Projekts ersetzt
-    @GetMapping("/username/{username}")  
-    public Optional<User> getUserById(@PathVariable int userID) {
-        return userService.getUserById(userID);
-    }
-
-    //TIMM - durch Loginfunktion ersetzt
-    @PostMapping
-    public User addUser(@RequestBody User user) {
-        return userService.addUser(user);  
-    }
-
-    private UserResponse mapToUserResponse(User user) { // neu: wandelt Entity in sicheres Response-DTO um
-    return new UserResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getProfilePicture()
-    );
-}
 
     /*
      *  Bereitstellung des Benutzerprofils:
@@ -112,19 +92,9 @@ public class UserController {
      */
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) { //regex hab ich mir generieren lassen
-        if (!user.getEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,}$")) {
-            return ResponseEntity.status(400).body("Ungültige E-Mail-Adresse.");
-        }
-        if (!user.getPassword().matches("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[\\W_]).{8,32}$")) {
-            return ResponseEntity.status(400).body("Passwort muss mindestens 8-32 Zeichen lang sein mit Groß-/Kleinschreibung, eine Zahl und ein Sonderzeichen enthalten.");
-        }
-        if (!user.getUsername().matches("^[a-zA-Z0-9_]{3,15}$")) {
-            return ResponseEntity.status(400).body("Benutzername muss 3-15 Zeichen lang sein und darf nur Buchstaben, Zahlen und Unterstriche enthalten.");
-        }
-
         try {
             User savedUser = userService.addUser(user);
-            return ResponseEntity.ok().body("Registrierung erfolgreich: " + savedUser.getUsername());
+            return ResponseEntity.ok().body("Registrierung erfolgreich: " + savedUser.getUserID());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
