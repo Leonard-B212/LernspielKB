@@ -32,6 +32,14 @@ public class UserController {
         );
     }
 
+    private UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+            user.getUserID(),
+            user.getType(),
+            user.getClassID()
+        );
+    }
+
     //JULIAN eig DTO verwenden, aber da testmethode irrelevant, kann eig gelöscht werden, da es keinen echten Mehrwert bietet, da die User-Entity eh nicht direkt an den Client gesendet wird, sondern immer über das UserResponse DTO läuft.
     @GetMapping 	                                
     public List<User> getAllUsers() {
