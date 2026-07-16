@@ -11,63 +11,49 @@ public class User {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY) // JPA generiert ID selbstständig, indem die DB nach der nächsten freien ID sucht
-    private int  id;
-
-    @Column(unique=true, nullable=false) 
-    private String username;
-
-    @Column(unique=true, nullable=false)
-    private String email;
+    private int userID;
 
     @Column(nullable=false)
-    private String profilePicture;
-
-    @Column(nullable=true) // Sollte natürlich false sein. Für Demozwecke wurde der Wert true gelassen.
     private String password;
+
+    @Column(nullable=false)
+    private String type;
+
+    @Column(nullable=true)
+    private Integer classID;
 
     
     public User()  {}
 
-    public User(String username, String email, String profilePicture, String password) {
-        this.username = username;
-        this.email = email;
-        this.profilePicture =profilePicture;
+    public User(String password, String type, Integer classID) {
         this.password = password;
     }
 
-    public int getId() {
-        return id;
+    public int getUserID() {
+        return userID;
     }
 
-    public String getUsername() {
-        return username;
+    public String getType() {
+        return type;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getProfilePicture() {
-        return profilePicture;
+    public Integer getClassID() {
+        return classID;
     }
     public String getPassword() { 
         return password; 
     }
 
-    public void setId(int id) {
-        this.id=id;
+    public void setUserID(int userID) {
+        this.userID = userID;
     }
 
-    public void setUsername(String username) {
-        this.username=username;
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public void setEmail(String email) {
-        this.email=email;
-    }
-
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture=profilePicture;
+    public void setClassID(Integer classID) {
+        this.classID = classID;
     }
     public void setPassword(String password) {
         this.password=password; 
