@@ -29,23 +29,12 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    // Benutzerprofil nach Username finden
-    public Optional<User> getUserByUsername(String username) {
-        Optional<User> optionalUser = userRepository.findByUsername(username);
+    // Benutzerprofil nach ID finden
+    public Optional<User> getUserById(int userID) {
+        Optional<User> optionalUser = userRepository.findById(userID);
     
         if (optionalUser.isEmpty()) {
-            logger.warn("Benutzer mit dem Benutzernamen '{}' existiert nicht.", username);
-            return Optional.empty();
-        }
-        return optionalUser;
-    }
-
-    //Benutzerprofil nach Email finden
-    public Optional<User> getUserByEmail(String email) {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-    
-        if (optionalUser.isEmpty()) {
-            logger.warn("Benutzer mit der E-Mail '{}' existiert nicht.", email);
+            logger.warn("Benutzer mit der ID '{}' existiert nicht.", userID);
             return Optional.empty();
         }
         return optionalUser;
@@ -119,8 +108,8 @@ public class UserService {
 
 
     //Benutzerauthentifizierung für Login
-    public boolean authenticateUser(String email, String password) {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+    public boolean authenticateUser(int userID, String password) {
+        Optional<User> optionalUser = userRepository.findById(userID);
 
         if (optionalUser.isPresent()) {
             User user = optionalUser.get();
