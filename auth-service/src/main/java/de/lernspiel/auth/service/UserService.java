@@ -42,41 +42,6 @@ public class UserService {
 
     // Benutzerprofil hinzufügen für Registrierungsmethode
     public User addUser(User user) {
-        if(userRepository.existsByUsername(user.getUsername())){
-            logger.warn("Benutzername '{}' ist bereits vergeben!", user.getUsername());   
-            throw new IllegalArgumentException("Benutzername ist bereits vergeben");
-        }if (userRepository.existsByEmail(user.getEmail())) {
-            logger.warn("Die E-Mail '{}' wird bereits verwendet!", user.getEmail());
-            throw new IllegalArgumentException("Die E-Mail-Adresse wird bereits verwendet");
-        }
-
-        String[] defaultImages = {          
-        "01_bruh.png",
-        "02_surprised_pikachu.png",
-        "03_what.png",
-        "04_1_bitte.png",
-        "05_rubbing.png",
-        "06_cat.png",
-        "07_crazy_women.png",
-        "08_today_I_feel_gay.png",
-        "09_sad_shibu.png",
-        "10_chad_shibu.png",
-        "11_winnie.png",
-        "12_normalste_harry_henningsen_vorlesung.png",
-        "13_giorgi_aliens.png",
-        "14_fry.png",
-        "15_service.png",
-        "16_the_GOAT.png",
-        "17_trade_offer.png",
-        "18_ok.png",
-        "19_oh_nice.png",
-        "20_gawk_gawk_3000.png",
-        "21_pain_harold.png"
-        };
-
-        // zuweisung eines zufälligen Profilfotos aus /Imgs
-        String randomProfilePicture = defaultImages[new Random().nextInt(defaultImages.length)];   
-        user.setProfilePicture(randomProfilePicture);
 
         //Passwort hashen und speichern
         String hashedPassword = passwordEncoder.encode(user.getPassword());
