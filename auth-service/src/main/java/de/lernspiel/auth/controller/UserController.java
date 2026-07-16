@@ -32,8 +32,8 @@ public class UserController {
 
     // TIMM - Benutzer nach Username finden wurde durch /me im verlauf der Projekts ersetzt
     @GetMapping("/username/{username}")  
-    public Optional<User> getUserByUsername(@PathVariable String username) {
-        return userService.getUserByUsername(username);
+    public Optional<User> getUserById(@PathVariable int userID) {
+        return userService.getUserById(userID);
     }
 
     //TIMM - durch Loginfunktion ersetzt
@@ -63,8 +63,8 @@ public class UserController {
             return ResponseEntity.status(403).body("Nicht authentifiziert");
             }
 
-            String email = authentication.getName(); // E-Mail aus dem authentication objekt aus dem SecurityContext
-            Optional<User> optionalUser = userService.getUserByEmail(email);
+            int userID = Integer.parseInt(authentication.getName()); // userID aus dem authentication objekt aus dem SecurityContext
+            Optional<User> optionalUser = userService.getUserById(userID);
 
             if (optionalUser.isPresent()) {
                 return ResponseEntity.ok().body(mapToUserResponse(optionalUser.get()));
@@ -93,9 +93,9 @@ public class UserController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {               
-        boolean isAuthenticated = userService.authenticateUser(loginRequest.getEmail(), loginRequest.getPassword());
+        boolean isAuthenticated = userService.authenticateUser(loginRequest.getUserID(), loginRequest.getPassword());
         if (isAuthenticated) {              
-            String token = jwtUtils.generateToken(loginRequest.getEmail());
+            String token = jwtUtils.generateToken(String.valueOf(user.getUserID()));
             return ResponseEntity.ok().body("Login erfolgreich. Bearer " + token);    
         } else {
             return ResponseEntity.status(401).body("Ungültige Anmeldedaten");  
