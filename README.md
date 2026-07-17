@@ -25,6 +25,50 @@ cd lernspiel
 
 ## Projekt starten
 
+### Ausführungsrichtlinie (nur einmal notwendig)
+
+Damit das PowerShell-Skript ausgeführt werden kann, muss die Ausführungsrichtlinie einmalig angepasst werden:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Danach kann das Skript in allen neuen PowerShell-Terminals ohne weitere Einstellungen ausgeführt werden.
+
+> **Hinweis:** Diese Einstellung muss nur einmal durchgeführt werden. Mit `RemoteSigned` dürfen lokal erstellte PowerShell-Skripte ausgeführt werden, während aus dem Internet heruntergeladene Skripte weiterhin besonderen Sicherheitsprüfungen unterliegen.
+
+---
+
+### Entwicklungs-Skript (empfohlen)
+
+Im Projekt befindet sich das Skript `dev.ps1`, das die häufigsten Entwicklungsaufgaben vereinfacht.
+
+Starten:
+
+```powershell
+.\dev.ps1
+```
+
+Anschließend erscheint ein Menü:
+
+```text
+==========================================
+          Lernspiel Entwicklung
+==========================================
+
+[1] Clean Install
+[2] Clean Install und Start
+[3] Nur Start
+[0] Beenden
+```
+
+Das erlaubt es einfach einen Clean Install / Start durchzuführen ohne permanent in der CLI das Directory zu wechseln.
+
+### Manueller Start
+
+Alternativ kann das Projekt auch manuell gestartet werden.
+
+---
 Zunächst das gesamte Multi-Module-Projekt bauen:
 
 ```bash
@@ -38,13 +82,12 @@ cd lernspiel-app
 mvn spring-boot:run
 ```
 
-Die Anwendung ist anschließend unter:
+Die Anwendung ist anschließend unter dieser URL erreichbar:
 
 ```
 http://localhost:8080
 ```
 
-erreichbar.
 
 ---
 
@@ -78,6 +121,7 @@ lernspiel/
 ├── lernspiel-app/     # Spring-Boot-Hauptanwendung
 │
 ├── .gitignore         # Von Git ignorierte Dateien und Ordner
+├── dev.ps1            # Entwicklungs-Skript zum Bauen und Starten
 ├── README.md          # Projektdokumentation
 └── pom.xml            # Parent-POM und Maven-Modulverwaltung
 ```
