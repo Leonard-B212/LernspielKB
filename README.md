@@ -70,9 +70,17 @@ Die folgenden Endpunkte dienen ausschließlich der lokalen Entwicklung und zum T
 ## Projektstruktur
 
 ```text
+## Projektstruktur
+
+```text
 lernspiel/
 │
 ├── auth-service/      # Authentifizierung und Benutzerverwaltung
-├── lernspiel-app/     # Spring Boot Anwendung
-└── pom.xml            # Parent-Projekt
+├── common/            # Gemeinsame DTOs, Modelle und Hilfsklassen
+├── game-service/      # Spiellogik und spielbezogene Funktionen
+├── lernspiel-app/     # Spring-Boot-Hauptanwendung
+│
+├── .gitignore         # Von Git ignorierte Dateien und Ordner
+├── README.md          # Projektdokumentation
+└── pom.xml            # Parent-POM und Maven-Modulverwaltung
 ```
