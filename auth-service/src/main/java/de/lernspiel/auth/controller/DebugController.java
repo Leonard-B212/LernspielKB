@@ -25,7 +25,7 @@ public class DebugController {
     @Autowired
     private JwtUtils jwtUtils;
 
-    @GetMapping("/dbinfo")
+    @GetMapping("/db-info")
     public Map<String, Object> dbInfo() {
 
         return jdbcTemplate.queryForMap(
@@ -52,7 +52,7 @@ public class DebugController {
         return userService.getAllUsers();
     }
 
-    @DeleteMapping("/dropUser")
+    @DeleteMapping("/drop-user")
     public ResponseEntity<?> dropUserTable() {
         try {
             jdbcTemplate.execute("DROP TABLE IF EXISTS `user`");
@@ -81,7 +81,7 @@ public class DebugController {
               <body>
                 <h1>Auth Debug</h1>
                 <ul>
-                  <li><a href="/debug/dbinfo">/debug/dbinfo</a></li>
+                  <li><a href="/debug/db-info">/debug/db-info</a></li>
                   <li><a href="/debug/create-test-user">/debug/create-test-user</a></li>
                   <li><a href="/debug/list-users">/debug/list-users</a></li>
                   <li><a href="/debug/login?userID=9999&password=test123">/debug/login?userID=9999&password=test123</a></li>
