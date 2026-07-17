@@ -52,7 +52,7 @@ public class UserService {
 
     //JULIAN - Profilbild ändern
     
-    public User updateProfilePicture(int id, String newProfilePicture) {
+   /**  public User updateProfilePicture(int id, String newProfilePicture) {
         Optional<User> optionalUser = userRepository.findById(id);
     
         if (optionalUser.isEmpty()) {
@@ -64,7 +64,7 @@ public class UserService {
         user.setProfilePicture("/Imgs/" + newProfilePicture);  
     
         return userRepository.save(user);  
-    }
+    }*/
 
     // JULIAN - Benutzerprofil löschen
     public void deleteUser(int id) {

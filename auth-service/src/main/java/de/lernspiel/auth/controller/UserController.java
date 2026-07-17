@@ -24,7 +24,7 @@ public class UserController {
    @Autowired
    private JwtUtils jwtUtils;
 
-    private UserResponse mapToUserResponse(User user) {
+   private UserResponse mapToUserResponse(User user) {
         return new UserResponse(
             user.getUserID(),
             user.getType(),
@@ -36,14 +36,6 @@ public class UserController {
     @GetMapping 	                                
     public List<User> getAllUsers() {
         return userService.getAllUsers();
-    }
-
-    private UserResponse mapToUserResponse(User user) {
-        return new UserResponse(
-            user.getUserID(),
-            user.getType(),
-            user.getClassID()
-        );
     }
 
 
@@ -70,11 +62,12 @@ public class UserController {
     }
 
 
-    // JULIAN - Profilbild aktualisieren
+    /* JULIAN - Profilbild aktualisieren
     @PatchMapping("/{id}/profilbild")    
     public User updateProfilePicture(@PathVariable int id, @RequestBody String newProfilePicture) {
         return userService.updateProfilePicture(id, newProfilePicture);
     }
+        */
 
     //JULIAN - Für Prototyp nicht spezifisch notwendig, allerdings zum verwalten und testen sinnvoll gewesen.
     @DeleteMapping("/{id}")
@@ -91,7 +84,7 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {               
         boolean isAuthenticated = userService.authenticateUser(loginRequest.getUserID(), loginRequest.getPassword());
         if (isAuthenticated) {              
-            String token = jwtUtils.generateToken(String.valueOf(user.getUserID()));
+            String token = jwtUtils.generateToken(String.valueOf(loginRequest.getUserID()));
             return ResponseEntity.ok().body("Login erfolgreich. Bearer " + token);    
         } else {
             return ResponseEntity.status(401).body("Ungültige Anmeldedaten");  
@@ -107,7 +100,7 @@ public class UserController {
      * 
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user) { //regex hab ich mir generieren lassen
+    public ResponseEntity<?> registerUser(@RequestBody User user) { 
         try {
             User savedUser = userService.addUser(user);
             return ResponseEntity.ok().body("Registrierung erfolgreich: " + savedUser.getUserID());

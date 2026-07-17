@@ -11,7 +11,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY) // JPA generiert ID selbstständig, indem die DB nach der nächsten freien ID sucht
-    private int userID;
+    private Integer userID;
 
     @Column(nullable=false)
     private String password;
@@ -27,9 +27,11 @@ public class User {
 
     public User(String password, String type, Integer classID) {
         this.password = password;
+        this.type = type;
+        this.classID = classID;
     }
 
-    public int getUserID() {
+    public Integer getUserID() {
         return userID;
     }
 
@@ -44,7 +46,7 @@ public class User {
         return password; 
     }
 
-    public void setUserID(int userID) {
+    public void setUserID(Integer userID) {
         this.userID = userID;
     }
 
