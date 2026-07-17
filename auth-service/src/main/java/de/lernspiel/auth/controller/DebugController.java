@@ -12,6 +12,10 @@ import de.lernspiel.auth.service.UserService;
 import de.lernspiel.auth.security.JwtUtils;
 import de.lernspiel.auth.entity.User;
 
+/*
+ * DebugController: Stellt Hilfsendpunkte für lokale Entwicklung und Diagnose bereit
+ * (z. B. DB-Infos, Testuser anlegen, Nutzer auflisten, Tabelle löschen, Login-Test).
+ */
 @RestController
 @RequestMapping("/debug")
 public class DebugController {
