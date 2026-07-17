@@ -52,6 +52,16 @@ public class DebugController {
         return userService.getAllUsers();
     }
 
+    @DeleteMapping("/dropUser")
+    public ResponseEntity<?> dropUserTable() {
+        try {
+            jdbcTemplate.execute("DROP TABLE IF EXISTS `user`");
+            return ResponseEntity.ok("Tabelle 'user' gelöscht.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Fehler beim Löschen der Tabelle 'user': " + e.getMessage());
+        }
+    }
+
     @GetMapping("/login")
     public ResponseEntity<?> debugLogin(@RequestParam int userID, @RequestParam String password) {
         boolean isAuthenticated = userService.authenticateUser(userID, password);
