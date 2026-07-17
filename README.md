@@ -70,9 +70,6 @@ Die folgenden Endpunkte dienen ausschließlich der lokalen Entwicklung und zum T
 ## Projektstruktur
 
 ```text
-## Projektstruktur
-
-```text
 lernspiel/
 │
 ├── auth-service/      # Authentifizierung und Benutzerverwaltung
