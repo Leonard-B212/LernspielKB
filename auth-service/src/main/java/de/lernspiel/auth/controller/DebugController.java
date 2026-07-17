@@ -37,7 +37,6 @@ public class DebugController {
     public ResponseEntity<?> createTestUser() {
         try {
             User user = new User();
-            user.setUserID(9999);
             user.setPassword("test123");
             user.setType("TEST");
             user.setClassID(null);
