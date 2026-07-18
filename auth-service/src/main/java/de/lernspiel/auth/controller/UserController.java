@@ -32,13 +32,6 @@ public class UserController {
         );
     }
 
-    //JULIAN eig DTO verwenden, aber da testmethode irrelevant, kann eig gelöscht werden, da es keinen echten Mehrwert bietet, da die User-Entity eh nicht direkt an den Client gesendet wird, sondern immer über das UserResponse DTO läuft.
-    @GetMapping 	                                
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
-    }
-
-
     /*
      *  Bereitstellung des Benutzerprofils:
      *  Gibt das aktuelle Benutzerprofil basierend auf der Authentifizierung zurück.
@@ -59,20 +52,6 @@ public class UserController {
             } else {
                 return ResponseEntity.status(404).body("Benutzer nicht gefunden");
         }
-    }
-
-
-    /* JULIAN - Profilbild aktualisieren
-    @PatchMapping("/{id}/profilbild")    
-    public User updateProfilePicture(@PathVariable int id, @RequestBody String newProfilePicture) {
-        return userService.updateProfilePicture(id, newProfilePicture);
-    }
-        */
-
-    //JULIAN - Für Prototyp nicht spezifisch notwendig, allerdings zum verwalten und testen sinnvoll gewesen.
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable int id) {
-        userService.deleteUser(id);
     }
 
     /*
