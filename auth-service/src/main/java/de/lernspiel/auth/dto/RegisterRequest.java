@@ -2,6 +2,7 @@ package de.lernspiel.auth.dto;
 
 import jakarta.validation.constraints.NotNull;
 import de.lernspiel.auth.entity.UserType;
+import jakarta.validation.constraints.NotBlank;
 
 public class RegisterRequest {
 

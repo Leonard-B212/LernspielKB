@@ -3,6 +3,8 @@ import jakarta.persistence.*;
 
 /*
  * Entityklasse für Hibernate. Erstellt automatisch Benutzerprofil in der DB und erlaubt einfaches direktes Handling ohne SQL
+ * 
+ * Es gibt diese Rollen: user, admin, teacher
  */
 
 @Entity
@@ -16,9 +18,9 @@ public class User {
     @Column(nullable=false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable=false)
-    private UserType type;
+    @Enumerated(EnumType.STRING)                                                                                                                                                                          
+    @Column(nullable=false)                                                                                                                                                                               
+    private UserType type;   
 
     @Column(nullable=true)
     private Integer classID;
@@ -36,7 +38,7 @@ public class User {
         return userID;
     }
 
-    public UserType getType() {
+    public UserType getType() { 
         return type;
     }
 

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import de.lernspiel.auth.service.UserService;
 import de.lernspiel.auth.security.JwtUtils;
 import de.lernspiel.auth.entity.User;
+import de.lernspiel.auth.entity.UserType;
 
 /*
  * DebugController: Stellt Hilfsendpunkte für lokale Entwicklung und Diagnose bereit
@@ -42,7 +43,7 @@ public class DebugController {
         try {
             User user = new User();
             user.setPassword("test123");
-            user.setType("TEST");
+            user.setType(UserType.STUDENT);
             user.setClassID(null);
             User saved = userService.addUser(user);
             return ResponseEntity.ok(saved);
