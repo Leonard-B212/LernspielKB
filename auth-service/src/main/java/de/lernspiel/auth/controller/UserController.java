@@ -89,7 +89,7 @@ public class UserController {
             user.setPassword(req.getPassword());
 
             User savedUser = userService.addUser(user);
-            return ResponseEntity.ok().body("Registrierung erfolgreich: " + savedUser.getUserID());
+            return ResponseEntity.ok().body(mapToUserResponse(savedUser));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
