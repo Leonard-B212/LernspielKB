@@ -16,8 +16,9 @@ public class User {
     @Column(nullable=false)
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable=false)
-    private String type;
+    private UserType type;
 
     @Column(nullable=true)
     private Integer classID;
@@ -25,7 +26,7 @@ public class User {
     
     public User()  {}
 
-    public User(String password, String type, Integer classID) {
+    public User(String password, UserType type, Integer classID) {
         this.password = password;
         this.type = type;
         this.classID = classID;
@@ -35,7 +36,7 @@ public class User {
         return userID;
     }
 
-    public String getType() {
+    public UserType getType() {
         return type;
     }
 
@@ -50,7 +51,7 @@ public class User {
         this.userID = userID;
     }
 
-    public void setType(String type) {
+    public void setType(UserType type) {
         this.type = type;
     }
 

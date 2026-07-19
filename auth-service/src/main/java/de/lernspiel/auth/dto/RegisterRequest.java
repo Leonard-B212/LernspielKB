@@ -1,11 +1,12 @@
 package de.lernspiel.auth.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import de.lernspiel.auth.entity.UserType;
 
 public class RegisterRequest {
 
-    @NotBlank
-    private String type;
+    @NotNull
+    private UserType type;
 
     private Integer classID;
 
@@ -14,11 +15,11 @@ public class RegisterRequest {
 
     public RegisterRequest() {}
 
-    public String getType() {
+    public UserType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(UserType type) {
         this.type = type;
     }
 
