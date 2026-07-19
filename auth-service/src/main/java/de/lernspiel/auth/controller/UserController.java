@@ -6,10 +6,12 @@ import org.springframework.web.bind.annotation.*;
 
 import de.lernspiel.auth.service.*;
 import de.lernspiel.auth.dto.LoginRequest;
+import de.lernspiel.auth.dto.RegisterRequest;
 import de.lernspiel.auth.dto.UserResponse;
 import de.lernspiel.auth.entity.*;
 import de.lernspiel.auth.security.*;
 import org.springframework.security.core.Authentication;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
@@ -79,8 +81,13 @@ public class UserController {
      * 
      */
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user) { 
+    public ResponseEntity<?> registerUser(@RequestBody @Valid RegisterRequest req) { 
         try {
+            User user = new User();
+            user.setType(req.getType());
+            user.setClassID(req.getClassID());
+            user.setPassword(req.getPassword());
+
             User savedUser = userService.addUser(user);
             return ResponseEntity.ok().body("Registrierung erfolgreich: " + savedUser.getUserID());
         } catch (IllegalArgumentException e) {
