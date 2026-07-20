@@ -65,9 +65,14 @@ public class UserService {
 
         return addUser(student);
     }
-    // JULIAN - Benutzerprofil löschen
-    public void deleteUser(int id) {
-        userRepository.deleteById(id);
+    
+    public void deleteUser(int userID) {
+
+        if (!userRepository.existsById(userID)) {
+            throw new IllegalArgumentException("Benutzer mit der ID " + userID + " existiert nicht.");
+        }
+
+        userRepository.deleteById(userID);
     }
 
 

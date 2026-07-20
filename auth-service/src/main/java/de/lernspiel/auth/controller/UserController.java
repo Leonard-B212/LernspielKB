@@ -130,5 +130,17 @@ public class UserController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
+
+    // Löscht einen Benutzer anhand seiner ID. Nur Administratoren dürfen Benutzer löschen.
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{userID}")
+    public ResponseEntity<?> deleteUser(@PathVariable int userID) {
+        try {
+            userService.deleteUser(userID);
+            return ResponseEntity.ok("Benutzer erfolgreich gelöscht.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
 }
 
