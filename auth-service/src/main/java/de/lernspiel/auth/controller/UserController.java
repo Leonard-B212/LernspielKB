@@ -37,7 +37,7 @@ public class UserController {
     /*
      *  Bereitstellung des Benutzerprofils:
      *  Gibt das aktuelle Benutzerprofil basierend auf der Authentifizierung zurück.
-     *  Holt die E-Mail aus dem Authentication-Objekt, also indirekt aus dem Benutzertoken und sucht den Benutzer in der Datenbank.
+     *  Holt die UserID aus dem Authentication-Objekt, also indirekt aus dem Benutzertoken und sucht den Benutzer in der Datenbank.
      *  Gibt bei Erfolg das Profil zurück, ansonsten einen entsprechenden Fehlerstatus.
         */ 
     @GetMapping("/me")
@@ -62,14 +62,24 @@ public class UserController {
      * Bei gültigen Anmeldedaten wird das Token mit HTTP-Status 200 (OK) zurückgegeben, falls nicht mit 401 unauthorized
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {               
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {               
         boolean isAuthenticated = userService.authenticateUser(loginRequest.getUserID(), loginRequest.getPassword());
-        if (isAuthenticated) {              
-            String token = jwtUtils.generateToken(String.valueOf(loginRequest.getUserID()));
-            return ResponseEntity.ok().body("Login erfolgreich. Bearer " + token);    
-        } else {
-            return ResponseEntity.status(401).body("Ungültige Anmeldedaten");  
+
+         if (!isAuthenticated) {
+            return ResponseEntity.status(401).body("Ungültige Anmeldedaten");
         }
+
+        Optional<User> optionalUser =
+            userService.getUserById(loginRequest.getUserID());
+
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(404).body("Benutzer nicht gefunden");
+        }
+
+        User user = optionalUser.get();
+        String token = jwtUtils.generateToken(user);
+
+        return ResponseEntity.ok().body("Login erfolgreich. Bearer " + token);
     }
     
 

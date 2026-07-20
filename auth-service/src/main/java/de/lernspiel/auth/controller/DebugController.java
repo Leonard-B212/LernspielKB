@@ -67,16 +67,7 @@ public class DebugController {
         }
     }
 
-    @GetMapping("/login")
-    public ResponseEntity<?> debugLogin(@RequestParam int userID, @RequestParam String password) {
-        boolean isAuthenticated = userService.authenticateUser(userID, password);
-        if (isAuthenticated) {
-            String token = jwtUtils.generateToken(String.valueOf(userID));
-            return ResponseEntity.ok("Login erfolgreich. Bearer " + token);
-        } else {
-            return ResponseEntity.status(401).body("Ungültige Anmeldedaten");
-        }
-    }
+ 
 
     @GetMapping({"", "/"})
     public String index() {

@@ -5,6 +5,7 @@ package de.lernspiel.auth.security;
  * von JWT-Benutzer- oder Servicetokens.
  */
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.lernspiel.auth.config.JwtConfig;
+import de.lernspiel.auth.entity.User;     
+import de.lernspiel.auth.entity.UserType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,12 +48,26 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(jwtConfig.getServiceSecretKey().getBytes(StandardCharsets.UTF_8));
     }
 
+    
+     //Zentrale Methode zum Parsen eines Benutzertokens.
+    private Claims parseUserClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     // Benutzertoken erstellen
-    public String generateToken(String email) {
+    public String generateToken(User user) {
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(String.valueOf(user.getUserID()))
+                .claim("role", user.getType().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtConfig.getExpirationTime()))
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + jwtConfig.getExpirationTime()))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -68,10 +85,7 @@ public class JwtUtils {
     // Benutzertoken validieren mit dem Masterkey
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
+            parseUserClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
             logger.warn("Token ist abgelaufen. Ablaufdatum: {}", e.getClaims().getExpiration());
@@ -94,29 +108,12 @@ public class JwtUtils {
         }
     }
 
-    // Service Token validieren mit Masterkey. Einfacheres Errorhandling, da interner Token
-    public boolean validateServiceToken(String token) {
+    // UserID extrahieren
+    public Integer extractUserID(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(getServiceSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            logger.error("Service-Token ist ungültig: {}", e.getMessage());
-            return false;
-        }
-    }
+            String subject = parseUserClaims(token).getSubject();
 
-    // Nutzer-Email extrahieren
-    public String extractEmail(String token) {
-        try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
+            return Integer.valueOf(subject);
         } catch (ExpiredJwtException e) {
             logger.warn("Token ist abgelaufen. Ablaufdatum: {}", e.getClaims().getExpiration());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token ist abgelaufen");
@@ -138,18 +135,40 @@ public class JwtUtils {
         }
     }
 
-    // Service-Name aus Service-Token extrahieren
-    public String extractServiceName(String token) {
+    // Funktion zum Extrahieren der Rolle aus dem Token
+    public UserType extractRole(String token) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getServiceSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject();
+            String role = parseUserClaims(token)
+                    .get("role", String.class);
+
+            if (role == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Rolle fehlt im Token");}
+
+            return UserType.valueOf(role);
+
+        } catch (IllegalArgumentException e) {
+            logger.error( "Ungültige oder fehlende Rolle im Token.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ungültige Rolle im Token");
+
+        } catch (ExpiredJwtException e) {
+            logger.warn( "Token ist abgelaufen. Ablaufdatum: {}", e.getClaims().getExpiration());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token ist abgelaufen");
+
+        } catch (SecurityException e) {
+            logger.error( "Token-Signatur ist ungültig oder manipuliert.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tokensignatur ungültig");
+
+        } catch (MalformedJwtException e) {
+            logger.error("Token ist falsch formatiert.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tokenformat ungültig");
+
+        } catch (UnsupportedJwtException e) {
+            logger.error( "Tokenalgorithmus wird nicht unterstützt.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tokenalgorithmus ungültig");
+
         } catch (Exception e) {
-            logger.error("Fehler beim Extrahieren des Servicenamens aus dem Token: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Ungültiger Service-Token.");
+            logger.error( "Fehler beim Extrahieren der Rolle: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Fehler bei der Tokenvalidierung");
         }
     }
 }
