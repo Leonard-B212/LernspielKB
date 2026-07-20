@@ -26,7 +26,7 @@ public class UserService {
     @Autowired
     private SchoolClassRepository schoolClassRepository; 
 
-    // JULIAN - Alle Benutzerprofile abrufen
+    //Alle Benutzerprofile abrufen
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }

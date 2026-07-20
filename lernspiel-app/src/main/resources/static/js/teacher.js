@@ -89,11 +89,12 @@ function escapeHtml(value) {
 
 await loadClasses();
 
-/*
- * Später aktivieren, sobald GET /api/benutzer/students/my existiert:
- *
- * async function loadOwnStudents() {
- *   const students = await apiRequest("/api/benutzer/students/my");
- *   // Tabelle befüllen
- * }
- */
+const response = await fetch("/api/benutzer/students/my", {
+    headers: {
+        Authorization: "Bearer " + localStorage.getItem("token")
+    }
+});
+
+const students = await response.json();
+
+console.log(students);

@@ -123,7 +123,7 @@ public class UserController {
             student.setPassword(req.getPassword());
 
             User savedStudent = userService.addStudent(student);
-            
+
             return ResponseEntity.ok(mapToUserResponse(savedStudent));
 
         } catch (IllegalArgumentException e) {
@@ -141,6 +141,13 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(e.getMessage());
         }
+    }
+
+    // Gibt alle Benutzerprofile zurück. Nur Administratoren dürfen dies tun.
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
     }
 }
 

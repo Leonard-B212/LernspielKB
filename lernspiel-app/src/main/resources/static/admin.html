@@ -3,94 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Lernspiel – Admin</title>
+
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <header class="topbar">
     <div>
       <strong>Lernspiel</strong>
       <span class="badge">ADMIN</span>
     </div>
-    <button id="logout-button" class="secondary">Logout</button>
+
+    <button id="logout-button" class="secondary">
+      Logout
+    </button>
   </header>
 
   <main class="page-grid">
+
     <section class="card">
       <h2>Lehrer anlegen</h2>
+
       <form id="teacher-form" class="stack">
-        <label>Passwort
-          <input id="teacher-password" type="password" required>
+        <label>
+          Passwort
+
+          <input
+            id="teacher-password"
+            type="password"
+            required
+          >
         </label>
-        <button type="submit">Lehrer erstellen</button>
+
+        <button type="submit">
+          Lehrer erstellen
+        </button>
       </form>
+
       <p id="teacher-message" class="message"></p>
     </section>
 
     <section class="card">
       <h2>Klasse anlegen</h2>
+
       <form id="class-form" class="stack">
-        <label>Klassenname
-          <input id="class-name" type="text" required placeholder="z. B. 10A">
+        <label>
+          Klassenname
+
+          <input
+            id="class-name"
+            type="text"
+            required
+            placeholder="z. B. 10A"
+          >
         </label>
-        <label>Teacher-ID
-          <input id="class-teacher-id" type="number" min="1" required>
+
+        <label>
+          Teacher-ID
+
+          <input
+            id="class-teacher-id"
+            type="number"
+            min="1"
+            required
+          >
         </label>
-        <button type="submit">Klasse erstellen</button>
+
+        <button type="submit">
+          Klasse erstellen
+        </button>
       </form>
+
       <p id="class-message" class="message"></p>
     </section>
 
     <section class="card">
       <h2>Schüler anlegen</h2>
+
       <form id="student-form" class="stack">
-        <label>Klasse
+        <label>
+          Klasse
+
           <select id="student-class-id" required>
             <option value="">Klasse wählen</option>
           </select>
         </label>
-        <label>Passwort
-          <input id="student-password" type="password" required>
+
+        <label>
+          Passwort
+
+          <input
+            id="student-password"
+            type="password"
+            required
+          >
         </label>
-        <button type="submit">Schüler erstellen</button>
+
+        <button type="submit">
+          Schüler erstellen
+        </button>
       </form>
+
       <p id="student-message" class="message"></p>
     </section>
 
     <section class="card span-2">
       <div class="section-header">
         <h2>Klassen</h2>
-        <button id="reload-classes" class="secondary">Neu laden</button>
+
+        <button id="reload-classes" class="secondary">
+          Neu laden
+        </button>
       </div>
+
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>Name</th><th>Teacher-ID</th></tr></thead>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Teacher-ID</th>
+            </tr>
+          </thead>
+
           <tbody id="classes-table"></tbody>
         </table>
       </div>
+
       <p id="classes-message" class="message"></p>
     </section>
 
-    <section class="card span-2 muted-card">
-      <h2>Alle Benutzer</h2>
-      <p>Dieser Bereich ist vorbereitet, aber der Backend-Endpunkt fehlt noch.</p>
-      <button disabled>Benutzer laden</button>
-      <div class="code-note">
-        Geplanter Endpunkt: <code>GET /api/benutzer</code>
+    <section class="card span-2">
+      <div class="section-header">
+        <h2>Alle Benutzer</h2>
+
+        <button id="reload-users" class="secondary">
+          Neu laden
+        </button>
       </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User-ID</th>
+              <th>Rolle</th>
+              <th>Klassen-ID</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+
+          <tbody id="users-table"></tbody>
+        </table>
+      </div>
+
+      <p id="users-message" class="message"></p>
     </section>
 
-    <section class="card span-2 muted-card">
+    <section class="card span-2">
       <h2>Benutzer löschen</h2>
-      <p>Die Oberfläche ist vorbereitet. Der Aufruf bleibt bis zur finalen Backend-Methode deaktiviert.</p>
-      <div class="inline-form">
-        <input type="number" min="1" placeholder="User-ID" disabled>
-        <button disabled>Löschen</button>
-      </div>
-      <div class="code-note">
-        Geplanter Endpunkt: <code>DELETE /api/benutzer/{userID}</code>
-      </div>
+
+      <form id="delete-user-form" class="inline-form">
+        <input
+          id="delete-user-id"
+          type="number"
+          min="1"
+          required
+          placeholder="User-ID"
+        >
+
+        <button type="submit" class="danger">
+          Löschen
+        </button>
+      </form>
+
+      <p id="delete-user-message" class="message"></p>
     </section>
+
   </main>
 
   <script type="module" src="js/admin.js"></script>
