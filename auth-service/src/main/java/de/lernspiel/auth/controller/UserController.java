@@ -10,6 +10,9 @@ import de.lernspiel.auth.dto.RegisterRequest;
 import de.lernspiel.auth.dto.UserResponse;
 import de.lernspiel.auth.entity.*;
 import de.lernspiel.auth.security.*;
+import de.lernspiel.auth.dto.TeacherRegisterRequest;
+import de.lernspiel.auth.dto.StudentRegisterRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import jakarta.validation.Valid;
 
@@ -83,23 +86,46 @@ public class UserController {
     }
     
 
-    /*
-     * Registriert einen neuen Benutzer, nachdem die Eingaben validiert wurden.
-     * Basic level Fehler sollen hierbei sofort zurückgegeben werden, deswegen sind die 3 Tests hier und nicht in der addUser Methode, damit man nicht die Schicht durchlaufen muss
-     * Wenn die eingaben passen, wird der Benutzer hinzugefügt. Die addUser methode prüft dann, ob der Nutzer existiert/Name/Email verwendet wurde. 
-     * Es werden entsprechende Statusmeldungen ausgegeben
-     * 
-     */
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody @Valid RegisterRequest req) { 
+        /*
+    * Erstellt einen neuen Lehrer.
+    * Nur Administratoren dürfen Lehrer erstellen.
+    */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/register/teacher")
+    public ResponseEntity<?> registerTeacher(@RequestBody @Valid TeacherRegisterRequest req) {
         try {
-            User user = new User();
-            user.setType(req.getType());
-            user.setClassID(req.getClassID());
-            user.setPassword(req.getPassword());
+            User teacher = new User();
+            teacher.setType(UserType.TEACHER);
+            teacher.setClassID(null);
+            teacher.setPassword(req.getPassword());
 
-            User savedUser = userService.addUser(user);
-            return ResponseEntity.ok().body(mapToUserResponse(savedUser));
+            User savedTeacher = userService.addUser(teacher);
+
+            return ResponseEntity.ok(mapToUserResponse(savedTeacher));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+
+    /*
+    * Erstellt einen neuen Schüler.
+    * Administratoren und Lehrer dürfen Schüler erstellen.
+    */
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    @PostMapping("/register/student")
+    public ResponseEntity<?> registerStudent(@RequestBody @Valid StudentRegisterRequest req) {
+        try {
+            User student = new User();
+            student.setType(UserType.STUDENT);
+            student.setClassID(req.getClassID());
+            student.setPassword(req.getPassword());
+
+            User savedStudent = userService.addStudent(student);
+
+            return ResponseEntity.ok(mapToUserResponse(savedStudent));
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }

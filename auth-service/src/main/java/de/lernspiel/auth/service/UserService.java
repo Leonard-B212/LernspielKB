@@ -22,7 +22,9 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired  
-    private UserRepository userRepository;  
+    private UserRepository userRepository; 
+    @Autowired
+    private SchoolClassRepository schoolClassRepository; 
 
     // JULIAN - Alle Benutzerprofile abrufen
     public List<User> getAllUsers() {
@@ -50,22 +52,19 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    //JULIAN - Profilbild ändern
-    
-   /**  public User updateProfilePicture(int id, String newProfilePicture) {
-        Optional<User> optionalUser = userRepository.findById(id);
-    
-        if (optionalUser.isEmpty()) {
-            logger.warn("Benutzer mit ID '{}' existiert nicht", id);
-            throw new IllegalArgumentException("Benutzer mit der ID " +id+ "existiert nicht.");
-        }
-    
-        User user = optionalUser.get();
-        user.setProfilePicture("/Imgs/" + newProfilePicture);  
-    
-        return userRepository.save(user);  
-    }*/
 
+    public User addStudent(User student) {
+
+        if (student.getClassID() == null) {
+            throw new IllegalArgumentException("Für einen Schüler muss eine Klasse angegeben werden.");
+        }
+
+        if (!schoolClassRepository.existsById(student.getClassID())) {
+            throw new IllegalArgumentException("Die angegebene Klasse existiert nicht.");
+        }
+
+        return addUser(student);
+    }
     // JULIAN - Benutzerprofil löschen
     public void deleteUser(int id) {
         userRepository.deleteById(id);

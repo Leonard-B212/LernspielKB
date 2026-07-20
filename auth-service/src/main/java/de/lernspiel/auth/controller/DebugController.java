@@ -57,11 +57,13 @@ public class DebugController {
         return userService.getAllUsers();
     }
 
+    //Für reset der Datenbank in der lokalen Entwicklungsumgebung. Löscht die Tabellen 'school_class' und 'user'. Bei neustart wird die DB neu aufgebaut auf Basis der Entities.
     @DeleteMapping("/drop-user")
     public ResponseEntity<?> dropUserTable() {
         try {
+            jdbcTemplate.execute("DROP TABLE IF EXISTS school_class");
             jdbcTemplate.execute("DROP TABLE IF EXISTS `user`");
-            return ResponseEntity.ok("Tabelle 'user' gelöscht.");
+            return ResponseEntity.ok("Tabellen gelöscht.");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Fehler beim Löschen der Tabelle 'user': " + e.getMessage());
         }
