@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 
 
@@ -16,7 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
  * JF ersetzt den UsernamePasswordAuthenticationFilter, da keine Session-Cookies verwendet werden. Dementsprechend ist auch der CSRF-Schutz aus.
  * Da wir mit generierten Token arbeiten gibt es keine Sessions und csrf schutz ist überflüssig.
  */
-
+@EnableMethodSecurity
 @Configuration
 public class SecurityConfig {
  
