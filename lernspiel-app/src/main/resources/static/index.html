@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lernspiel – Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="centered-page">
+  <main class="card login-card">
+    <h1>Lernspiel</h1>
+    <p class="muted">Dummy-Frontend für die Benutzerverwaltung</p>
+
+    <form id="login-form" class="stack">
+      <label>
+        Benutzer-ID
+        <input id="user-id" type="number" min="1" required autocomplete="username">
+      </label>
+
+      <label>
+        Passwort
+        <input id="password" type="password" required autocomplete="current-password">
+      </label>
+
+      <button type="submit">Einloggen</button>
+    </form>
+
+    <p id="message" class="message" aria-live="polite"></p>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lernspiel – Schüler</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>Lernspiel</strong>
+      <span class="badge">STUDENT</span>
+    </div>
+    <button id="logout-button" class="secondary">Logout</button>
+  </header>
+
+  <main class="single-column">
+    <section class="card">
+      <h1>Mein Profil</h1>
+      <dl class="profile-list">
+        <div><dt>User-ID</dt><dd id="profile-user-id">–</dd></div>
+        <div><dt>Rolle</dt><dd id="profile-role">–</dd></div>
+        <div><dt>Class-ID</dt><dd id="profile-class-id">–</dd></div>
+      </dl>
+      <p id="profile-message" class="message"></p>
+    </section>
+  </main>
+
+  <script type="module" src="js/student.js"></script>
+</body>
+</html>

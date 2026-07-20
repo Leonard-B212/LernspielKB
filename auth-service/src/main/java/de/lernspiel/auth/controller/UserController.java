@@ -123,7 +123,7 @@ public class UserController {
             student.setPassword(req.getPassword());
 
             User savedStudent = userService.addStudent(student);
-
+            
             return ResponseEntity.ok(mapToUserResponse(savedStudent));
 
         } catch (IllegalArgumentException e) {

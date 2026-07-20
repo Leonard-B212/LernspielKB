@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lernspiel – Lehrer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <strong>Lernspiel</strong>
+      <span class="badge">TEACHER</span>
+    </div>
+    <button id="logout-button" class="secondary">Logout</button>
+  </header>
+
+  <main class="page-grid">
+    <section class="card">
+      <h2>Klasse anlegen</h2>
+      <form id="class-form" class="stack">
+        <label>Klassenname
+          <input id="class-name" type="text" required placeholder="z. B. 10A">
+        </label>
+        <button type="submit">Klasse erstellen</button>
+      </form>
+      <p class="muted">Die Teacher-ID wird automatisch aus <code>/me</code> übernommen.</p>
+      <p id="class-message" class="message"></p>
+    </section>
+
+    <section class="card">
+      <h2>Schüler anlegen</h2>
+      <form id="student-form" class="stack">
+        <label>Klasse
+          <select id="student-class-id" required>
+            <option value="">Klasse wählen</option>
+          </select>
+        </label>
+        <label>Passwort
+          <input id="student-password" type="password" required>
+        </label>
+        <button type="submit">Schüler erstellen</button>
+      </form>
+      <p id="student-message" class="message"></p>
+    </section>
+
+    <section class="card span-2">
+      <div class="section-header">
+        <h2>Klassen</h2>
+        <button id="reload-classes" class="secondary">Neu laden</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Teacher-ID</th></tr></thead>
+          <tbody id="classes-table"></tbody>
+        </table>
+      </div>
+      <p id="classes-message" class="message"></p>
+    </section>
+
+    <section class="card span-2 muted-card">
+      <h2>Eigene Schüler</h2>
+      <p>Dieser Bereich bleibt deaktiviert, bis der passende Backend-Endpunkt existiert.</p>
+      <button disabled>Eigene Schüler laden</button>
+      <div class="code-note">
+        Geplanter Endpunkt: <code>GET /api/benutzer/students/my</code>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/teacher.js"></script>
+</body>
+</html>
