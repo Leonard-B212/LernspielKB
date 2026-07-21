@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.lernspiel.auth.service.*;
 import de.lernspiel.auth.dto.LoginRequest;
-import de.lernspiel.auth.dto.RegisterRequest;
 import de.lernspiel.auth.dto.UserResponse;
 import de.lernspiel.auth.entity.*;
 import de.lernspiel.auth.security.*;
