@@ -58,14 +58,34 @@
       <p id="classes-message" class="message"></p>
     </section>
 
-    <section class="card span-2 muted-card">
-      <h2>Eigene Schüler</h2>
-      <p>Dieser Bereich bleibt deaktiviert, bis der passende Backend-Endpunkt existiert.</p>
-      <button disabled>Eigene Schüler laden</button>
-      <div class="code-note">
-        Geplanter Endpunkt: <code>GET /api/benutzer/students/my</code>
-      </div>
-    </section>
+    <section class="card span-2">
+  <div class="section-header">
+    <h2>Eigene Schüler</h2>
+    <button
+      id="reload-students"
+      type="button"
+      class="secondary"
+    >
+      Neu laden
+    </button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Schüler-ID</th>
+          <th>Rolle</th>
+          <th>Klassen-ID</th>
+        </tr>
+      </thead>
+
+      <tbody id="students-table"></tbody>
+    </table>
+  </div>
+
+  <p id="students-message" class="message"></p>
+</section>
   </main>
 
   <script type="module" src="js/teacher.js"></script>

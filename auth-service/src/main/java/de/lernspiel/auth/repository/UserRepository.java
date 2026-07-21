@@ -15,4 +15,5 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByType(UserType type);
     List<User> findByClassIDIn(List<Integer> classIDs);
+    List<User> findByClassIDInAndType(List<Integer> classIDs,UserType type);
 }

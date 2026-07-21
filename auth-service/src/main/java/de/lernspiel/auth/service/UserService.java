@@ -53,6 +53,7 @@ public class UserService {
     }
 
 
+    // Benutzerprofil für Schüler hinzufügen, überprüft ob Klasse existiert
     public User addStudent(User student) {
 
         if (student.getClassID() == null) {
@@ -89,4 +90,22 @@ public class UserService {
         }
         return false; 
     }
+
+    public List<User> getStudentsForTeacher(int teacherID) {
+
+        User teacher = userRepository.findById(teacherID).orElseThrow(() -> new IllegalArgumentException("Lehrer mit der ID " + teacherID + " wurde nicht gefunden."));
+
+        if (teacher.getType() != UserType.TEACHER) {throw new IllegalArgumentException("Der angemeldete Benutzer ist kein Lehrer.");
+        }
+
+        List<SchoolClass> teacherClasses = schoolClassRepository.findByTeacherID(teacherID);
+
+        if (teacherClasses.isEmpty()) {throw new IllegalArgumentException("Dem Lehrer ist keine Klasse zugewiesen.");
+        }
+
+        List<Integer> classIDs = teacherClasses.stream().map(SchoolClass::getClassID).toList();
+
+        return userRepository.findByClassIDInAndType(classIDs,UserType.STUDENT);
+    }   
+
 }

@@ -9,4 +9,5 @@ import de.lernspiel.auth.entity.SchoolClass;
 public interface SchoolClassRepository extends JpaRepository<SchoolClass, Integer> {
     boolean existsByClassName(String className);
     List<SchoolClass> findByTeacherID(Integer teacherID);
+    
 }

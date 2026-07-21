@@ -149,5 +149,29 @@ public class UserController {
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
+
+    // Gibt alle Schüler eines Lehrers zurück. Nur Lehrer darf dies tun.
+    @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping("/me/students")
+    public ResponseEntity<?> getMyStudents(Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(403).body("Nicht authentifiziert");
+        }
+
+        try {
+            int teacherID = Integer.parseInt(authentication.getName());
+
+            List<UserResponse> students = userService.getStudentsForTeacher(teacherID).stream().map(this::mapToUserResponse).toList();
+
+            return ResponseEntity.ok(students);
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(401).body("Ungültige Benutzeridentität im Token.");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
 }
 
