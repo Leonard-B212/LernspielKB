@@ -5,8 +5,8 @@ public class InterpreterController {
     private InterpreterService interpreterService;
 
     @PostMapping("/run")
-    public ResponseEntity<InterpreterResult> run(@RequestBody List<CodeBlock> program) {
-        InterpreterResult result = interpreterService.run(program);
-        return ResponseEntity.ok(result);
+    public ResponseEntity<List<String>> run(@RequestBody ProgramRequest programRequest) {
+        List<String> output = interpreterService.run(programRequest);
+        return ResponseEntity.ok(output);
     }
 }
