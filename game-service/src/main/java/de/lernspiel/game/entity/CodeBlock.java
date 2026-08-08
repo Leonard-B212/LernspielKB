@@ -1,18 +1,8 @@
 @Entity
 public class CodeBlock {
-    private int id;
-    private String type;
+    private int type;
 
-    public CodeBlock(int id, String type) {
-        this.id = id;
-        this.type = type;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getType() {
+    public int getType(){
         return type;
     }
 }
