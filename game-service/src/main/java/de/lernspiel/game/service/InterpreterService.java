@@ -1,23 +1,29 @@
+import java.util.ArrayList;
+
 @service
 public class InterpreterService {
 
     public List<String> run(ProgramRequest programRequest) {
-        List<String> output = new ArrayList<>();
-
-        for (CodeBlock block : programRequest.getProgram()) {
-            executeBlock(block, output);
+        ArrayList<String> output = new ArrayList<String>();
+        switch(programRequest.getLanguageId){
+            case 1: //Id für Java
+                interpreterMainJava(programRequest);
+                break;
+            case 2: //Id für Python
+                interpreterMainPython(programRequest);
+                break;
+            default: //Id nicht implementiert
+                //TODO: Errorhandling
+                break;
         }
-
         return output;
     }
 
-    private void executeBlock(CodeBlock block, List<String> output) {
-        switch (block.getType()) {
-            case "A" -> { /* TODO */ }
-            case "B" -> { /* TODO */ }
-            default -> throw new IllegalArgumentException(
-                    "Unknown block type: " + block.getType() + " (id " + block.getId() + ")");
-        }
+    public void interpreterMainJava(ProgramRequest programRequest){
+
     }
-    
+
+    public void interpreterMainPython(ProgramRequest programRequest){
+        
+    }
 }
