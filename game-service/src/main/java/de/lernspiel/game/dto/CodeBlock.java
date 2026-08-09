@@ -1,8 +1,5 @@
-package de.lernspiel.game.entity;
+package de.lernspiel.game.dto;
 
-import jakarta.persistence.Entity;
-
-@Entity
 public class CodeBlock {
     private CodeType type;
 

@@ -1,4 +1,4 @@
-package de.lernspiel.game.entity;
+package de.lernspiel.game.dto;
 
 public class Variable<T> {
     private final T value;
