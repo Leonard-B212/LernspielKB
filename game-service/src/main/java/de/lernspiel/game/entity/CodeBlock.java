@@ -4,9 +4,9 @@ import jakarta.persistence.Entity;
 
 @Entity
 public class CodeBlock {
-    private int type;
+    private CodeType type;
 
-    public int getType(){
+    public CodeType getType(){
         return type;
     }
 }

@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.entity.CodeBlock;
-import de.lernspiel.game.entity.ExpressionBlock;
-import de.lernspiel.game.entity.IfBlock;
+import de.lernspiel.game.entity.CodeType;
 import de.lernspiel.game.entity.Variable;
 
 @Service
@@ -43,7 +42,7 @@ public class InterpreterService {
     }
 
     public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
-
+        
     }
 
     private List<CodeBlock[]> parseCode(List<CodeBlock> program) {
@@ -52,7 +51,7 @@ public class InterpreterService {
 
         for (CodeBlock block : program) {
             current.add(block);
-            if (block.getType() == 0) {
+            if (block.getType().equals(CodeType.BREAK)) {
                 result.add(current.toArray(new CodeBlock[0]));
                 current = new ArrayList<>();
             }
