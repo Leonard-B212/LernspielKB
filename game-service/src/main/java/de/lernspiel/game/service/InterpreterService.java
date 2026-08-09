@@ -1,8 +1,16 @@
+package de.lernspiel.game.service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.stereotype.Service;
+
+import de.lernspiel.game.dto.ProgramRequest;
+import de.lernspiel.game.entity.CodeBlock;
+import de.lernspiel.game.entity.ExpressionBlock;
+import de.lernspiel.game.entity.IfBlock;
+import de.lernspiel.game.entity.Variable;
 
 @Service
 public class InterpreterService {
@@ -23,30 +31,37 @@ public class InterpreterService {
     }
 
     public void interpreterMainJava(ProgramRequest programRequest){
-        Map<String, Variable> variables = new HashMap<>();
-        executeCode(programRequest.getProgram(), variables);
+        Map<String, Variable<?>> variables = new HashMap<>();
+        executeProgram(programRequest.getProgram(), variables);
     }
 
-    public void executeCode(List<CodeBlock> program, Map<String, Variable> variables){
-        for(CodeBlock cb: program){
-            executeCodeBlock(cb, variables);
+    public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables){
+        List<CodeBlock[]> parsedCode = parseCode(program);
+        for(CodeBlock[] lineOfCode : parsedCode){
+            executeCode(lineOfCode, variables);;
         }
     }
 
-    public void executeCodeBlock(CodeBlock codeBlock, Map<String, Variable> variables){
-        switch(codeBlock.getType()){
-            case 1: //If-Statement
-                IfBlock cb = (IfBlock) codeBlock;
-                if(checkExpression(cb.getExpression(), variables)){
-                    executeCode(cb.getProgram(), variables);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown block type: " + codeBlock.getType());
-        }
+    public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
+
     }
 
-    public boolean checkExpression(ExpressionBlock expression, Map<String, Variable> variables){
-        return true; //TODO
+    private List<CodeBlock[]> parseCode(List<CodeBlock> program) {
+        List<CodeBlock[]> result = new ArrayList<>();
+        List<CodeBlock> current = new ArrayList<>();
+
+        for (CodeBlock block : program) {
+            current.add(block);
+            if (block.getType() == 0) {
+                result.add(current.toArray(new CodeBlock[0]));
+                current = new ArrayList<>();
+            }
+        }
+
+        if (!current.isEmpty()) {
+            result.add(current.toArray(new CodeBlock[0])); // trailing blocks with no terminating 0
+        }
+
+        return result;
     }
 }
