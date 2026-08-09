@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.lernspiel.game.dto.CodeBlock;
@@ -61,112 +64,6 @@ public class InterpreterService {
         }
     }
 
-    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
-        CodeBlock variableType = lineOfCode[0];
-        VarNameBlock variableName;
-        ValueBlock variableValue;
-
-        if(lineOfCode.length < 2){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else if(!lineOfCode[1].getType().equals(CodeType.VAR_NAME)){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else {
-            variableName = (VarNameBlock) lineOfCode[1];
-        }
-
-        if(lineOfCode.length < 3){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else if(lineOfCode[2].getType().equals(CodeType.BREAK)){
-            //Variable Deklariert ohne Value Zuweisung
-
-            if(variables.get(variableName.getName()).equals(null)){
-                //TODO: Errorhandling
-                throw new IllegalArgumentException("Variable bereits deklariert");
-            }
-
-            switch (variableType.getType()) {
-                case STRING:
-                    Variable<String> strVariable = new Variable<>(null, String.class);
-                    variables.put(variableName.getName(), strVariable);
-                    return;
-                case INT:
-                    Variable<Integer> intVariable = new Variable<>(null, Integer.class);
-                    variables.put(variableName.getName(), intVariable);
-                    return;
-                case BOOLEAN:
-                    Variable<Boolean> boolVariable = new Variable<>(null, Boolean.class);
-                    variables.put(variableName.getName(), boolVariable);
-                    return;
-                default:
-                    //TODO: Errorhandling
-                    throw new IllegalArgumentException("");
-            }
-        }
-            
-        if(!lineOfCode[2].getType().equals(CodeType.EQUALS)){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else if(lineOfCode.length < 4){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else if(!lineOfCode[3].getType().equals(CodeType.VALUE)){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        }
-        
-        variableValue = (ValueBlock) lineOfCode[3];
-
-        if(lineOfCode.length < 5){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        } else if(!lineOfCode[4].getType().equals(CodeType.BREAK)){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("");
-        }
-
-        //Variable deklariert und Value assigned
-        if(variables.get(variableName.getName()).equals(null)){
-            //TODO: Errorhandling
-            throw new IllegalArgumentException("Variable bereits deklariert");
-        }
-
-        switch (variableType.getType()) {
-            case STRING:
-                if(variableValue.getValue().getType().equals(String.class)){
-                    String value = (String) variableValue.getValue().getValue();
-                    Variable<String> strVariable = new Variable<>(value, String.class);
-                    variables.put(variableName.getName(), strVariable);
-                    return;
-                }
-                //TODO: Errorhandling
-                throw new IllegalArgumentException("");
-            case INT:
-                if(variableValue.getValue().getType().equals(Integer.class)){
-                    Integer value = (Integer) variableValue.getValue().getValue();
-                    Variable<Integer> intVariable = new Variable<>(value, Integer.class);
-                    variables.put(variableName.getName(), intVariable);
-                    return;
-                }
-                //TODO: Errorhandling
-                throw new IllegalArgumentException("");
-            case BOOLEAN:
-                if(variableValue.getValue().getType().equals(Boolean.class)){
-                    Boolean value = (Boolean) variableValue.getValue().getValue();
-                    Variable<Boolean> boolVariable = new Variable<>(value, Boolean.class);
-                    variables.put(variableName.getName(), boolVariable);
-                    return;
-                }
-                //TODO: Errorhandling
-                throw new IllegalArgumentException("");
-            default:
-                //TODO: Errorhandling
-                throw new IllegalArgumentException("");
-        }
-    }
-
     public List<CodeBlock[]> parseCode(List<CodeBlock> program) {
         List<CodeBlock[]> result = new ArrayList<>();
         List<CodeBlock> current = new ArrayList<>();
@@ -184,5 +81,121 @@ public class InterpreterService {
         }
 
         return result;
+    }
+
+    /**
+     * Verarbeitet eine Variablendeklaration, z. B.:
+     *   int x;          -> Deklaration ohne Initialwert
+     *   int x = 5;       -> Deklaration mit Initialwert
+     */
+    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables) {
+        System.out.println("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
+
+        CodeBlock variableTypeBlock = lineOfCode[0];
+        VarNameBlock variableNameBlock = extractVariableName(lineOfCode);
+        String varName = variableNameBlock.getName();
+
+        ensureNotAlreadyDeclared(varName, variables);
+
+        CodeBlock thirdBlock = requireBlock(lineOfCode, 2, "Erwarte '=' oder ';' nach dem Variablennamen");
+
+        if (thirdBlock.getType().equals(CodeType.BREAK)) {
+            // Fall 1: Deklaration ohne Wertzuweisung, z. B. "int x;"
+            Variable<?> emptyVariable = createEmptyVariable(variableTypeBlock.getType());
+            variables.put(varName, emptyVariable);
+            System.out.println("Variable " + varName + " " + variableTypeBlock.getType() + " ohne Initialwert deklariert");
+            return;
+        }
+
+        if (!thirdBlock.getType().equals(CodeType.EQUALS)) {
+            throw new IllegalArgumentException(
+                "Erwarte '=' nach dem Variablennamen, war aber: " + thirdBlock.getType());
+        }
+
+        // Fall 2: Deklaration mit Wertzuweisung, z. B. "int x = 5;"
+        CodeBlock valueBlockRaw = requireBlock(lineOfCode, 3, "Erwarte einen Wert nach '='");
+        if (!valueBlockRaw.getType().equals(CodeType.VALUE)) {
+            throw new IllegalArgumentException(
+                "Erwarte einen Wert nach '=', war aber: " + valueBlockRaw.getType());
+        }
+        ValueBlock valueBlock = (ValueBlock) valueBlockRaw;
+
+        CodeBlock terminator = requireBlock(lineOfCode, 4, "Erwarte ';' am Ende der Deklaration");
+        if (!terminator.getType().equals(CodeType.BREAK)) {
+            throw new IllegalArgumentException(
+                "Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
+        }
+
+        Variable<?> initializedVariable = createInitializedVariable(variableTypeBlock.getType(), valueBlock);
+        variables.put(varName, initializedVariable);
+        System.out.println("Variable " + varName + " " + variableTypeBlock.getType() + " mit Initialwert deklariert: " + initializedVariable.getValue());
+    }
+
+    /** Prüft und liefert den Variablennamen-Block an Position 1. */
+    private VarNameBlock extractVariableName(CodeBlock[] lineOfCode) {
+        CodeBlock block = requireBlock(lineOfCode, 1, "Erwarte einen Variablennamen an Position 1");
+        if (!block.getType().equals(CodeType.VAR_NAME)) {
+            throw new IllegalArgumentException("Erwarte VAR_NAME an Position 1, war aber: " + block.getType());
+        }
+        return (VarNameBlock) block;
+    }
+
+    /** Liefert lineOfCode[index] oder wirft eine aussagekräftige Exception, falls die Zeile zu kurz ist. */
+    private CodeBlock requireBlock(CodeBlock[] lineOfCode, int index, String errorContext) {
+        if (lineOfCode.length <= index) {
+            throw new IllegalArgumentException(errorContext + " (Zeile hat nur " + lineOfCode.length + " Blöcke)");
+        }
+        return lineOfCode[index];
+    }
+
+    /** Prüft, ob die zu deklarierende Variable bereits existiert */
+    private void ensureNotAlreadyDeclared(String varName, Map<String, Variable<?>> variables) {
+        if (variables.containsKey(varName)) {
+            throw new IllegalArgumentException("Variable bereits deklariert: " + varName);
+        }
+    }
+
+    /** Erzeugt eine leere (uninitialisierte) Variable passend zum deklarierten Typ. */
+    private Variable<?> createEmptyVariable(CodeType type) {
+        switch (type) {
+            case STRING:
+                return new Variable<>(null, String.class);
+            case INT:
+                return new Variable<>(null, Integer.class);
+            case BOOLEAN:
+                return new Variable<>(null, Boolean.class);
+            default:
+                throw new IllegalArgumentException("Unbekannter Variablentyp: " + type);
+        }
+    }
+
+    /** Erzeugt eine initialisierte Variable und prüft dabei, dass der Werttyp zum deklarierten Typ passt. */
+    private Variable<?> createInitializedVariable(CodeType type, ValueBlock valueBlock) {
+        Variable<?> parsedValue = valueBlock.getValue();
+        if (parsedValue == null) {
+            throw new IllegalArgumentException("ValueBlock enthält keinen Wert");
+        }
+
+        switch (type) {
+            case STRING:
+                return requireMatchingType(parsedValue, String.class);
+            case INT:
+                return requireMatchingType(parsedValue, Integer.class);
+            case BOOLEAN:
+                return requireMatchingType(parsedValue, Boolean.class);
+            default:
+                throw new IllegalArgumentException("Unbekannter Variablentyp: " + type);
+        }
+    }
+
+    /** Prüft Typ-Übereinstimmung und castet typsicher via Class#cast statt manuellem (T)-Cast pro Fall. */
+    private <T> Variable<T> requireMatchingType(Variable<?> value, Class<T> expected) {
+        if (!value.getType().equals(expected)) {
+            throw new IllegalArgumentException(
+                "Typ-Mismatch: erwartet " + expected.getSimpleName()
+                + ", aber Wert war vom Typ " + value.getType().getSimpleName());
+        }
+        T castValue = expected.cast(value.getValue());
+        return new Variable<>(castValue, expected);
     }
 }
