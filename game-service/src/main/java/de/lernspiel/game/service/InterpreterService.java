@@ -102,7 +102,6 @@ public class InterpreterService {
      */
     public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output) {
         output.add("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
-        System.out.println("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
 
         CodeType variableType = lineOfCode[0].getType();
 
@@ -127,7 +126,6 @@ public class InterpreterService {
             variables.put(varName, emptyVariable);
             localVariables.add(varName);
             output.add("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
-            System.out.println("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
             return;
         }
 
@@ -156,12 +154,10 @@ public class InterpreterService {
         variables.put(varName, initializedVariable);
         localVariables.add(varName);
         output.add("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
-        System.out.println("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
     }
 
     public void variableValueAssignment(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
         output.add("variableValueAssignment gestartet mit " + lineOfCode.length + " Blöcken");
-        System.out.println("variableValueAssignment gestartet mit " + lineOfCode.length + " Blöcken");
 
         VarNameBlock variableNameBlock = (VarNameBlock) lineOfCode[0];
         String varName = variableNameBlock.getName();
@@ -193,7 +189,6 @@ public class InterpreterService {
 
         variables.put(varName, newVariableValue);
         output.add("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
-        System.out.println("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
     }
 
     public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
@@ -354,7 +349,6 @@ public class InterpreterService {
             result.append((String) operand.getValue());
         }
         output.add("String concatenation result: \"" + result + "\"");
-        System.out.println("String concatenation result: \"" + result + "\"");
         return new Variable<>(result.toString(), CodeType.STRING);
     }
 
@@ -402,7 +396,6 @@ public class InterpreterService {
 
         int result = stack.stream().mapToInt(Integer::intValue).sum();
         output.add("Integer expression evaluated to: " + result);
-        System.out.println("Integer expression evaluated to: " + result);
         return new Variable<>(result, CodeType.INT);
     }
 

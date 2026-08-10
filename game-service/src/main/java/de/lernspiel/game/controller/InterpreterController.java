@@ -21,6 +21,9 @@ public class InterpreterController {
     @PostMapping("/run")
     public ResponseEntity<List<String>> run(@RequestBody ProgramRequest programRequest) {
         List<String> output = interpreterService.run(programRequest);
+        for(String s : output){
+            System.out.println(s);
+        }
         return ResponseEntity.ok(output);
     }
 }
