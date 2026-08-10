@@ -209,6 +209,7 @@ public class InterpreterService {
         }
     }
 
+    /** Resolves a single operand (ValueBlock or VarNameBlock) into a Variable of the expected type. */
     public Variable<?> resolveSingleOperand(CodeBlock block, CodeType expectedType, Map<String, Variable<?>> variables) {
         if (block instanceof ValueBlock valueBlock) {
             return requireMatchingType(valueBlock.getValue(), expectedType);
@@ -219,6 +220,12 @@ public class InterpreterService {
         throw new IllegalArgumentException("Expected a value or variable name, got: " + block.getType());
     }
 
+    /**
+     * Looks up a variable by name and validates it's actually usable:
+     * - must be declared
+     * - must actually have a value (catches "int x; y = x;" - using a declared-but-uninitialized variable, which would otherwise NPE silently during concatenation/arithmetic below)
+     * - must match the expected type
+     */
     public Variable<?> resolveVariableReference(String name, CodeType expectedType, Map<String, Variable<?>> variables) {
         if (!variableAlreadyDeclared(name, variables)) {
             throw new IllegalArgumentException("Use of undeclared variable: " + name);
@@ -278,7 +285,7 @@ public class InterpreterService {
         }
 
         System.out.println("String concatenation result: \"" + result + "\"");
-        return new Variable<>(result.toString(), String.class);
+        return new Variable<>(result.toString(), CodeType.STRING);
     }
 
     /** Form 4: Integer via mathematische Operationen */
@@ -318,7 +325,7 @@ public class InterpreterService {
 
         int result = stack.stream().mapToInt(Integer::intValue).sum();
         System.out.println("Integer expression evaluated to: " + result);
-        return new Variable<>(result, Integer.class);
+        return new Variable<>(result, CodeType.INT);
     }
 
     /** Liefert lineOfCode[index] oder wirft eine aussagekräftige Exception, falls die Zeile zu kurz ist. */
@@ -329,7 +336,7 @@ public class InterpreterService {
         return lineOfCode[index];
     }
 
-    /** Prüft, ob die zu deklarierende Variable bereits existiert */
+    /** Prüft, ob die gegebene Variable bereits deklariert wurde */
     private boolean variableAlreadyDeclared(String varName, Map<String, Variable<?>> variables) {
         if (variables.containsKey(varName)) {
             return true;
