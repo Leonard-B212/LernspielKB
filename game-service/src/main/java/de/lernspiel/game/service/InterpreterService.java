@@ -53,7 +53,7 @@ public class InterpreterService {
     }
 
     public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output){
-        List<CodeBlock[]> parsedCode = parseCode(program);
+        List<CodeBlock[]> parsedCode = parseCode(program, output);
         for(CodeBlock[] lineOfCode : parsedCode){
             executeCode(lineOfCode, variables, localVariables, output);
         }
@@ -76,7 +76,7 @@ public class InterpreterService {
         }
     }
 
-    public List<CodeBlock[]> parseCode(List<CodeBlock> program) {
+    public List<CodeBlock[]> parseCode(List<CodeBlock> program, ExecutionLog output) {
         List<CodeBlock[]> result = new ArrayList<>();
         List<CodeBlock> current = new ArrayList<>();
 
@@ -89,7 +89,8 @@ public class InterpreterService {
         }
 
         if (!current.isEmpty()) {
-            result.add(current.toArray(new CodeBlock[0]));
+            output.add("Line has to end on ';'");
+            throw new IllegalArgumentException("Line has to end on ';'");
         }
 
         return result;
