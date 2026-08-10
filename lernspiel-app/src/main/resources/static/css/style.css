@@ -511,6 +511,48 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
     font-size: 1.5rem;
 }
 
+/* -------------------------
+   Interpreter-Ausgabe
+   ------------------------- */
+
+.interpreter-output-card {
+    margin-top: .25rem;
+}
+
+.interpreter-output {
+    margin-top: 1rem;
+    padding: 1rem;
+
+    min-height: 80px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: #e5e7eb;
+
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .9rem;
+
+    display: grid;
+    gap: .45rem;
+}
+
+.interpreter-output-placeholder {
+    color: #9ca3af;
+}
+
+.interpreter-output-line {
+    line-height: 1.5;
+}
+
+.interpreter-output-line::before {
+    content: "> ";
+    color: #6b7280;
+}
+
+.interpreter-output-line.error {
+    color: #fca5a5;
+}
 
 /* -------------------------
    Mobile

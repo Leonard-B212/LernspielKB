@@ -7,6 +7,9 @@ const runButton = document.getElementById("run-button");
 
 const message = document.getElementById("sandbox-message");
 
+const interpreterOutput =
+    document.getElementById("interpreter-output");
+
 
 /*
  * Das Programm bleibt intern eine flache Liste.
@@ -1092,6 +1095,13 @@ resetButton.addEventListener(
 
         showMessage("");
 
+
+        interpreterOutput.innerHTML = `
+            <span class="interpreter-output-placeholder">
+                Noch kein Programm ausgeführt.
+            </span>
+        `;
+
     }
 );
 
@@ -1192,9 +1202,39 @@ runButton.addEventListener(
             );
 
 
-            showMessage(
-                "Programm wurde erfolgreich vom Interpreter ausgeführt."
-            );
+            /*
+            * Backend-Ausgabe sichtbar darstellen.
+            */
+            renderInterpreterOutput(output);
+
+
+            /*
+            * Der Interpreter fängt Exceptions aktuell selbst
+            * und schreibt sie als String in die Output-Liste.
+            *
+            * Deshalb kann HTTP 200 zurückkommen, obwohl das
+            * eingegebene Programm fachlich fehlerhaft war.
+            */
+            const hasInterpreterError =
+                output.some((entry) =>
+                    entry.includes("Exception:")
+                );
+
+
+            if (hasInterpreterError) {
+
+                showMessage(
+                    "Der Interpreter hat einen Fehler im Programm gefunden.",
+                    true
+                );
+
+            } else {
+
+                showMessage(
+                    "Programm wurde erfolgreich vom Interpreter ausgeführt."
+                );
+
+            }
 
         }
 
@@ -1217,6 +1257,73 @@ runButton.addEventListener(
     }
 );
 
+/* =========================================================
+   INTERPRETER-AUSGABE
+   ========================================================= */
+
+function renderInterpreterOutput(output) {
+
+    interpreterOutput.innerHTML = "";
+
+
+    if (!output || output.length === 0) {
+
+        const placeholder =
+            document.createElement("span");
+
+
+        placeholder.classList.add(
+            "interpreter-output-placeholder"
+        );
+
+
+        placeholder.textContent =
+            "Der Interpreter hat keine Ausgabe erzeugt.";
+
+
+        interpreterOutput.appendChild(
+            placeholder
+        );
+
+
+        return;
+    }
+
+
+    output.forEach((entry) => {
+
+        const line =
+            document.createElement("div");
+
+
+        line.classList.add(
+            "interpreter-output-line"
+        );
+
+
+        /*
+         * Exceptions werden vom Backend aktuell
+         * als Text in der Output-Liste zurückgegeben.
+         */
+        if (entry.includes("Exception:")) {
+
+            line.classList.add("error");
+
+        }
+
+
+        /*
+         * textContent statt innerHTML:
+         * Backend-Ausgabe wird nur als Text dargestellt.
+         */
+        line.textContent = entry;
+
+
+        interpreterOutput.appendChild(line);
+
+    });
+
+}
 
 /* =========================================================
    HELPER
