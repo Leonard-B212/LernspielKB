@@ -329,7 +329,7 @@ public class InterpreterService {
     }
 
     /** Liefert lineOfCode[index] oder wirft eine aussagekräftige Exception, falls die Zeile zu kurz ist. */
-    private CodeBlock requireBlock(CodeBlock[] lineOfCode, int index, String errorContext) {
+    public CodeBlock requireBlock(CodeBlock[] lineOfCode, int index, String errorContext) {
         if (lineOfCode.length <= index) {
             throw new IllegalArgumentException(errorContext + " (Zeile hat nur " + lineOfCode.length + " Blöcke)");
         }
@@ -337,7 +337,7 @@ public class InterpreterService {
     }
 
     /** Prüft, ob die gegebene Variable bereits deklariert wurde */
-    private boolean variableAlreadyDeclared(String varName, Map<String, Variable<?>> variables) {
+    public boolean variableAlreadyDeclared(String varName, Map<String, Variable<?>> variables) {
         if (variables.containsKey(varName)) {
             return true;
         } else {
@@ -346,7 +346,7 @@ public class InterpreterService {
     }
 
     /** Erzeugt eine leere (uninitialisierte) Variable passend zum deklarierten Typ. */
-    private Variable<?> createEmptyVariable(CodeType type) {
+    public Variable<?> createEmptyVariable(CodeType type) {
         switch (type) {
             case STRING:
                 return new Variable<>(null, CodeType.STRING);
