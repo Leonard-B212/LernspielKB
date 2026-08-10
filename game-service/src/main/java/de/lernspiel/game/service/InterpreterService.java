@@ -1,12 +1,14 @@
 package de.lernspiel.game.service;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
+import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.lernspiel.game.dto.CodeBlock;
@@ -18,6 +20,8 @@ import de.lernspiel.game.dto.Variable;
 
 @Service
 public class InterpreterService {
+    private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
+    private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
 
     public List<String> run(ProgramRequest programRequest) {
         List<String> output = new ArrayList<String>();
@@ -109,26 +113,172 @@ public class InterpreterService {
 
         if (!thirdBlock.getType().equals(CodeType.EQUALS)) {
             throw new IllegalArgumentException(
-                "Erwarte '=' nach dem Variablennamen, war aber: " + thirdBlock.getType());
+                "Erwarte '=' oder ';' nach dem Variablennamen, war aber: " + thirdBlock.getType());
         }
 
-        // Fall 2: Deklaration mit Wertzuweisung, z. B. "int x = 5;"
-        CodeBlock valueBlockRaw = requireBlock(lineOfCode, 3, "Erwarte einen Wert nach '='");
-        if (!valueBlockRaw.getType().equals(CodeType.VALUE)) {
-            throw new IllegalArgumentException(
-                "Erwarte einen Wert nach '=', war aber: " + valueBlockRaw.getType());
+        
+        //Fall 2: Deklaration mit Wertzuweisung
+        List<CodeBlock> valueAssignBlocks = new ArrayList<>();
+        for(int i = 3; i < lineOfCode.length - 1; i++){
+            valueAssignBlocks.add(requireBlock(lineOfCode, i, "Erwarte eine Wertzuweisung nach '='"));
         }
-        ValueBlock valueBlock = (ValueBlock) valueBlockRaw;
 
-        CodeBlock terminator = requireBlock(lineOfCode, 4, "Erwarte ';' am Ende der Deklaration");
+        if(valueAssignBlocks.isEmpty()){
+            throw new IllegalArgumentException("Erwarte eine Wertzuweisung nach '='");
+        }
+
+        Variable<?> initializedVariable = determineVariableValue(valueAssignBlocks, variables, variableTypeBlock.getType());
+
+        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length - 1, "Erwarte ';' am Ende der Deklaration");
         if (!terminator.getType().equals(CodeType.BREAK)) {
             throw new IllegalArgumentException(
                 "Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
         }
 
-        Variable<?> initializedVariable = createInitializedVariable(variableTypeBlock.getType(), valueBlock);
         variables.put(varName, initializedVariable);
         System.out.println("Variable " + varName + " " + variableTypeBlock.getType() + " mit Initialwert deklariert: " + initializedVariable.getValue());
+    }
+
+    /**
+     * Resolves the value(s) between '=' and ';' into a single Variable, according to the four supported assignment forms:
+     *   1. a single ValueBlock
+     *   2. a single VarNameBlock referencing an already-declared variable of the same type
+     *   3. (STRING only) operand ADD operand ADD operand ...
+     *   4. (INT only)    operand OP operand OP operand ...  where OP in {ADD, SUBTRACT, MULTIPLY, DIVIDE}
+     */
+    public Variable<?> determineVariableValue(List<CodeBlock> valueAssignBlocks, Map<String, Variable<?>> variables, CodeType type) {
+        if (valueAssignBlocks.size() == 1) {
+            // Form 1 or 2: a single value or a single variable reference
+            return resolveSingleOperand(valueAssignBlocks.get(0), type, variables);
+        }
+
+        // More than one block only makes sense for STRING (concatenation) or INT (arithmetic)
+        switch (type) {
+            case STRING:
+                return evaluateStringConcatenation(valueAssignBlocks, variables);
+            case INT:
+                return evaluateIntegerExpression(valueAssignBlocks, variables);
+            case BOOLEAN:
+                throw new IllegalArgumentException("Boolean variables only support a single value or variable reference");
+            default:
+                throw new IllegalArgumentException("Unknown variable type: " + type);
+        }
+    }
+
+    /** Resolves a single operand (ValueBlock or VarNameBlock) into a Variable of the expected type. */
+    public Variable<?> resolveSingleOperand(CodeBlock block, CodeType expectedType, Map<String, Variable<?>> variables) {
+        if (block instanceof ValueBlock valueBlock) {
+            return requireMatchingType(valueBlock.getValue(), javaClassFor(expectedType));
+        }
+        if (block instanceof VarNameBlock varNameBlock) {
+            return resolveVariableReference(varNameBlock.getName(), expectedType, variables);
+        }
+        throw new IllegalArgumentException("Expected a value or variable name, got: " + block.getType());
+    }
+
+    /**
+     * Looks up a variable by name and validates it's actually usable:
+     * - must be declared
+     * - must actually have a value (catches "int x; y = x;" - using a declared-but-uninitialized variable, which would otherwise NPE silently during concatenation/arithmetic below)
+     * - must match the expected type
+     */
+    public Variable<?> resolveVariableReference(String name, CodeType expectedType, Map<String, Variable<?>> variables) {
+        if (!variables.containsKey(name)) {
+            throw new IllegalArgumentException("Use of undeclared variable: " + name);
+        }
+        Variable<?> referenced = variables.get(name);
+        if (referenced.getValue() == null) {
+            throw new IllegalArgumentException("Use of declared but uninitialized variable: " + name);
+        }
+        return requireMatchingType(referenced, javaClassFor(expectedType));
+    }
+
+    public Class<?> javaClassFor(CodeType type) {
+        switch (type) {
+            case STRING:  return String.class;
+            case INT:     return Integer.class;
+            case BOOLEAN: return Boolean.class;
+            default:      throw new IllegalArgumentException("No Java type mapped for: " + type);
+        }
+    }
+
+    public <T> Variable<T> requireMatchingType(Variable<?> value, Class<T> expected) {
+        if (!value.getType().equals(expected)) {
+            throw new IllegalArgumentException("Type mismatch: expected " + expected.getSimpleName() + ", but value was of type " + value.getType().getSimpleName());
+        }
+        T castValue = expected.cast(value.getValue());
+        return new Variable<>(castValue, expected);
+    }
+
+    /** Validates that blocks strictly alternate operand-operator-operand-...-operand. Catches malformed chains like "1 ADD ADD 2" or "1 ADD" (trailing operator) */
+    public void validateAlternatingPattern(List<CodeBlock> blocks, Set<CodeType> allowedOperators, String context) {
+        if (blocks.size() % 2 == 0) {
+            throw new IllegalArgumentException(context + ": expected an odd number of blocks (operand-operator-operand-...)");
+        }
+        for (int i = 0; i < blocks.size(); i++) {
+            CodeType actual = blocks.get(i).getType();
+            boolean operatorPosition = (i % 2 == 1);
+            if (operatorPosition && !allowedOperators.contains(actual)) {
+                throw new IllegalArgumentException(context + ": invalid operator at position " + i + ": " + actual + " (allowed: " + allowedOperators + ")");
+            }
+            if (!operatorPosition && !(actual.equals(CodeType.VALUE) || actual.equals(CodeType.VAR_NAME))) {
+                throw new IllegalArgumentException(context + ": expected an operand at position " + i + ", but found: " + actual);
+            }
+        }
+    }
+
+    /** Form 3: STRING concatenation via ADD-blocks only. */
+    public Variable<String> evaluateStringConcatenation(List<CodeBlock> blocks, Map<String, Variable<?>> variables) {
+        validateAlternatingPattern(blocks, STRING_CONCAT_OPERATORS, "String concatenation");
+
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < blocks.size(); i += 2) {
+            Variable<?> operand = resolveSingleOperand(blocks.get(i), CodeType.STRING, variables);
+            result.append((String) operand.getValue());
+        }
+
+        System.out.println("String concatenation result: \"" + result + "\"");
+        return new Variable<>(result.toString(), String.class);
+    }
+
+    /** Form 4: Integer via mathematische Operationen */
+    public Variable<Integer> evaluateIntegerExpression(List<CodeBlock> blocks, Map<String, Variable<?>> variables) {
+        validateAlternatingPattern(blocks, ARITHMETIC_OPERATORS, "Integer expression");
+
+        // Resolve every operand up front, left to right
+        List<Integer> operands = new ArrayList<>();
+        List<CodeType> operators = new ArrayList<>();
+        for (int i = 0; i < blocks.size(); i += 2) {
+            operands.add((Integer) resolveSingleOperand(blocks.get(i), CodeType.INT, variables).getValue());
+            if (i + 1 < blocks.size()) {
+                operators.add(blocks.get(i + 1).getType());
+            }
+        }
+
+        Deque<Integer> stack = new ArrayDeque<>();
+        stack.push(operands.get(0));
+
+        for (int i = 0; i < operators.size(); i++) {
+            CodeType op = operators.get(i);
+            int nextOperand = operands.get(i + 1);
+
+            switch (op) {
+                case MULTIPLY -> stack.push(stack.pop() * nextOperand);
+                case DIVIDE -> {
+                    if (nextOperand == 0) {
+                        throw new IllegalArgumentException("Division by zero in integer expression");
+                    }
+                    stack.push(stack.pop() / nextOperand);
+                }
+                case ADD -> stack.push(nextOperand);
+                case SUBTRACT -> stack.push(-nextOperand);
+                default -> throw new IllegalStateException("Unreachable: " + op);
+            }
+        }
+
+        int result = stack.stream().mapToInt(Integer::intValue).sum();
+        System.out.println("Integer expression evaluated to: " + result);
+        return new Variable<>(result, Integer.class);
     }
 
     /** Prüft und liefert den Variablennamen-Block an Position 1. */
@@ -167,35 +317,5 @@ public class InterpreterService {
             default:
                 throw new IllegalArgumentException("Unbekannter Variablentyp: " + type);
         }
-    }
-
-    /** Erzeugt eine initialisierte Variable und prüft dabei, dass der Werttyp zum deklarierten Typ passt. */
-    private Variable<?> createInitializedVariable(CodeType type, ValueBlock valueBlock) {
-        Variable<?> parsedValue = valueBlock.getValue();
-        if (parsedValue == null) {
-            throw new IllegalArgumentException("ValueBlock enthält keinen Wert");
-        }
-
-        switch (type) {
-            case STRING:
-                return requireMatchingType(parsedValue, String.class);
-            case INT:
-                return requireMatchingType(parsedValue, Integer.class);
-            case BOOLEAN:
-                return requireMatchingType(parsedValue, Boolean.class);
-            default:
-                throw new IllegalArgumentException("Unbekannter Variablentyp: " + type);
-        }
-    }
-
-    /** Prüft Typ-Übereinstimmung und castet typsicher via Class#cast statt manuellem (T)-Cast pro Fall. */
-    private <T> Variable<T> requireMatchingType(Variable<?> value, Class<T> expected) {
-        if (!value.getType().equals(expected)) {
-            throw new IllegalArgumentException(
-                "Typ-Mismatch: erwartet " + expected.getSimpleName()
-                + ", aber Wert war vom Typ " + value.getType().getSimpleName());
-        }
-        T castValue = expected.cast(value.getValue());
-        return new Variable<>(castValue, expected);
     }
 }

@@ -13,7 +13,11 @@ public enum CodeType {
     IF_STATEMENT(5, "if-statement"),
     ELSE_STATEMENT(6, "else-statement"),
     EQUALS(7, "="),
-    VALUE(8, "value");
+    ADD(8, "+"),
+    SUBTRACT(9, "-"),
+    MULTIPLY(10, "*"),
+    DIVIDE(11, "/")
+    VALUE(12, "value");
 
     private final int id;
     private final String label;
