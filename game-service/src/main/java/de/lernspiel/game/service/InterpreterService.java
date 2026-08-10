@@ -89,7 +89,7 @@ public class InterpreterService {
         }
 
         if (!current.isEmpty()) {
-            throw new IllegalArgumentException("Line has to end on ';'");
+            throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + current.getLast().getType());
         }
 
         return result;
