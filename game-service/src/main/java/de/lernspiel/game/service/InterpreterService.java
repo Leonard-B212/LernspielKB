@@ -89,7 +89,6 @@ public class InterpreterService {
         }
 
         if (!current.isEmpty()) {
-            output.add("Line has to end on ';'");
             throw new IllegalArgumentException("Line has to end on ';'");
         }
 
