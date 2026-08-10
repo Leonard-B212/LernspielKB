@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.lernspiel.game.dto.CodeBlock;
 import de.lernspiel.game.dto.CodeType;
 import de.lernspiel.game.dto.ElseStatementBlock;
+import de.lernspiel.game.dto.ExecutionLog;
 import de.lernspiel.game.dto.IfStatementBlock;
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
@@ -26,44 +27,49 @@ public class InterpreterService {
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
 
     public List<String> run(ProgramRequest programRequest) {
-        List<String> output = new ArrayList<String>();
-        switch(programRequest.getLanguageId()){
-            case 1: //Id für Java
-                interpreterMainJava(programRequest);
-                break;
-            case 2: //Id für Python
-                //TODO: Python Interpreter
-                throw new UnsupportedOperationException("Python interpreter not implemented yet");
-            default: //Id nicht implementiert
-                throw new IllegalArgumentException("Unknown language id: " + programRequest.getLanguageId());
+        ExecutionLog output = new ExecutionLog();
+        try {
+            switch(programRequest.getLanguageId()){
+                case 1: //Id für Java
+                    interpreterMainJava(programRequest, output);
+                    break;
+                case 2: //Id für Python
+                    //TODO: Python Interpreter
+                    throw new UnsupportedOperationException("Python interpreter not implemented yet");
+                default: //Id nicht implementiert
+                    throw new IllegalArgumentException("Unknown language id: " + programRequest.getLanguageId());
+            }
+
+        } catch (Exception e) {
+            output.add(e.getClass().getSimpleName() + ": " + e.getMessage());
         }
-        return output;
+        return new ArrayList<>(output.getEntries());
     }
 
-    public void interpreterMainJava(ProgramRequest programRequest){
+    public void interpreterMainJava(ProgramRequest programRequest, ExecutionLog output){
         Map<String, Variable<?>> variables = new HashMap<>();
         List<String> globalVariables = new ArrayList<>();
-        executeProgram(programRequest.getProgram(), variables, globalVariables);
+        executeProgram(programRequest.getProgram(), variables, globalVariables, output);
     }
 
-    public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, List<String> localVariables){
+    public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output){
         List<CodeBlock[]> parsedCode = parseCode(program);
         for(CodeBlock[] lineOfCode : parsedCode){
-            executeCode(lineOfCode, variables, localVariables);
+            executeCode(lineOfCode, variables, localVariables, output);
         }
     }
 
-    public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables){
+    public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output){
         CodeBlock firstBlock = lineOfCode[0];
         switch (firstBlock.getType()) {
             case STRING, INT, BOOLEAN:
-                variableDeclaration(lineOfCode, variables, localVariables);
+                variableDeclaration(lineOfCode, variables, localVariables, output);
                 break;
             case VAR_NAME:
-                variableValueAssignment(lineOfCode, variables);
+                variableValueAssignment(lineOfCode, variables, output);
                 break;
             case IF_STATEMENT:
-                conditionalStatement(lineOfCode, variables);
+                conditionalStatement(lineOfCode, variables, output);
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected Start of Line: " + firstBlock.getType());
@@ -94,12 +100,13 @@ public class InterpreterService {
      *   int x;          -> Deklaration ohne Initialwert
      *   int x = 5;       -> Deklaration mit Initialwert
      */
-    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables) {
+    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output) {
+        output.add("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
         System.out.println("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
 
         CodeType variableType = lineOfCode[0].getType();
 
-        CodeBlock variableNameBlockRaw = requireBlock(lineOfCode, 1, "Erwarte einen Variablennamen an Position 1");
+        CodeBlock variableNameBlockRaw = requireBlock(lineOfCode, 1, "Erwarte einen Variablennamen an Position 1", output);
 
         if (!variableNameBlockRaw.getType().equals(CodeType.VAR_NAME)) {
             throw new IllegalArgumentException("Erwarte VAR_NAME an Position 1, war aber: " + variableNameBlockRaw.getType());
@@ -112,13 +119,14 @@ public class InterpreterService {
             throw new IllegalArgumentException("Variable bereits deklariert: " + varName);
         }
 
-        CodeBlock thirdBlock = requireBlock(lineOfCode, 2, "Erwarte '=' oder ';' nach dem Variablennamen");
+        CodeBlock thirdBlock = requireBlock(lineOfCode, 2, "Erwarte '=' oder ';' nach dem Variablennamen", output);
 
         if (thirdBlock.getType().equals(CodeType.BREAK)) {
             // Fall 1: Deklaration ohne Wertzuweisung, z. B. "int x;"
-            Variable<?> emptyVariable = createEmptyVariable(variableType);
+            Variable<?> emptyVariable = createEmptyVariable(variableType, output);
             variables.put(varName, emptyVariable);
             localVariables.add(varName);
+            output.add("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
             System.out.println("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
             return;
         }
@@ -131,27 +139,28 @@ public class InterpreterService {
         //Fall 2: Deklaration mit Wertzuweisung
         List<CodeBlock> valueAssignBlocks = new ArrayList<>();
         for(int i = 3; i < lineOfCode.length - 1; i++){
-            valueAssignBlocks.add(requireBlock(lineOfCode, i, "Erwarte eine Wertzuweisung nach '='"));
+            valueAssignBlocks.add(requireBlock(lineOfCode, i, "Erwarte eine Wertzuweisung nach '='", output));
         }
 
         if(valueAssignBlocks.isEmpty()){
             throw new IllegalArgumentException("Erwarte eine Wertzuweisung nach '='");
         }
 
-        Variable<?> initializedVariable = determineVariableValue(valueAssignBlocks, variables, variableType);
+        Variable<?> initializedVariable = determineVariableValue(valueAssignBlocks, variables, variableType, output);
 
-        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length - 1, "Erwarte ';' am Ende der Deklaration");
+        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length - 1, "Erwarte ';' am Ende der Deklaration", output);
         if (!terminator.getType().equals(CodeType.BREAK)) {
-            throw new IllegalArgumentException(
-                "Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
+            throw new IllegalArgumentException("Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
         }
 
         variables.put(varName, initializedVariable);
         localVariables.add(varName);
+        output.add("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
         System.out.println("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
     }
 
-    public void variableValueAssignment(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
+    public void variableValueAssignment(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
+        output.add("variableValueAssignment gestartet mit " + lineOfCode.length + " Blöcken");
         System.out.println("variableValueAssignment gestartet mit " + lineOfCode.length + " Blöcken");
 
         VarNameBlock variableNameBlock = (VarNameBlock) lineOfCode[0];
@@ -161,51 +170,52 @@ public class InterpreterService {
             throw new IllegalArgumentException("Variable wurde nicht deklariert: " + varName);
         }
 
-        CodeBlock equalsBlock = requireBlock(lineOfCode, 1, "Erwarte '=' nach dem Variablennamen");
+        CodeBlock equalsBlock = requireBlock(lineOfCode, 1, "Erwarte '=' nach dem Variablennamen", output);
         if(!equalsBlock.getType().equals(CodeType.EQUALS)){
             throw new IllegalArgumentException("Erwarte '=' nach dem Variablennamen, war aber: " + equalsBlock.getType());
         }
 
         List<CodeBlock> valueAssignBlocks = new ArrayList<>();
         for(int i = 2; i < lineOfCode.length - 1; i++){
-            valueAssignBlocks.add(requireBlock(lineOfCode, i, "Erwarte eine Wertzuweisung nach '='"));
+            valueAssignBlocks.add(requireBlock(lineOfCode, i, "Erwarte eine Wertzuweisung nach '='", output));
         }
 
         if(valueAssignBlocks.isEmpty()){
             throw new IllegalArgumentException("Erwarte eine Wertzuweisung nach '='");
         }
 
-        Variable<?> newVariableValue = determineVariableValue(valueAssignBlocks, variables, variables.get(varName).getType());
+        Variable<?> newVariableValue = determineVariableValue(valueAssignBlocks, variables, variables.get(varName).getType(), output);
 
-        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length - 1, "Erwarte ';' am Ende der Deklaration");
+        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length - 1, "Erwarte ';' am Ende der Deklaration", output);
         if (!terminator.getType().equals(CodeType.BREAK)) {
-            throw new IllegalArgumentException(
-                "Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
+            throw new IllegalArgumentException("Erwarte ';' am Ende der Deklaration, war aber: " + terminator.getType());
         }
 
         variables.put(varName, newVariableValue);
+        output.add("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
         System.out.println("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
     }
 
-    public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
+    public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
+        output.add("conditionalStatement gestartet mit " + lineOfCode.length + " Blöcken");
         IfStatementBlock firstIfBlock = (IfStatementBlock) lineOfCode[0];
 
-        if(checkExpression(firstIfBlock, variables)){
-            executeConditionalProgram(firstIfBlock.getProgram(), variables);
+        if(checkExpression(firstIfBlock, variables, output)){
+            executeConditionalProgram(firstIfBlock.getProgram(), variables, output);
             return;
         }
 
         int position = 1;
         while(position < lineOfCode.length - 1){
-            CodeBlock currentBlock = requireBlock(lineOfCode, position, "Conditional Statement");
+            CodeBlock currentBlock = requireBlock(lineOfCode, position, "Conditional Statement", output);
             if(!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)){
                 throw new IllegalArgumentException("Erwarte Else-Statement, war aber : " + currentBlock.getType());
             }
-            CodeBlock nextBlock = requireBlock(lineOfCode, position + 1, "Conditional Statement");
+            CodeBlock nextBlock = requireBlock(lineOfCode, position + 1, "Conditional Statement", output);
             if(nextBlock.getType().equals(CodeType.IF_STATEMENT)){
                 IfStatementBlock ifBlock = (IfStatementBlock) nextBlock;
-                if(checkExpression(ifBlock, variables)){
-                    executeConditionalProgram(ifBlock.getProgram(), variables);
+                if(checkExpression(ifBlock, variables, output)){
+                    executeConditionalProgram(ifBlock.getProgram(), variables, output);
                     return;
                 }
                 position +=2;
@@ -213,25 +223,26 @@ public class InterpreterService {
                 throw new IllegalArgumentException("Erwarte Else-If-Statement oder Else Statement, war aber : " + nextBlock.getType());
             } else {
                 ElseStatementBlock elseBlock = (ElseStatementBlock) currentBlock;
-                executeConditionalProgram(elseBlock.getProgram(), variables);
+                executeConditionalProgram(elseBlock.getProgram(), variables, output);
                 return;
             }
         }
-        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length-1, "Erwarte ein Break am Ende eines Code-Abschnitts");
+        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length-1, "Erwarte ein Break am Ende eines Code-Abschnitts", output);
         if(!terminator.getType().equals(CodeType.BREAK)){
             throw new IllegalArgumentException("Erwarte Break, war aber : " + terminator.getType());
         }
     }
 
-    public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables) {
+    public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
         // TODO Auto-generated method stub
         return true;
     }
 
-    public void executeConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables){
+    public void executeConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, ExecutionLog output){
+        output.add("Conditional Statement (Body) gestartet mit " + program.size() + " Blöcken");
         List<String> localVariables = new ArrayList<>();
         try {
-            executeProgram(program, variables, localVariables);
+            executeProgram(program, variables, localVariables, output);
         } finally {
             for(String varName : localVariables){
                 variables.remove(varName);
@@ -246,18 +257,18 @@ public class InterpreterService {
      *   3. (STRING only) operand ADD operand ADD operand ...
      *   4. (INT only)    operand OP operand OP operand ...  where OP in {ADD, SUBTRACT, MULTIPLY, DIVIDE}
      */
-    public Variable<?> determineVariableValue(List<CodeBlock> valueAssignBlocks, Map<String, Variable<?>> variables, CodeType type) {
+    public Variable<?> determineVariableValue(List<CodeBlock> valueAssignBlocks, Map<String, Variable<?>> variables, CodeType type, ExecutionLog output) {
         if (valueAssignBlocks.size() == 1) {
             // Form 1 or 2: a single value or a single variable reference
-            return resolveSingleOperand(valueAssignBlocks.get(0), type, variables);
+            return resolveSingleOperand(valueAssignBlocks.get(0), type, variables, output);
         }
 
         // More than one block only makes sense for STRING (concatenation) or INT (arithmetic)
         switch (type) {
             case STRING:
-                return evaluateStringConcatenation(valueAssignBlocks, variables);
+                return evaluateStringConcatenation(valueAssignBlocks, variables, output);
             case INT:
-                return evaluateIntegerExpression(valueAssignBlocks, variables);
+                return evaluateIntegerExpression(valueAssignBlocks, variables, output);
             case BOOLEAN:
                 throw new IllegalArgumentException("Boolean variables only support a single value or variable reference");
             default:
@@ -266,12 +277,12 @@ public class InterpreterService {
     }
 
     /** Resolves a single operand (ValueBlock or VarNameBlock) into a Variable of the expected type. */
-    public Variable<?> resolveSingleOperand(CodeBlock block, CodeType expectedType, Map<String, Variable<?>> variables) {
+    public Variable<?> resolveSingleOperand(CodeBlock block, CodeType expectedType, Map<String, Variable<?>> variables, ExecutionLog output) {
         if (block instanceof ValueBlock valueBlock) {
-            return requireMatchingType(valueBlock.getValue(), expectedType);
+            return requireMatchingType(valueBlock.getValue(), expectedType, output);
         }
         if (block instanceof VarNameBlock varNameBlock) {
-            return resolveVariableReference(varNameBlock.getName(), expectedType, variables);
+            return resolveVariableReference(varNameBlock.getName(), expectedType, variables, output);
         }
         throw new IllegalArgumentException("Expected a value or variable name, got: " + block.getType());
     }
@@ -282,7 +293,7 @@ public class InterpreterService {
      * - must actually have a value (catches "int x; y = x;" - using a declared-but-uninitialized variable, which would otherwise NPE silently during concatenation/arithmetic below)
      * - must match the expected type
      */
-    public Variable<?> resolveVariableReference(String name, CodeType expectedType, Map<String, Variable<?>> variables) {
+    public Variable<?> resolveVariableReference(String name, CodeType expectedType, Map<String, Variable<?>> variables, ExecutionLog output) {
         if (!variableAlreadyDeclared(name, variables)) {
             throw new IllegalArgumentException("Use of undeclared variable: " + name);
         }
@@ -290,31 +301,34 @@ public class InterpreterService {
         if (referenced.getValue() == null) {
             throw new IllegalArgumentException("Use of declared but uninitialized variable: " + name);
         }
-        return requireMatchingType(referenced, expectedType);
+        return requireMatchingType(referenced, expectedType, output);
     }
 
-    public Class<?> javaClassFor(CodeType type) {
+    public Class<?> javaClassFor(CodeType type, ExecutionLog output) {
         switch (type) {
-            case STRING:  return String.class;
-            case INT:     return Integer.class;
-            case BOOLEAN: return Boolean.class;
-            default:      throw new IllegalArgumentException("No Java type mapped for: " + type);
+            case STRING:  
+                return String.class;
+            case INT:
+                return Integer.class;
+            case BOOLEAN:
+                return Boolean.class;
+            default:
+                throw new IllegalArgumentException("No Java type mapped for: " + type);
         }
     }
 
     @SuppressWarnings("unchecked") // safe: javaClassFor(expectedType) is guaranteed to return the Class matching T at every call site, since CodeType and the Java type are 1:1
-    public <T> Variable<T> requireMatchingType(Variable<?> value, CodeType expectedType) {
+    public <T> Variable<T> requireMatchingType(Variable<?> value, CodeType expectedType, ExecutionLog output) {
         if (value.getType() != expectedType) {
-            throw new IllegalArgumentException(
-                "Type mismatch: expected " + expectedType + ", but value was of type " + value.getType());
+            throw new IllegalArgumentException("Type mismatch: expected " + expectedType + ", but value was of type " + value.getType());
         }
-        Class<T> expectedClass = (Class<T>) javaClassFor(expectedType);
+        Class<T> expectedClass = (Class<T>) javaClassFor(expectedType, output);
         T castValue = expectedClass.cast(value.getValue());
         return new Variable<>(castValue, expectedType);
     }
 
     /** Validates that blocks strictly alternate operand-operator-operand-...-operand. Catches malformed chains like "1 ADD ADD 2" or "1 ADD" (trailing operator) */
-    public void validateAlternatingPattern(List<CodeBlock> blocks, Set<CodeType> allowedOperators, String context) {
+    public void validateAlternatingPattern(List<CodeBlock> blocks, Set<CodeType> allowedOperators, String context, ExecutionLog output) {
         if (blocks.size() % 2 == 0) {
             throw new IllegalArgumentException(context + ": expected an odd number of blocks (operand-operator-operand-...)");
         }
@@ -331,28 +345,28 @@ public class InterpreterService {
     }
 
     /** Form 3: STRING concatenation via ADD-blocks only. */
-    public Variable<String> evaluateStringConcatenation(List<CodeBlock> blocks, Map<String, Variable<?>> variables) {
-        validateAlternatingPattern(blocks, STRING_CONCAT_OPERATORS, "String concatenation");
+    public Variable<String> evaluateStringConcatenation(List<CodeBlock> blocks, Map<String, Variable<?>> variables, ExecutionLog output) {
+        validateAlternatingPattern(blocks, STRING_CONCAT_OPERATORS, "String concatenation", output);
 
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < blocks.size(); i += 2) {
-            Variable<?> operand = resolveSingleOperand(blocks.get(i), CodeType.STRING, variables);
+            Variable<?> operand = resolveSingleOperand(blocks.get(i), CodeType.STRING, variables, output);
             result.append((String) operand.getValue());
         }
-
+        output.add("String concatenation result: \"" + result + "\"");
         System.out.println("String concatenation result: \"" + result + "\"");
         return new Variable<>(result.toString(), CodeType.STRING);
     }
 
     /** Form 4: Integer via mathematische Operationen */
-    public Variable<Integer> evaluateIntegerExpression(List<CodeBlock> blocks, Map<String, Variable<?>> variables) {
-        validateAlternatingPattern(blocks, ARITHMETIC_OPERATORS, "Integer expression");
+    public Variable<Integer> evaluateIntegerExpression(List<CodeBlock> blocks, Map<String, Variable<?>> variables, ExecutionLog output) {
+        validateAlternatingPattern(blocks, ARITHMETIC_OPERATORS, "Integer expression", output);
 
         // Resolve every operand up front, left to right
         List<Integer> operands = new ArrayList<>();
         List<CodeType> operators = new ArrayList<>();
         for (int i = 0; i < blocks.size(); i += 2) {
-            operands.add((Integer) resolveSingleOperand(blocks.get(i), CodeType.INT, variables).getValue());
+            operands.add((Integer) resolveSingleOperand(blocks.get(i), CodeType.INT, variables, output).getValue());
             if (i + 1 < blocks.size()) {
                 operators.add(blocks.get(i + 1).getType());
             }
@@ -366,26 +380,34 @@ public class InterpreterService {
             int nextOperand = operands.get(i + 1);
 
             switch (op) {
-                case MULTIPLY -> stack.push(stack.pop() * nextOperand);
-                case DIVIDE -> {
+                case MULTIPLY:
+                    stack.push(stack.pop() * nextOperand);
+                    break;
+                case DIVIDE:
                     if (nextOperand == 0) {
                         throw new IllegalArgumentException("Division by zero in integer expression");
                     }
                     stack.push(stack.pop() / nextOperand);
-                }
-                case ADD -> stack.push(nextOperand);
-                case SUBTRACT -> stack.push(-nextOperand);
-                default -> throw new IllegalStateException("Unreachable: " + op);
+                    break;
+                case ADD:
+                    stack.push(nextOperand);
+                    break;
+                case SUBTRACT:
+                    stack.push(-nextOperand);
+                    break;
+                default:
+                    throw new IllegalStateException("Unreachable: " + op);
             }
         }
 
         int result = stack.stream().mapToInt(Integer::intValue).sum();
+        output.add("Integer expression evaluated to: " + result);
         System.out.println("Integer expression evaluated to: " + result);
         return new Variable<>(result, CodeType.INT);
     }
 
     /** Liefert lineOfCode[index] oder wirft eine aussagekräftige Exception, falls die Zeile zu kurz ist. */
-    public CodeBlock requireBlock(CodeBlock[] lineOfCode, int index, String errorContext) {
+    public CodeBlock requireBlock(CodeBlock[] lineOfCode, int index, String errorContext, ExecutionLog output) {
         if (lineOfCode.length <= index) {
             throw new IllegalArgumentException(errorContext + " (Zeile hat nur " + lineOfCode.length + " Blöcke)");
         }
@@ -402,7 +424,7 @@ public class InterpreterService {
     }
 
     /** Erzeugt eine leere (uninitialisierte) Variable passend zum deklarierten Typ. */
-    public Variable<?> createEmptyVariable(CodeType type) {
+    public Variable<?> createEmptyVariable(CodeType type, ExecutionLog output) {
         switch (type) {
             case STRING:
                 return new Variable<>(null, CodeType.STRING);
