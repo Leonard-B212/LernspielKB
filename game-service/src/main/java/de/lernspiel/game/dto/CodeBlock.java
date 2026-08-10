@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     use = JsonTypeInfo.Id.NAME,
     include = JsonTypeInfo.As.EXISTING_PROPERTY,
     property = "type",
-    visible = true
+    visible = true,
+    defaultImpl = CodeBlock.class
 )
 @JsonSubTypes({
     @JsonSubTypes.Type(value = VarNameBlock.class, name = "VAR_NAME"),
@@ -16,12 +17,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ElseStatementBlock.class, name = "ELSE_STATEMENT")
 })
 public class CodeBlock {
+
     private CodeType type;
 
-    public CodeType getType(){
+    public CodeType getType() {
         return type;
     }
-    
+
     public void setType(CodeType type) {
         this.type = type;
     }

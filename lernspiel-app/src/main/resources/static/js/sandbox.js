@@ -1100,15 +1100,9 @@ resetButton.addEventListener(
    AUSFÜHREN
    ========================================================= */
 
-/*
- * Backend kommt erst später.
- *
- * Aktuell wird weiterhin nur der lokale Zustand
- * in der Browser-Konsole ausgegeben.
- */
 runButton.addEventListener(
     "click",
-    () => {
+    async () => {
 
         if (program.length === 0) {
 
@@ -1118,19 +1112,107 @@ runButton.addEventListener(
             );
 
             return;
-
         }
 
 
+        /*
+         * Für die Sandbox-Demo erstmal feste Werte.
+         *
+         * Später kommen userId und levelId
+         * aus Benutzerverwaltung bzw. Level.
+         *
+         * languageId = 1 entspricht aktuell Java.
+         */
+        const programRequest = {
+            userId: 1,
+            levelId: 1,
+            languageId: 1,
+            program: program
+        };
+
+
+        /*
+         * Hilfreich für die Demo / Fehlersuche:
+         * So sieht man exakt, was ans Backend geht.
+         */
         console.log(
-            "Aktuelles Sandbox-Programm:",
-            program
+            "ProgramRequest an Interpreter:",
+            programRequest
         );
 
 
-        showMessage(
-            "Programm wurde lokal erstellt. Siehe Browser-Konsole."
-        );
+        try {
+
+            const response = await fetch(
+                "/game/interpreter/run",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(programRequest)
+                }
+            );
+
+
+            /*
+             * Falls das Backend einen Fehler zurückgibt,
+             * Text auslesen und anzeigen.
+             */
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+
+                throw new Error(
+                    errorText ||
+                    `Interpreter-Fehler: HTTP ${response.status}`
+                );
+            }
+
+
+            /*
+             * Der Interpreter gibt momentan List<String>
+             * zurück.
+             *
+             * Aktuell wird diese Liste vermutlich noch []
+             * sein, weil der Service seine Ergebnisse
+             * über System.out.println ausgibt.
+             */
+            const output =
+                await response.json();
+
+
+            console.log(
+                "Antwort vom Interpreter:",
+                output
+            );
+
+
+            showMessage(
+                "Programm wurde erfolgreich vom Interpreter ausgeführt."
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Fehler beim Interpreter-Aufruf:",
+                error
+            );
+
+
+            showMessage(
+                error.message ||
+                "Programm konnte nicht ausgeführt werden.",
+                true
+            );
+
+        }
 
     }
 );
