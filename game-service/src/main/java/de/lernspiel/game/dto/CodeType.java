@@ -16,7 +16,7 @@ public enum CodeType {
     ADD(8, "+"),
     SUBTRACT(9, "-"),
     MULTIPLY(10, "*"),
-    DIVIDE(11, "/")
+    DIVIDE(11, "/"),
     VALUE(12, "value");
 
     private final int id;
