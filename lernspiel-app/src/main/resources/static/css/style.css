@@ -124,7 +124,7 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
    ========================================================= */
 
 .sandbox-page {
-    width: min(1100px, calc(100% - 2rem));
+    width: min(1450px, calc(100% - 2rem));
     margin: 2rem auto;
     display: grid;
     gap: 1rem;
@@ -133,6 +133,50 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
 .sandbox-page h2 {
     margin-top: 0;
     margin-bottom: .25rem;
+}
+
+/* -------------------------
+   Sandbox Arbeitsbereich
+   ------------------------- */
+
+.sandbox-workspace {
+    display: grid;
+
+    /*
+     * Links bekommt der Code deutlich mehr Platz,
+     * rechts bleibt genug Platz für die Konsole.
+     */
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(320px, 1fr);
+
+    gap: 1rem;
+
+    align-items: start;
+}
+
+
+/* Linke Seite:
+   Programm + Aktionen + Statusmeldung */
+.sandbox-left-column {
+    display: grid;
+    gap: 1rem;
+
+    min-width: 0;
+}
+
+
+/*
+ * Die Interpreter-Ausgabe bleibt beim Scrollen
+ * auf größeren Bildschirmen sichtbar.
+ */
+.interpreter-output-card {
+    align-self: start;
+
+    position: sticky;
+    top: 1rem;
+
+    min-width: 0;
 }
 
 
@@ -515,10 +559,6 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
    Interpreter-Ausgabe
    ------------------------- */
 
-.interpreter-output-card {
-    margin-top: .25rem;
-}
-
 .interpreter-output {
     margin-top: 1rem;
     padding: 1rem;
@@ -557,6 +597,21 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
 /* -------------------------
    Mobile
    ------------------------- */
+/*
+ * Wenn der Bildschirm für zwei sinnvolle Spalten
+ * zu schmal wird, wandert die Konsole wieder nach unten.
+ */
+@media (max-width: 1000px) {
+
+    .sandbox-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .interpreter-output-card {
+        position: static;
+    }
+
+}
 
 @media (max-width: 760px) {
 

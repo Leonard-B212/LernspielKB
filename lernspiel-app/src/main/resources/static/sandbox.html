@@ -103,81 +103,93 @@
     </section>
 
 
-    <!-- Programm -->
-    <section class="card">
+    <!-- Zweispaltiger Arbeitsbereich -->
+<div class="sandbox-workspace">
+
+    <!-- LINKE SEITE -->
+    <div class="sandbox-left-column">
+
+        <!-- Programm -->
+        <section class="card">
+
+            <div class="section-header">
+                <div>
+                    <h2>Dein Programm</h2>
+                    <p class="muted">
+                        Baue hier dein Programm aus den Blöcken zusammen.
+                    </p>
+                </div>
+
+                <button id="reset-button"
+                        type="button"
+                        class="secondary">
+                    Zurücksetzen
+                </button>
+            </div>
+
+            <div id="program-dropzone"
+                 class="program-dropzone">
+            </div>
+
+        </section>
+
+
+        <!-- Untere Aktionen -->
+        <section class="sandbox-actions">
+
+            <div id="trash-dropzone"
+                 class="trash-dropzone">
+
+                <span class="trash-icon">🗑️</span>
+
+                <span>
+                    Block hierher ziehen zum Löschen
+                </span>
+
+            </div>
+
+            <button id="run-button"
+                    type="button">
+                ▶ Ausführen
+            </button>
+
+        </section>
+
+
+        <p id="sandbox-message"
+           class="message">
+        </p>
+
+    </div>
+
+
+    <!-- RECHTE SEITE -->
+    <section id="interpreter-output-card"
+             class="card interpreter-output-card">
 
         <div class="section-header">
+
             <div>
-                <h2>Dein Programm</h2>
+                <h2>Interpreter-Ausgabe</h2>
                 <p class="muted">
-                    Baue hier dein Programm aus den Blöcken zusammen.
+                    Rückmeldung zur Ausführung deines Programms.
                 </p>
             </div>
 
-            <button id="reset-button"
-                    type="button"
-                    class="secondary">
-                Zurücksetzen
-            </button>
         </div>
 
-        <div id="program-dropzone"
-            class="program-dropzone">
-        </div>
-        
-    </section>
+        <div id="interpreter-output"
+             class="interpreter-output">
 
-
-    <!-- Untere Aktionen -->
-    <section class="sandbox-actions">
-
-        <div id="trash-dropzone"
-             class="trash-dropzone">
-
-            <span class="trash-icon">🗑️</span>
-
-            <span>
-                Block hierher ziehen zum Löschen
+            <span class="interpreter-output-placeholder">
+                Noch kein Programm ausgeführt.
             </span>
 
         </div>
 
-        <!-- Funktion kommt später mit Backend-Mapping -->
-        <button id="run-button"
-                type="button">
-            ▶ Ausführen
-        </button>
-
     </section>
 
-
-    <p id="sandbox-message"
-       class="message">
-    </p>
-    
-    <!-- Ausgabe des Interpreters -->
-    <section id="interpreter-output-card"
-         class="card interpreter-output-card">
-
-    <div class="section-header">
-        <div>
-            <h2>Interpreter-Ausgabe</h2>
-            <p class="muted">
-                Rückmeldung zur Ausführung deines Programms.
-            </p>
-        </div>
-    </div>
-
-    <div id="interpreter-output"
-         class="interpreter-output">
-
-        <span class="interpreter-output-placeholder">
-            Noch kein Programm ausgeführt.
-        </span>
-
-    </div>
-
-</section>
+</div>
 
 </main>
 
