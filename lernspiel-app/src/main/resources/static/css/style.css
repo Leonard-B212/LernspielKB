@@ -177,6 +177,7 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
     top: 1rem;
 
     min-width: 0;
+    height: fit-content;
 }
 
 
@@ -559,22 +560,290 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
    Interpreter-Ausgabe
    ------------------------- */
 
+   /* -------------------------
+   Console Theme Switch
+   ------------------------- */
+
+.interpreter-header {
+    align-items: flex-start;
+}
+
+.console-theme-switch {
+    position: relative;
+
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    min-width: 240px;
+
+    padding: 4px;
+
+    border-radius: 12px 12px 0 0;
+
+    background: #e5e7eb;
+
+    overflow: hidden;
+
+    transition:
+        background .25s ease,
+        box-shadow .25s ease;
+}
+
+
+/*
+ * Bewegliche aktive Fläche.
+ */
+.console-theme-slider {
+    position: absolute;
+
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+
+    width: calc((100% - 8px) / 3);
+
+    border-radius: 9px;
+
+    background: #374151;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+
+    transition:
+        transform .25s cubic-bezier(.2, .8, .2, 1),
+        background .25s ease;
+}
+
+
+/*
+ * Position des Sliders.
+ */
+.console-theme-switch[data-active-theme="dark"]
+.console-theme-slider {
+    transform: translateX(0);
+}
+
+.console-theme-switch[data-active-theme="kernel"]
+.console-theme-slider {
+    transform: translateX(100%);
+}
+
+.console-theme-switch[data-active-theme="light"]
+.console-theme-slider {
+    transform: translateX(200%);
+}
+
+
+/*
+ * Einzelne Theme-Schaltflächen.
+ */
+.console-theme-option {
+    position: relative;
+    z-index: 1;
+
+    padding: .55rem .75rem;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #6b7280;
+
+    font-size: .82rem;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color .2s ease,
+        transform .12s ease;
+}
+
+.console-theme-option:hover {
+    filter: none;
+    transform: translateY(-1px);
+}
+
+.console-theme-option.active {
+    color: white;
+}
+
 .interpreter-output {
-    margin-top: 1rem;
+    margin-top: 0;
     padding: 1rem;
 
-    min-height: 80px;
+    min-height: 220px;
 
-    border-radius: 10px;
-
-    background: #111827;
-    color: #e5e7eb;
+    border-radius: 0 0 12px 12px;
 
     font-family: Consolas, "Courier New", monospace;
     font-size: .9rem;
 
     display: grid;
+    align-content: start;
     gap: .45rem;
+
+    transition:
+        background .25s ease,
+        color .25s ease,
+        box-shadow .25s ease;
+}
+
+/* -------------------------
+   Console Theme: Dark
+   ------------------------- */
+
+.interpreter-console[data-theme="dark"]
+.interpreter-output {
+    background: #111827;
+    color: #e5e7eb;
+}
+
+.interpreter-console[data-theme="dark"]
+.interpreter-output-placeholder {
+    color: #9ca3af;
+}
+
+.interpreter-console[data-theme="dark"]
+.interpreter-output-line::before {
+    color: #6b7280;
+}
+
+.interpreter-console[data-theme="dark"]
+.console-theme-switch {
+    background: #e5e7eb;
+}
+
+.interpreter-console[data-theme="dark"]
+.console-theme-slider {
+    background: #374151;
+}
+
+
+/* -------------------------
+   Console Theme: Kernel
+   ------------------------- */
+
+.interpreter-console[data-theme="kernel"] {
+    background: #050805;
+    color: #7CFF7C;
+}
+
+.interpreter-console[data-theme="kernel"]
+h2 {
+    color: #7CFF7C;
+}
+
+.interpreter-console[data-theme="kernel"]
+.muted {
+    color: #4ade80;
+}
+
+.interpreter-console[data-theme="kernel"]
+.interpreter-output {
+    background: #000000;
+    color: #65ff65;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(101, 255, 101, .18),
+        inset 0 0 25px rgba(0, 255, 0, .035);
+}
+
+.interpreter-console[data-theme="kernel"]
+.interpreter-output-placeholder {
+    color: #22c55e;
+}
+
+.interpreter-console[data-theme="kernel"]
+.interpreter-output-line::before {
+    color: #22c55e;
+}
+
+.interpreter-console[data-theme="kernel"]
+.interpreter-output-line.error {
+    color: #ff6b6b;
+}
+
+.interpreter-console[data-theme="kernel"]
+.console-theme-switch {
+    background: #0b1a0b;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(101, 255, 101, .18);
+}
+
+.interpreter-console[data-theme="kernel"]
+.console-theme-slider {
+    background: #14532d;
+
+    box-shadow:
+        0 0 12px rgba(34, 197, 94, .3);
+}
+
+.interpreter-console[data-theme="kernel"]
+.console-theme-option {
+    color: #4ade80;
+}
+
+.interpreter-console[data-theme="kernel"]
+.console-theme-option.active {
+    color: #d1ffd1;
+}
+
+
+/* -------------------------
+   Console Theme: Light
+   ------------------------- */
+
+.interpreter-console[data-theme="light"] {
+    background: #ffffff;
+}
+
+.interpreter-console[data-theme="light"]
+.interpreter-output {
+    background: #ffffff;
+    color: #111827;
+
+    box-shadow:
+        inset 0 0 0 1px #d1d5db;
+}
+
+.interpreter-console[data-theme="light"]
+.interpreter-output-placeholder {
+    color: #9ca3af;
+}
+
+.interpreter-console[data-theme="light"]
+.interpreter-output-line::before {
+    color: #9ca3af;
+}
+
+.interpreter-console[data-theme="light"]
+.interpreter-output-line.error {
+    color: #b91c1c;
+}
+
+.interpreter-console[data-theme="light"]
+.console-theme-switch {
+    background: #e5e7eb;
+}
+
+.interpreter-console[data-theme="light"]
+.console-theme-slider {
+    background: white;
+
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, .15);
+}
+
+.interpreter-console[data-theme="light"]
+.console-theme-option {
+    color: #6b7280;
+}
+
+.interpreter-console[data-theme="light"]
+.console-theme-option.active {
+    color: #111827;
 }
 
 .interpreter-output-placeholder {
@@ -592,6 +861,20 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
 
 .interpreter-output-line.error {
     color: #fca5a5;
+}
+
+/* -------------------------
+   Console Wrapper
+   ------------------------- */
+
+.interpreter-console {
+    margin-top: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+
+    transition:
+        background .25s ease,
+        box-shadow .25s ease;
 }
 
 /* -------------------------

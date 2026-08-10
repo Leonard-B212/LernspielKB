@@ -7,8 +7,13 @@ const runButton = document.getElementById("run-button");
 
 const message = document.getElementById("sandbox-message");
 
-const interpreterOutput =
-    document.getElementById("interpreter-output");
+const interpreterOutput = document.getElementById("interpreter-output");
+
+const interpreterConsole = document.getElementById("interpreter-console");
+
+const consoleThemeSwitch = document.getElementById("console-theme-switch");
+
+const consoleThemeOptions = consoleThemeSwitch.querySelectorAll(".console-theme-option");
 
 
 /*
@@ -1080,6 +1085,47 @@ function getBlockCssClass(type) {
 
 }
 
+/* =========================================================
+   CONSOLE THEME
+   ========================================================= */
+
+consoleThemeOptions.forEach((button) => {
+
+    button.addEventListener("click", () => {
+
+        const selectedTheme =
+            button.dataset.theme;
+
+
+        /*
+         * Theme an die gesamte Console-Card hängen.
+         */
+        interpreterConsole.dataset.theme =
+            selectedTheme;
+
+
+        /*
+         * Slider an die passende Position bewegen.
+         */
+        consoleThemeSwitch.dataset.activeTheme =
+            selectedTheme;
+
+
+        /*
+         * Aktiven Button markieren.
+         */
+        consoleThemeOptions.forEach((option) => {
+
+            option.classList.toggle(
+                "active",
+                option === button
+            );
+
+        });
+
+    });
+
+});
 
 /* =========================================================
    RESET
@@ -1230,9 +1276,8 @@ runButton.addEventListener(
 
             } else {
 
-                showMessage(
-                    "Programm wurde erfolgreich vom Interpreter ausgeführt."
-                );
+                // Erfolgreiche Ausführung sieht man direkt in der Interpreter-Ausgabe.
+                showMessage("");
 
             }
 

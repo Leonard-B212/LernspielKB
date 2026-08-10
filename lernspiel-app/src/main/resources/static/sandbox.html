@@ -165,25 +165,54 @@
 
     <!-- RECHTE SEITE -->
     <section id="interpreter-output-card"
-             class="card interpreter-output-card">
+         class="card interpreter-output-card">
 
         <div class="section-header">
-
             <div>
                 <h2>Interpreter-Ausgabe</h2>
                 <p class="muted">
                     Rückmeldung zur Ausführung deines Programms.
                 </p>
             </div>
-
         </div>
 
-        <div id="interpreter-output"
-             class="interpreter-output">
+        <div id="interpreter-console"
+            class="interpreter-console"
+            data-theme="dark">
 
-            <span class="interpreter-output-placeholder">
-                Noch kein Programm ausgeführt.
-            </span>
+            <div id="console-theme-switch"
+                class="console-theme-switch"
+                data-active-theme="dark">
+
+                <div class="console-theme-slider"></div>
+
+                <button type="button"
+                        class="console-theme-option active"
+                        data-theme="dark">
+                    Dark
+                </button>
+
+                <button type="button"
+                        class="console-theme-option"
+                        data-theme="kernel">
+                    Kernel
+                </button>
+
+                <button type="button"
+                        class="console-theme-option"
+                        data-theme="light">
+                    Light
+                </button>
+            </div>
+
+            <div id="interpreter-output"
+                class="interpreter-output">
+
+                <span class="interpreter-output-placeholder">
+                    Noch kein Programm ausgeführt.
+                </span>
+
+            </div>
 
         </div>
 
