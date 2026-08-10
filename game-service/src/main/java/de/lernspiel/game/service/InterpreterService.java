@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import de.lernspiel.game.dto.CodeBlock;
 import de.lernspiel.game.dto.CodeType;
+import de.lernspiel.game.dto.ElseStatementBlock;
+import de.lernspiel.game.dto.IfStatementBlock;
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
 import de.lernspiel.game.dto.VarNameBlock;
@@ -40,31 +42,31 @@ public class InterpreterService {
 
     public void interpreterMainJava(ProgramRequest programRequest){
         Map<String, Variable<?>> variables = new HashMap<>();
-        executeProgram(programRequest.getProgram(), variables);
+        List<String> globalVariables = new ArrayList<>();
+        executeProgram(programRequest.getProgram(), variables, globalVariables);
     }
 
-    public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables){
+    public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, List<String> localVariables){
         List<CodeBlock[]> parsedCode = parseCode(program);
         for(CodeBlock[] lineOfCode : parsedCode){
-            executeCode(lineOfCode, variables);
+            executeCode(lineOfCode, variables, localVariables);
         }
     }
 
-    public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
+    public void executeCode(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables){
         CodeBlock firstBlock = lineOfCode[0];
         switch (firstBlock.getType()) {
             case STRING, INT, BOOLEAN:
-                variableDeclaration(lineOfCode, variables);
+                variableDeclaration(lineOfCode, variables, localVariables);
                 break;
             case VAR_NAME:
                 variableValueAssignment(lineOfCode, variables);
                 break;
             case IF_STATEMENT:
-                //Conditional Statement
+                conditionalStatement(lineOfCode, variables);
                 break;
             default:
-                //TODO: Errorhandling
-                break;
+                throw new IllegalArgumentException("Unexpected Start of Line: " + firstBlock.getType());
         }
     }
 
@@ -92,7 +94,7 @@ public class InterpreterService {
      *   int x;          -> Deklaration ohne Initialwert
      *   int x = 5;       -> Deklaration mit Initialwert
      */
-    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables) {
+    public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables) {
         System.out.println("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
 
         CodeType variableType = lineOfCode[0].getType();
@@ -116,6 +118,7 @@ public class InterpreterService {
             // Fall 1: Deklaration ohne Wertzuweisung, z. B. "int x;"
             Variable<?> emptyVariable = createEmptyVariable(variableType);
             variables.put(varName, emptyVariable);
+            localVariables.add(varName);
             System.out.println("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
             return;
         }
@@ -144,6 +147,7 @@ public class InterpreterService {
         }
 
         variables.put(varName, initializedVariable);
+        localVariables.add(varName);
         System.out.println("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
     }
 
@@ -181,6 +185,58 @@ public class InterpreterService {
 
         variables.put(varName, newVariableValue);
         System.out.println("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
+    }
+
+    public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables){
+        IfStatementBlock firstIfBlock = (IfStatementBlock) lineOfCode[0];
+
+        if(checkExpression(firstIfBlock, variables)){
+            executeConditionalProgram(firstIfBlock.getProgram(), variables);
+            return;
+        }
+
+        int position = 1;
+        while(position < lineOfCode.length - 1){
+            CodeBlock currentBlock = requireBlock(lineOfCode, position, "Conditional Statement");
+            if(!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)){
+                throw new IllegalArgumentException("Erwarte Else-Statement, war aber : " + currentBlock.getType());
+            }
+            CodeBlock nextBlock = requireBlock(lineOfCode, position + 1, "Conditional Statement");
+            if(nextBlock.getType().equals(CodeType.IF_STATEMENT)){
+                IfStatementBlock ifBlock = (IfStatementBlock) nextBlock;
+                if(checkExpression(ifBlock, variables)){
+                    executeConditionalProgram(ifBlock.getProgram(), variables);
+                    return;
+                }
+                position +=2;
+            } else if(!nextBlock.getType().equals(CodeType.BREAK)){
+                throw new IllegalArgumentException("Erwarte Else-If-Statement oder Else Statement, war aber : " + nextBlock.getType());
+            } else {
+                ElseStatementBlock elseBlock = (ElseStatementBlock) currentBlock;
+                executeConditionalProgram(elseBlock.getProgram(), variables);
+                return;
+            }
+        }
+        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length-1, "Erwarte ein Break am Ende eines Code-Abschnitts");
+        if(!terminator.getType().equals(CodeType.BREAK)){
+            throw new IllegalArgumentException("Erwarte Break, war aber : " + terminator.getType());
+        }
+    }
+
+    public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables) {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    public void executeConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables){
+        List<String> localVariables = new ArrayList<>();
+        try {
+            executeProgram(program, variables, localVariables);
+        } finally {
+            for(String varName : localVariables){
+                variables.remove(varName);
+            }
+        }
     }
 
     /**
