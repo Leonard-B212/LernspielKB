@@ -118,3 +118,412 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
   .span-2 { grid-column: span 1; }
   .section-header, .inline-form { align-items: stretch; flex-direction: column; }
 }
+
+/* =========================================================
+   SANDBOX
+   ========================================================= */
+
+.sandbox-page {
+    width: min(1100px, calc(100% - 2rem));
+    margin: 2rem auto;
+    display: grid;
+    gap: 1rem;
+}
+
+.sandbox-page h2 {
+    margin-top: 0;
+    margin-bottom: .25rem;
+}
+
+
+/* -------------------------
+   Block-Palette
+   ------------------------- */
+
+.block-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+    margin-top: 1rem;
+}
+
+
+/* -------------------------
+   Code-Blöcke
+   ------------------------- */
+
+.code-block {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 52px;
+
+    padding: .65rem .9rem;
+
+    border-radius: 8px;
+
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+
+    cursor: grab;
+
+    user-select: none;
+
+    border: 2px solid transparent;
+
+    transition:
+        transform .12s ease,
+        box-shadow .12s ease,
+        opacity .12s ease;
+}
+
+.code-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, .12);
+}
+
+.code-block:active {
+    cursor: grabbing;
+}
+
+
+/* Datentypen */
+
+.block-type {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+
+/* Variablen */
+
+.block-variable {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+
+/* Werte */
+
+.block-value {
+    background: #dcfce7;
+    color: #166534;
+}
+
+
+/* Operatoren */
+
+.block-operator {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+
+/* Semikolon / Break */
+
+.block-break {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+
+/* Block, der bereits im Programm liegt */
+
+.program-block {
+    position: relative;
+}
+
+
+/* Während ein Block gezogen wird */
+
+.dragging {
+    opacity: .4;
+}
+
+
+/* -------------------------
+   Programmfläche
+   ------------------------- */
+
+.program-dropzone {
+    min-height: 220px;
+
+    margin-top: 1rem;
+    padding: .8rem;
+
+    border: 2px dashed #9ca3af;
+    border-radius: 12px;
+
+    background: #f9fafb;
+
+    display: flex;
+    flex-direction: column;
+
+    transition:
+        border-color .15s ease,
+        background .15s ease,
+        min-height .2s ease;
+}
+
+
+/*
+ * Wird aktiv, sobald irgendein Block
+ * über der Sandbox gezogen wird.
+ */
+.program-dropzone.drag-over {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+
+/* -------------------------
+   Einzelne Codezeile
+   ------------------------- */
+
+.code-line {
+    display: grid;
+
+    grid-template-columns:
+        38px
+        minmax(0, 1fr);
+
+    min-height: 64px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    transition:
+        background .15s ease,
+        min-height .15s ease;
+}
+
+
+.code-line:last-child {
+    border-bottom: none;
+}
+
+
+/*
+ * Kleine Zeilennummer links,
+ * ähnlich einem Code-Editor.
+ */
+.line-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #9ca3af;
+
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .85rem;
+
+    user-select: none;
+
+    border-right: 1px solid #e5e7eb;
+
+    margin-right: .8rem;
+}
+
+
+/* -------------------------
+   Inhalt einer Codezeile
+   ------------------------- */
+
+.code-line-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    min-width: 0;
+
+    padding: .65rem 0;
+
+    position: relative;
+}
+
+
+/* -------------------------
+   Hinweis bei leerer Zeile
+   ------------------------- */
+
+.empty-line-hint {
+    color: #9ca3af;
+
+    font-size: .9rem;
+
+    margin-left: .4rem;
+
+    pointer-events: none;
+
+    user-select: none;
+}
+
+
+/* -------------------------
+   Einfüge-Indikator
+   ------------------------- */
+
+/*
+ * Zwischen jedem Codeblock existiert technisch
+ * ein kleiner Slot.
+ *
+ * Normalerweise ist er fast unsichtbar.
+ */
+.drop-indicator {
+    width: 8px;
+    height: 38px;
+
+    margin: 0 2px;
+
+    border-radius: 999px;
+
+    transition:
+        width .14s ease,
+        margin .14s ease,
+        background .14s ease,
+        box-shadow .14s ease;
+}
+
+
+/*
+ * Während Drag & Drop werden die Slots
+ * etwas leichter erreichbar.
+ */
+.program-dropzone.drag-active
+.drop-indicator {
+    width: 12px;
+}
+
+
+/*
+ * Das ist die tatsächliche Stelle,
+ * an der der Block eingefügt wird.
+ */
+.drop-indicator.active {
+    width: 26px;
+
+    margin-left: 5px;
+    margin-right: 5px;
+
+    background:
+        linear-gradient(
+            to right,
+            transparent 11px,
+            #2563eb 11px,
+            #2563eb 15px,
+            transparent 15px
+        );
+
+    box-shadow:
+        0 0 12px rgba(37, 99, 235, .18);
+}
+
+
+/* -------------------------
+   Programm-Blöcke
+   ------------------------- */
+
+.program-block {
+    position: relative;
+
+    flex-shrink: 0;
+
+    transition:
+        transform .14s ease,
+        opacity .14s ease,
+        box-shadow .14s ease;
+}
+
+
+/*
+ * Der gerade bewegte Block wird transparent,
+ * damit man sieht, dass er seine alte Position
+ * verlässt.
+ */
+.program-block.dragging {
+    opacity: .3;
+    transform: scale(.96);
+}
+
+
+/*
+ * Wenn gerade gezogen wird, bekommen die anderen
+ * Blöcke eine kleine Transition.
+ */
+.program-dropzone.drag-active
+.program-block:not(.dragging) {
+    transition:
+        transform .14s ease,
+        margin .14s ease;
+}
+/* -------------------------
+   Aktionen
+   ------------------------- */
+
+.sandbox-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 1rem;
+}
+
+.sandbox-actions > button {
+    min-width: 180px;
+}
+
+
+/* -------------------------
+   Mülleimer
+   ------------------------- */
+
+.trash-dropzone {
+    flex: 1;
+
+    min-height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: .7rem;
+
+    border: 2px dashed #f87171;
+    border-radius: 12px;
+
+    background: #fef2f2;
+    color: #991b1b;
+
+    font-weight: 700;
+
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        transform .15s ease;
+}
+
+.trash-dropzone.drag-over {
+    background: #fee2e2;
+    border-color: #dc2626;
+    transform: scale(1.01);
+}
+
+.trash-icon {
+    font-size: 1.5rem;
+}
+
+
+/* -------------------------
+   Mobile
+   ------------------------- */
+
+@media (max-width: 760px) {
+
+    .sandbox-actions {
+        flex-direction: column;
+    }
+
+    .sandbox-actions > button {
+        width: 100%;
+    }
+
+}

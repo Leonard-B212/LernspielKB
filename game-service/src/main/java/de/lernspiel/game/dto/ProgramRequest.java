@@ -12,15 +12,28 @@ public class ProgramRequest {
         return userId;
     }
 
+    public void setUserId(int userId){
+        this.userId = userId;
+    }
+
     public int getLevelId(){
         return levelId;
+    }
+    public void setLevelId(int levelId){
+        this.levelId = levelId;
     }
 
     public int getLanguageId(){
         return languageId;
     }
+    public void setLanguageId(int languageId){
+        this.languageId = languageId;
+    }
 
     public List<CodeBlock> getProgram(){
         return program;
+    }
+    public void setProgram(List<CodeBlock> program){
+        this.program = program;
     }
 }

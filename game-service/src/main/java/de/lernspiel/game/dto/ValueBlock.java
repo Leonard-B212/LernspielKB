@@ -6,4 +6,7 @@ public class ValueBlock extends CodeBlock {
     public Variable<?> getValue() {
         return value;
     }
+    public void setValue(Variable<?> value) {
+        this.value = value;
+    }
 }

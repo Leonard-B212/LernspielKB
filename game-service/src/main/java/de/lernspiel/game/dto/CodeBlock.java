@@ -21,4 +21,8 @@ public class CodeBlock {
     public CodeType getType(){
         return type;
     }
+    
+    public void setType(CodeType type) {
+        this.type = type;
+    }
 }

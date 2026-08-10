@@ -1,8 +1,8 @@
 package de.lernspiel.game.dto;
 
 public class Variable<T> {
-    private final T value;
-    private final CodeType type;
+    private T value;
+    private CodeType type;
 
     public Variable(T value, CodeType type) {
         this.value = value;
@@ -13,7 +13,16 @@ public class Variable<T> {
         return value;
     }
 
+    public void setValue(T value) {
+        this.value = value;
+    }
+
     public CodeType getType() {
         return type;
     }
+
+    public void setType(CodeType type) {
+        this.type = type;
+    }
+
 }
