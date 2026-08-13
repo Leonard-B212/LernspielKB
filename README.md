@@ -276,7 +276,8 @@ LernspielKB/
 │
 ├── auth-service/       # Authentifizierung und Benutzerverwaltung
 ├── common/             # Gemeinsame bzw. modulübergreifende Komponenten
-├── game-service/       # Interpreter, Spiellogik und spielbezogene DTOs
+├── game-service/       # Interpreter und Ausführung der erstellten Programme
+├── level-service/      # Geplante Verwaltung und Bereitstellung dynamischer Level
 ├── lernspiel-app/      # Spring-Boot-Hauptanwendung und Frontend
 │
 ├── .gitignore          # Von Git ignorierte Dateien und Ordner
@@ -370,6 +371,11 @@ LernspielKB/
 │                           │
 │                           └── service/
 │                               └── InterpreterService.java     # Interpretiert und verarbeitet die übergebenen Code-Blöcke
+│
+│
+├── level-service/                             # Geplantes Modul zur Verwaltung und Bereitstellung von Leveln
+│                                              # Level sollen später dynamisch aus der Datenbank geladen werden
+│                                              # und u. a. Aufgabenstellung und verfügbare Code-Blöcke definieren
 │
 └── lernspiel-app/                              # Ausführbare Spring-Boot-Anwendung und Web-Frontend
     ├── pom.xml                                 # Maven-Konfiguration der Hauptanwendung
