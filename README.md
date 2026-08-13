@@ -10,7 +10,7 @@ Webanwendung für ein Lernspiel im Rahmen eines Projekts an der DHBW.
 - Maven 3.9+
 - MySQL
 - Git
-- Visual Studio Code (empfohlen)
+- Visual Studio Code (wird empfohlen)
 
 ---
 
