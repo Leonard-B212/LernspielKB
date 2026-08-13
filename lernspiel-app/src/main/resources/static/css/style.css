@@ -415,52 +415,61 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
  * Normalerweise ist er fast unsichtbar.
  */
 .drop-indicator {
-    width: 8px;
+    position: relative;
+
+    width: 12px;
     height: 38px;
 
     margin: 0 2px;
 
+    flex-shrink: 0;
+
     border-radius: 999px;
-
-    transition:
-        width .14s ease,
-        margin .14s ease,
-        background .14s ease,
-        box-shadow .14s ease;
 }
 
 
-/*
- * Während Drag & Drop werden die Slots
- * etwas leichter erreichbar.
- */
-.program-dropzone.drag-active
-.drop-indicator {
-    width: 12px;
-}
 
 
 /*
  * Das ist die tatsächliche Stelle,
  * an der der Block eingefügt wird.
  */
-.drop-indicator.active {
-    width: 26px;
+.drop-indicator::before {
+    content: "";
 
-    margin-left: 5px;
-    margin-right: 5px;
+    position: absolute;
 
-    background:
-        linear-gradient(
-            to right,
-            transparent 11px,
-            #2563eb 11px,
-            #2563eb 15px,
-            transparent 15px
-        );
+    top: 3px;
+    bottom: 3px;
+    left: 50%;
+
+    width: 2px;
+
+    border-radius: 999px;
+
+    background: #2563eb;
 
     box-shadow:
-        0 0 12px rgba(37, 99, 235, .18);
+        0 0 6px rgba(37, 99, 235, .25);
+
+    transform:
+        translateX(-50%)
+        scaleY(.35);
+
+    opacity: 0;
+
+    transition:
+        opacity .12s ease,
+        transform .12s ease;
+}
+
+
+.drop-indicator.active::before {
+    opacity: 1;
+
+    transform:
+        translateX(-50%)
+        scaleY(1);
 }
 
 

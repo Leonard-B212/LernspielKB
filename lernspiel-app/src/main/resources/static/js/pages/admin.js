@@ -1,4 +1,4 @@
-import { apiRequest, logout, requireRole, showMessage } from "./api.js";
+import { apiRequest, logout, requireRole, showMessage } from "../api/api.js";
 
 document.getElementById("logout-button").addEventListener("click", logout);
 document.getElementById("reload-classes").addEventListener("click", loadClasses);

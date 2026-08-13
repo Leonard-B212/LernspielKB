@@ -4,7 +4,7 @@ import {
   getCurrentUser,
   redirectByRole,
   showMessage
-} from "./api.js";
+} from "../api/api.js";
 
 const form = document.getElementById("login-form");
 const message = document.getElementById("message");
