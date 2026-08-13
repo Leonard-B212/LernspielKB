@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Code Sandbox</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div>
+        <strong>Lernspiel</strong>
+        <span class="badge">Sandbox</span>
+    </div>
+</header>
+
+<main class="sandbox-page">
+
+    <!-- Block-Auswahl -->
+    <section class="card">
+        <div class="section-header">
+            <div>
+                <h2>Code-Blöcke</h2>
+                <p class="muted">
+                    Ziehe die Blöcke in dein Programm.
+                </p>
+            </div>
+        </div>
+
+        <div id="block-palette" class="block-palette">
+
+            <div class="code-block block-type"
+                 draggable="true"
+                 data-type="INT">
+                int
+            </div>
+
+            <div class="code-block block-type"
+                 draggable="true"
+                 data-type="STRING">
+                String
+            </div>
+
+            <div class="code-block block-type"
+                 draggable="true"
+                 data-type="BOOLEAN">
+                boolean
+            </div>
+
+            <div class="code-block block-variable"
+                 draggable="true"
+                 data-type="VAR_NAME">
+                Variable
+            </div>
+
+            <div class="code-block block-value"
+                 draggable="true"
+                 data-type="VALUE">
+                Wert
+            </div>
+
+            <div class="code-block block-operator"
+                 draggable="true"
+                 data-type="EQUALS">
+                =
+            </div>
+
+            <div class="code-block block-operator"
+                 draggable="true"
+                 data-type="ADD">
+                +
+            </div>
+
+            <div class="code-block block-operator"
+                 draggable="true"
+                 data-type="SUBTRACT">
+                -
+            </div>
+
+            <div class="code-block block-operator"
+                 draggable="true"
+                 data-type="MULTIPLY">
+                *
+            </div>
+
+            <div class="code-block block-operator"
+                 draggable="true"
+                 data-type="DIVIDE">
+                /
+            </div>
+
+            <div class="code-block block-break"
+                 draggable="true"
+                 data-type="BREAK">
+                ;
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- Zweispaltiger Arbeitsbereich -->
+<div class="sandbox-workspace">
+
+    <!-- LINKE SEITE -->
+    <div class="sandbox-left-column">
+
+        <!-- Programm -->
+        <section class="card">
+
+            <div class="section-header">
+                <div>
+                    <h2>Dein Programm</h2>
+                    <p class="muted">
+                        Baue hier dein Programm aus den Blöcken zusammen.
+                    </p>
+                </div>
+
+                <button id="reset-button"
+                        type="button"
+                        class="secondary">
+                    Zurücksetzen
+                </button>
+            </div>
+
+            <div id="program-dropzone"
+                 class="program-dropzone">
+            </div>
+
+        </section>
+
+
+        <!-- Untere Aktionen -->
+        <section class="sandbox-actions">
+
+            <div id="trash-dropzone"
+                 class="trash-dropzone">
+
+                <span class="trash-icon">🗑️</span>
+
+                <span>
+                    Block hierher ziehen zum Löschen
+                </span>
+
+            </div>
+
+            <button id="run-button"
+                    type="button">
+                ▶ Ausführen
+            </button>
+
+        </section>
+
+
+        <p id="sandbox-message"
+           class="message">
+        </p>
+
+    </div>
+
+
+    <!-- RECHTE SEITE -->
+    <section id="interpreter-output-card"
+         class="card interpreter-output-card">
+
+        <div class="section-header">
+            <div>
+                <h2>Interpreter-Ausgabe</h2>
+                <p class="muted">
+                    Rückmeldung zur Ausführung deines Programms.
+                </p>
+            </div>
+        </div>
+
+        <div id="interpreter-console"
+            class="interpreter-console"
+            data-theme="dark">
+
+            <div id="console-theme-switch"
+                class="console-theme-switch"
+                data-active-theme="dark">
+
+                <div class="console-theme-slider"></div>
+
+                <button type="button"
+                        class="console-theme-option active"
+                        data-theme="dark">
+                    Dark
+                </button>
+
+                <button type="button"
+                        class="console-theme-option"
+                        data-theme="kernel">
+                    Kernel
+                </button>
+
+                <button type="button"
+                        class="console-theme-option"
+                        data-theme="light">
+                    Light
+                </button>
+            </div>
+
+            <div id="interpreter-output"
+                class="interpreter-output">
+
+                <span class="interpreter-output-placeholder">
+                    Noch kein Programm ausgeführt.
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+</main>
+
+<script type="module" src="/js/sandbox.js"></script>
+
+</body>
+</html>

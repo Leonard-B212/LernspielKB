@@ -12,11 +12,17 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export async function apiRequest(path, options = {}) {
+// GEÄNDERT:
+// Neuer Parameter "useAuth".
+// Standardmäßig true, damit bestehende Requests weiterhin automatisch
+// den Token mitsenden.
+export async function apiRequest(path, options = {}, useAuth = true) {
   const headers = new Headers(options.headers || {});
   const token = getToken();
 
-  if (token) {
+  // GEÄNDERT:
+  // Token wird nur angehängt, wenn useAuth === true.
+  if (useAuth && token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
@@ -25,15 +31,19 @@ export async function apiRequest(path, options = {}) {
   }
 
   const response = await fetch(path, { ...options, headers });
+
   const contentType = response.headers.get("content-type") || "";
+
   const data = contentType.includes("application/json")
     ? await response.json()
     : await response.text();
 
   if (!response.ok) {
-    const message = typeof data === "string"
-      ? data
-      : data?.message || `HTTP ${response.status}`;
+    const message =
+      typeof data === "string"
+        ? data
+        : data?.message || `HTTP ${response.status}`;
+
     throw new Error(message || `HTTP ${response.status}`);
   }
 
@@ -57,16 +67,19 @@ export async function requireRole(...allowedRoles) {
 
   try {
     const user = await getCurrentUser();
+
     if (!allowedRoles.includes(user.type)) {
       redirectByRole(user.type);
       throw new Error("Falsche Rolle");
     }
+
     return user;
   } catch (error) {
     if (error.message !== "Falsche Rolle") {
       clearToken();
       window.location.href = "/index.html";
     }
+
     throw error;
   }
 }
@@ -77,6 +90,7 @@ export function redirectByRole(role) {
     TEACHER: "/teacher.html",
     STUDENT: "/student.html"
   };
+
   window.location.href = routes[role] || "/index.html";
 }
 

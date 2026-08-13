@@ -20,6 +20,7 @@
     <modules>
         <module>lernspiel-app</module>
         <module>auth-service</module>
+        <module>game-service</module>
     </modules>
 
     <properties>

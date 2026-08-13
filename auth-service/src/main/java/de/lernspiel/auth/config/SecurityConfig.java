@@ -34,7 +34,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/Imgs/**", "/favicon.ico").permitAll()
                 .requestMatchers("/", "/index.html", "/register.html", "/profile.html", "/static/**", "/error", "/index.html", "/admin.html", "/teacher.html", "/student.html", "/css/**", "/js/**", "/favicon.ico", "/api/benutzer/login").permitAll()        // Freigabe für das testfrontend, zur übersicht aufgeteilt
-                .requestMatchers("/api/benutzer/login", "/api/benutzer/register", "/api/token/generate-service-token", "/debug/db-info", "/debug/create-test-user", "/debug/list-users", "/debug/drop-user", "/debug/login").permitAll() // Öffentliche Endpunkte
+                .requestMatchers("/api/benutzer/login", "/api/benutzer/register", "/api/token/generate-service-token", "/debug/db-info", 
+                "/debug/create-test-user", "/debug/list-users", "/debug/drop-user", "/debug/login", "/sandbox.html", "/game/interpreter/run").permitAll() // Öffentliche Endpunkte
                 .anyRequest().authenticated()  // Alle anderen Endpunkte erfordern Authentifizierung
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
