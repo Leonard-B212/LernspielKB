@@ -1,4 +1,4 @@
-import { apiRequest, logout, requireRole, showMessage } from "./api.js";
+import { apiRequest, logout, requireRole, showMessage } from "../api/api.js";
 
 const currentTeacher = await requireRole("TEACHER");
 
