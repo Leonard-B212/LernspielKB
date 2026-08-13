@@ -24,7 +24,6 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
 - [Projektstruktur](#projektstruktur)
 - [API-Endpunkte](#api-endpunkte)
 - [Entwicklung](#entwicklung)
-  - [Entwicklungs-Skript](#entwicklungs-skript)
   - [Manueller Start](#manueller-start)
   - [Aktueller Entwicklungsstand](#aktueller-entwicklungsstand)
 
