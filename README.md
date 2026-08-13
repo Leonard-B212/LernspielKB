@@ -555,28 +555,13 @@ Die folgenden Endpunkte dienen ausschließlich der lokalen Entwicklung und zum T
 
 # Entwicklung
 
-## Entwicklungs-Skript
+Für die alltägliche Entwicklung kann das im Projekt enthaltene PowerShell-Skript `dev.ps1` verwendet werden.
 
-Das Skript `dev.ps1` vereinfacht die häufigsten Entwicklungsaufgaben:
-
-```powershell
-.\dev.ps1
-```
-
-Es ermöglicht:
-
-```text
-[1] Clean Install
-[2] Clean Install und Start
-[3] Nur Start
-[0] Beenden
-```
-
-Dadurch muss für Build und Start nicht permanent zwischen den Maven-Modulen gewechselt werden.
+Die Einrichtung und Verwendung des Skripts ist unter [Projekt starten](#projekt-starten) beschrieben.
 
 ## Manueller Start
 
-Alternativ kann das Projekt vollständig über Maven gestartet werden.
+Alternativ kann das Projekt vollständig über Maven gebaut und gestartet werden.
 
 Zunächst das gesamte Multi-Module-Projekt bauen:
 
