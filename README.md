@@ -425,8 +425,6 @@ LernspielKB/
 
 </details>
 
----
-
 
 ---
 
