@@ -1,5 +1,6 @@
 package de.lernspiel.game.dto;
 
+import de.lernspiel.common.code.CodeType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 

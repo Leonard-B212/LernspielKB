@@ -12,7 +12,6 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import de.lernspiel.game.dto.CodeBlock;
-import de.lernspiel.game.dto.CodeType;
 import de.lernspiel.game.dto.ElseStatementBlock;
 import de.lernspiel.game.dto.ExecutionLog;
 import de.lernspiel.game.dto.IfStatementBlock;
@@ -20,6 +19,9 @@ import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
 import de.lernspiel.game.dto.VarNameBlock;
 import de.lernspiel.game.dto.Variable;
+
+import de.lernspiel.common.code.CodeType;
+
 
 @Service
 public class InterpreterService {

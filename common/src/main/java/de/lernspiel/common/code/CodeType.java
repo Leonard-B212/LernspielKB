@@ -1,4 +1,4 @@
-package de.lernspiel.game.dto;
+package de.lernspiel.common.code;
 
 /**
  * CodeType
