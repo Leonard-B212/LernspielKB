@@ -13,17 +13,19 @@ public class LevelResponse {
     private String levelDescription;
     private String category;
     private Integer levelNumber;
+    private Integer languageID;
     private String language;
     private List<LevelComponentResponse> components;
 
     public LevelResponse(
-            Integer levelID,
-            String levelName,
-            String levelDescription,
-            String category,
-            Integer levelNumber,
-            String language,
-            List<LevelComponentResponse> components) {
+        Integer levelID,
+        String levelName,
+        String levelDescription,
+        String category,
+        Integer levelNumber,
+        Integer languageID,
+        String language,
+        List<LevelComponentResponse> components) {
 
         this.levelID = levelID;
         this.levelName = levelName;
@@ -32,6 +34,7 @@ public class LevelResponse {
         this.levelNumber = levelNumber;
         this.language = language;
         this.components = components;
+        this.languageID = languageID;
     }
 
     public Integer getLevelID() {
@@ -88,5 +91,13 @@ public class LevelResponse {
 
     public void setComponents(List<LevelComponentResponse> components) {
         this.components = components;
+    }
+
+    public Integer getLanguageID() {
+    return languageID;
+    }
+
+    public void setLanguageID(Integer languageID) {
+        this.languageID = languageID;
     }
 }

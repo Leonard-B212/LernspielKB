@@ -301,6 +301,7 @@ public class LevelService {
                 level.getLevelDescription(),
                 level.getCategory(),
                 level.getLevelNumber(),
+                level.getLanguage().getLanguageID(),
                 level.getLanguage().getLanguageName(),
                 components
         );

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Level</title>
+
+    <link rel="stylesheet"
+          href="/css/style.css">
+</head>
+
+
+<body>
+
+<header class="topbar">
+    <div>
+        <strong>Lernspiel</strong>
+
+        <span class="badge">
+            Level
+        </span>
+    </div>
+</header>
+
+
+<main class="sandbox-page">
+
+    <!-- =====================================================
+         AUFGABE
+         ===================================================== -->
+
+    <section class="card level-task-card">
+
+        <div class="level-task-header">
+
+            <div class="level-task-main">
+
+                <div class="level-meta">
+
+                    <span class="level-number-label">
+                        LEVEL
+                        <span id="level-number">
+                        </span>
+                    </span>
+
+                    <span class="level-meta-separator">
+                        ·
+                    </span>
+
+                    <span id="level-category"
+                          class="level-category">
+                    </span>
+
+                </div>
+
+
+                <h1 id="level-title">
+                    Level wird geladen ...
+                </h1>
+
+
+                <p id="level-description"
+                   class="level-description">
+                </p>
+
+            </div>
+
+
+            <span id="level-language"
+                  class="level-language-badge">
+            </span>
+
+        </div>
+
+
+        <div class="level-palette-section">
+
+            <span class="level-palette-label">
+                Verfügbare Blöcke
+            </span>
+
+
+            <!--
+                Wird dynamisch aus den Components
+                des geladenen Levels erzeugt.
+            -->
+            <div id="block-palette"
+                 class="block-palette">
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ARBEITSBEREICH
+         ===================================================== -->
+
+    <div class="sandbox-workspace">
+
+        <!-- LINKE SEITE -->
+        <div class="sandbox-left-column">
+
+            <section class="card">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>Dein Programm</h2>
+
+                        <p class="muted">
+                            Baue hier dein Programm
+                            aus den Code-Blöcken zusammen.
+                        </p>
+                    </div>
+
+
+                    <button id="reset-button"
+                            type="button"
+                            class="secondary">
+                        Zurücksetzen
+                    </button>
+
+                </div>
+
+
+                <div id="program-dropzone"
+                     class="program-dropzone">
+                </div>
+
+            </section>
+
+
+            <section class="sandbox-actions">
+
+                <div id="trash-dropzone"
+                     class="trash-dropzone">
+
+                    <span class="trash-icon">
+                        🗑️
+                    </span>
+
+                    <span>
+                        Block hierher ziehen zum Löschen
+                    </span>
+
+                </div>
+
+
+                <button id="run-button"
+                        type="button">
+                    ▶ Ausführen
+                </button>
+
+            </section>
+
+
+            <p id="level-message"
+               class="message">
+            </p>
+
+        </div>
+
+
+        <!-- RECHTE SEITE -->
+        <section id="interpreter-output-card"
+                 class="card interpreter-output-card">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Interpreter-Ausgabe</h2>
+
+                    <p class="muted">
+                        Rückmeldung zur Ausführung deines Programms.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div id="interpreter-console"
+                 class="interpreter-console"
+                 data-theme="dark">
+
+                <div id="console-theme-switch"
+                     class="console-theme-switch"
+                     data-active-theme="dark">
+
+                    <div class="console-theme-slider">
+                    </div>
+
+
+                    <button type="button"
+                            class="console-theme-option active"
+                            data-theme="dark">
+                        Dark
+                    </button>
+
+
+                    <button type="button"
+                            class="console-theme-option"
+                            data-theme="kernel">
+                        Kernel
+                    </button>
+
+
+                    <button type="button"
+                            class="console-theme-option"
+                            data-theme="light">
+                        Light
+                    </button>
+
+                </div>
+
+
+                <div id="interpreter-output"
+                     class="interpreter-output">
+
+                    <span class="interpreter-output-placeholder">
+                        Noch kein Programm ausgeführt.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script type="module"
+        src="/js/pages/level.js">
+</script>
+
+</body>
+
+</html>
