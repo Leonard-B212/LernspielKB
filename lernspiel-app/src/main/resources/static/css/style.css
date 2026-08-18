@@ -916,3 +916,173 @@ h2 {
     }
 
 }
+
+/* =========================================================
+   LEVEL
+   ========================================================= */
+
+/*
+ * Kompakte Aufgabenkarte der Level-Seite.
+ *
+ * Aufgabenbeschreibung, Metadaten und verfügbare Blöcke
+ * gehören bewusst zu einem gemeinsamen Bereich.
+ */
+.level-task-card {
+    padding: 1.4rem 1.5rem;
+}
+
+
+/* -------------------------
+   Aufgabeninformationen
+   ------------------------- */
+
+.level-task-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 2rem;
+}
+
+
+.level-task-main {
+    min-width: 0;
+}
+
+
+/*
+ * Kleine Metazeile oberhalb des eigentlichen Leveltitels.
+ */
+.level-meta {
+    display: flex;
+    align-items: center;
+
+    gap: .45rem;
+
+    margin-bottom: .4rem;
+
+    color: #6b7280;
+
+    font-size: .75rem;
+    font-weight: 700;
+
+    letter-spacing: .06em;
+
+    text-transform: uppercase;
+}
+
+
+.level-number-label {
+    color: #2563eb;
+}
+
+
+.level-meta-separator {
+    color: #9ca3af;
+}
+
+
+.level-category {
+    color: #6b7280;
+}
+
+
+/*
+ * Der Levelname ist die eigentliche Hauptüberschrift.
+ */
+.level-task-card h1 {
+    margin: 0;
+
+    font-size: 1.65rem;
+    line-height: 1.2;
+
+    color: #111827;
+}
+
+
+.level-description {
+    margin:
+        .55rem
+        0
+        0;
+
+    color: #6b7280;
+
+    line-height: 1.5;
+}
+
+
+/*
+ * Programmiersprache als bewusst kleines Badge.
+ */
+.level-language-badge {
+    flex-shrink: 0;
+
+    padding: .35rem .7rem;
+
+    border-radius: 999px;
+
+    background: #e5e7eb;
+    color: #374151;
+
+    font-family: Consolas, "Courier New", monospace;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+
+/* -------------------------
+   Level Block-Palette
+   ------------------------- */
+
+.level-palette-section {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+
+.level-palette-label {
+    display: block;
+
+    margin-bottom: .7rem;
+
+    color: #6b7280;
+
+    font-size: .8rem;
+    font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing: .04em;
+}
+
+
+/*
+ * Die globale Palette besitzt standardmäßig margin-top.
+ * Auf der Level-Seite wird der Abstand bereits vom Label gesteuert.
+ */
+.level-palette-section .block-palette {
+    margin-top: 0;
+}
+
+
+/* -------------------------
+   Mobile Level
+   ------------------------- */
+
+@media (max-width: 760px) {
+
+    .level-task-header {
+        flex-direction: column;
+
+        gap: .8rem;
+    }
+
+
+    .level-language-badge {
+        align-self: flex-start;
+    }
+
+}

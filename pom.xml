@@ -18,9 +18,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>lernspiel-app</module>
+        <module>common</module>
         <module>auth-service</module>
         <module>game-service</module>
+        <module>level-service</module>
+        <module>lernspiel-app</module>
     </modules>
 
     <properties>

@@ -1,5 +1,6 @@
 package de.lernspiel.game.dto;
 
+import de.lernspiel.common.code.CodeType;
 public class Variable<T> {
     private T value;
     private CodeType type;
