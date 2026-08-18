@@ -69,6 +69,29 @@ public class DebugController {
         }
     }
 
+    // Löscht die Level-Tabellen vollständig, damit Hibernate sie nach Entity-Änderungen neu erzeugen kann.
+    @DeleteMapping("/drop-level-data")
+    public ResponseEntity<?> dropLevelData() {
+        try {
+            jdbcTemplate.execute("DROP TABLE IF EXISTS completed_level");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS level_component");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS level");
+            jdbcTemplate.execute("DROP TABLE IF EXISTS level_category");
+
+            return ResponseEntity.ok(
+                    "Level-Tabellen wurden gelöscht."
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(500)
+                    .body(
+                        "Fehler beim Löschen der Level-Tabellen: "
+                        + e.getMessage()
+                    );
+        }
+    }
+
  
 
     @GetMapping({"", "/"})

@@ -10,7 +10,11 @@ public class LevelOverviewResponse {
 
     private Integer levelID;
     private String levelName;
+
+    private Integer categoryID;
     private String category;
+    private Integer categoryOrder;
+
     private Integer levelNumber;
     private Integer languageID;
     private String language;
@@ -18,7 +22,9 @@ public class LevelOverviewResponse {
     public LevelOverviewResponse(
             Integer levelID,
             String levelName,
+            Integer categoryID,
             String category,
+            Integer categoryOrder,
             Integer levelNumber,
             Integer languageID,
             String language) {
@@ -77,5 +83,20 @@ public class LevelOverviewResponse {
 
     public void setLanguage(String language) {
         this.language = language;
+    }
+    public Integer getCategoryID() {
+    return categoryID;
+    }
+
+    public void setCategoryID(Integer categoryID) {
+        this.categoryID = categoryID;
+    }
+
+    public Integer getCategoryOrder() {
+        return categoryOrder;
+    }
+
+    public void setCategoryOrder(Integer categoryOrder) {
+        this.categoryOrder = categoryOrder;
     }
 }
