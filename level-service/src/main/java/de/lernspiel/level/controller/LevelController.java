@@ -52,7 +52,7 @@ public class LevelController {
             @PathVariable Integer levelID) {
 
         try {
-
+            
             LevelResponse level =
                     levelService.getLevelById(
                             levelID

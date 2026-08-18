@@ -10,6 +10,7 @@ public class CreateLevelRequest {
     private String levelName;
     private String levelDescription;
     private String category;
+    private Integer categoryOrder;
     private Integer levelNumber;
     private String language;
     private List<LevelComponentRequest> components;
@@ -60,5 +61,12 @@ public class CreateLevelRequest {
 
     public void setComponents(List<LevelComponentRequest> components) {
         this.components = components;
+    }
+    public Integer getCategoryOrder() {
+        return categoryOrder;
+    }
+
+    public void setCategoryOrder(Integer categoryOrder) {
+        this.categoryOrder = categoryOrder;
     }
 }
