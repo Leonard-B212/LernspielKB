@@ -66,19 +66,29 @@ public class LevelProgressController {
      * Später soll completeLevel() von der echten Ergebnisprüfung aufgerufen werden.
      */
     @PostMapping("/levels/{levelID}/complete")
-    public ResponseEntity<Void> completeLevel(
+    public ResponseEntity<?> completeLevel(
             @PathVariable Integer levelID,
             Principal principal) {
 
-        Integer userID =
-                getUserID(principal);
+        try {
+            Integer userID =
+                    getUserID(principal);
 
-        levelProgressService.completeLevel(
-                userID,
-                levelID
-        );
+            levelProgressService.completeLevel(
+                    userID,
+                    levelID
+            );
 
-        return ResponseEntity.noContent().build();
+            return ResponseEntity
+                    .noContent()
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .status(404)
+                    .body(e.getMessage());
+        }
     }
 
 

@@ -2,6 +2,7 @@ package de.lernspiel.level.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
 import de.lernspiel.level.dto.LevelComponentResponse;
+import de.lernspiel.level.dto.LevelOverviewResponse;
 import de.lernspiel.level.dto.LevelResponse;
 import de.lernspiel.level.entity.Component;
 import de.lernspiel.level.entity.Level;
@@ -18,6 +20,7 @@ import de.lernspiel.level.repository.ComponentRepository;
 import de.lernspiel.level.repository.LevelComponentRepository;
 import de.lernspiel.level.repository.LevelRepository;
 import de.lernspiel.level.repository.ProgrammingLanguageRepository;
+import de.lernspiel.level.dto.LevelOverviewResponse;
 
 /**
  * Service für das Laden und Anlegen von Level-Daten.
@@ -304,6 +307,51 @@ public class LevelService {
                 level.getLanguage().getLanguageID(),
                 level.getLanguage().getLanguageName(),
                 components
+        );
+    }
+
+    /**
+     * Liefert alle vorhandenen Level in kompakter Form für Übersichtsseiten.
+     *
+     * Die Level werden nach Programmiersprache, Kategorie und Levelnummer sortiert.
+     */
+    public List<LevelOverviewResponse> getAllLevels() {
+
+        return levelRepository
+                .findAll()
+                .stream()
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        (Level level) ->
+                                                level.getLanguage()
+                                                        .getLanguageName()
+                                )
+                                .thenComparing(
+                                        Level::getCategory
+                                )
+                                .thenComparing(
+                                        Level::getLevelNumber
+                                )
+                )
+                .map(this::mapToOverviewResponse)
+                .toList();
+    }
+
+
+    /**
+     * Wandelt ein Level in die kompakte Darstellung für Übersichtsseiten um.
+     */
+    private LevelOverviewResponse mapToOverviewResponse(
+            Level level) {
+
+        return new LevelOverviewResponse(
+                level.getLevelID(),
+                level.getLevelName(),
+                level.getCategory(),
+                level.getLevelNumber(),
+                level.getLanguage().getLanguageID(),
+                level.getLanguage().getLanguageName()
         );
     }
 }
