@@ -320,6 +320,16 @@ export function createSkilltreeRenderer({
             level.levelNumber;
 
 
+        const circle =
+            document.createElement(
+                "span"
+            );
+
+        circle.classList.add(
+            "skilltree-level-circle"
+        );
+
+
         const number =
             document.createElement(
                 "span"
@@ -346,8 +356,12 @@ export function createSkilltreeRenderer({
             level.levelName;
 
 
-        button.appendChild(
+        circle.appendChild(
             number
+        );
+
+        button.appendChild(
+            circle
         );
 
         button.appendChild(
@@ -363,6 +377,58 @@ export function createSkilltreeRenderer({
                 )
         );
 
+
+        /*
+        * Während der Hover-Animation bewegt sich der Node leicht.
+        * Die SVG-Verbindung wird deshalb währenddessen neu gezeichnet.
+        */
+        let hoverAnimationFrame = null;
+
+
+        function updateConnectionsWhileHovered() {
+
+            drawConnections();
+
+            hoverAnimationFrame =
+                requestAnimationFrame(
+                    updateConnectionsWhileHovered
+                );
+        }
+
+
+        button.addEventListener(
+            "mouseenter",
+            () => {
+
+                if (hoverAnimationFrame !== null) {
+                    return;
+                }
+
+                updateConnectionsWhileHovered();
+            }
+        );
+
+
+        button.addEventListener(
+            "mouseleave",
+            () => {
+
+                if (hoverAnimationFrame !== null) {
+
+                    cancelAnimationFrame(
+                        hoverAnimationFrame
+                    );
+
+                    hoverAnimationFrame = null;
+                }
+
+
+                // Nach Ende der Animation einmal die finale Position zeichnen.
+                requestAnimationFrame(
+                    drawConnections
+                );
+            }
+        );
 
         return button;
     }

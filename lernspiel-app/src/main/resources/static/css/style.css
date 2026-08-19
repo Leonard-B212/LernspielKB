@@ -1238,30 +1238,20 @@ h2 {
     left: 50%;
     top: 0;
 
-    width: 58px;
-    height: 58px;
+    width: 40px;
+    height: 40px;
 
     padding: 0;
 
-    border-radius: 50%;
+    border: 0;
+    background: transparent;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    background: white;
     color: #374151;
 
-    border: 3px solid #f97316;
-
-    box-shadow:
-        0 5px 14px rgba(0, 0, 0, .10);
-
-    /*
-     * Die eigentliche Position kommt aus dem Renderer.
-     * Später kann die Physics-Schicht zusätzlich kleine
-     * Abweichungen auf diese Grundposition anwenden.
-     */
     transform:
         translateX(-50%)
         translate(
@@ -1270,18 +1260,82 @@ h2 {
         );
 
     z-index: 3;
+}
+
+/*
+ * Sichtbarer Kreis eines Level-Nodes.
+ *
+ * Schatten, Hintergrund und Rahmen liegen nur auf diesem Element,
+ * damit das darunterliegende Label nicht im Schattenbereich liegt.
+ */
+.skilltree-level-circle {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: white;
+    border: 2px solid #f97316;
+
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, .10);
 
     transition:
-        box-shadow .15s ease,
-        background .15s ease;
+        box-shadow .2s ease,
+        background .15s ease,
+        scale .2s ease;
+}
+
+.skilltree-level-node:hover {
+    animation:
+        skilltree-node-glide
+        2.4s
+        ease-in-out
+        infinite;
 }
 
 
-.skilltree-level-node:hover {
+.skilltree-level-node:hover .skilltree-level-circle {
+    scale: 1.025;
+
     box-shadow:
         0 10px 22px rgba(0, 0, 0, .16);
 }
 
+/*
+ * Ruhige Schwebebewegung beim Hover.
+ *
+ * Die eigentliche Position des Nodes bleibt erhalten.
+ * translate erzeugt nur eine kleine zusätzliche Abweichung.
+ */
+@keyframes skilltree-node-glide {
+
+    0% {
+        translate: 0 0;
+    }
+
+    25% {
+        translate: 2px -1px;
+    }
+
+    50% {
+        translate: -2px 1px;
+    }
+
+    75% {
+        translate: 1px 2px;
+    }
+
+    100% {
+        translate: 0 0;
+    }
+}
 
 /*
  * Die Nummer bleibt direkt im Node sichtbar.
@@ -1323,7 +1377,7 @@ h2 {
    Abgeschlossene Level
    ------------------------- */
 
-.skilltree-level-node.completed {
+.skilltree-level-node.completed .skilltree-level-circle {
     background: #f97316;
     color: white;
 
