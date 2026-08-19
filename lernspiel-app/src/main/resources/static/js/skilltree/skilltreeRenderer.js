@@ -1,9 +1,18 @@
 /**
- * Rendert die Level des Skilltrees.
+ * Rendert die visuelle Struktur des Skilltrees.
  *
- * Die visuelle Baumstruktur wird später ergänzt.
- * Aktuell werden die Level zunächst nach Kategorie gruppiert dargestellt.
+ * Kategorien bilden den vertikalen Hauptpfad.
+ * Die zugehörigen Level werden fächerförmig um ihre Kategorie angeordnet.
+ *
+ * Ein SVG-Layer zeichnet die Verbindungen zwischen den Nodes.
+ * Die Verbindung zwischen Kategorien ist getrennt von den Level-Verbindungen,
+ * damit später beispielsweise Fortschritt dargestellt werden kann.
  */
+
+import {
+    initializeSkilltreePhysics
+} from "./skilltreePhysics.js";
+
 export function createSkilltreeRenderer({
     skilltreeElement,
     languageSelector,
@@ -11,7 +20,12 @@ export function createSkilltreeRenderer({
     onLevelSelect
 }) {
 
+    let resizeHandlerRegistered = false;
 
+
+    /**
+     * Rendert die verfügbaren Programmiersprachen.
+     */
     function renderLanguageSelector(
         languages,
         activeLanguage) {
@@ -27,7 +41,13 @@ export function createSkilltreeRenderer({
                 );
 
             button.type = "button";
-            button.textContent = language;
+
+            button.textContent =
+                language;
+
+            button.classList.add(
+                "language-option"
+            );
 
             button.classList.toggle(
                 "active",
@@ -49,11 +69,24 @@ export function createSkilltreeRenderer({
     }
 
 
+    /**
+     * Rendert alle Kategorien und deren Level-Nodes.
+     */
+
     function renderLevels(
         levels,
         isCompleted) {
 
         skilltreeElement.innerHTML = "";
+
+
+        // SVG liegt hinter allen Nodes.
+        const svg =
+            createConnectionLayer();
+
+        skilltreeElement.appendChild(
+            svg
+        );
 
 
         const categories =
@@ -62,79 +95,495 @@ export function createSkilltreeRenderer({
 
         categories.forEach(category => {
 
-            const section =
-                document.createElement(
-                    "section"
+            const categoryBranch =
+                createCategoryBranch(
+                    category,
+                    isCompleted
                 );
 
-            section.classList.add(
-                "skilltree-category"
+            skilltreeElement.appendChild(
+                categoryBranch
+            );
+        });
+
+
+        /*
+        * Erst nachdem alle Nodes im DOM liegen,
+        * können Verbindungen und Physics gestartet werden.
+        */
+        requestAnimationFrame(() => {
+
+            drawConnections();
+
+            initializeSkilltreePhysics({
+                skilltreeElement,
+
+                // Linien werden während der Bewegung aktualisiert.
+                onUpdate:
+                    drawConnections
+            });
+        });
+
+
+        /*
+        * Bei einer Größenänderung müssen nur die
+        * Verbindungslinien neu berechnet werden.
+        */
+        if (!resizeHandlerRegistered) {
+
+            window.addEventListener(
+                "resize",
+                () =>
+                    requestAnimationFrame(
+                        drawConnections
+                    )
             );
 
-
-            const heading =
-                document.createElement(
-                    "h2"
-                );
-
-            heading.textContent =
-                category.name;
+            resizeHandlerRegistered = true;
+        }
+    }
 
 
-            section.appendChild(
-                heading
+    /**
+     * Erstellt einen transparenten SVG-Layer für alle Verbindungen.
+     */
+    function createConnectionLayer() {
+
+        const svg =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "svg"
             );
 
+        svg.classList.add(
+            "skilltree-connections"
+        );
 
-            category.levels.forEach(
-                level => {
+        svg.setAttribute(
+            "aria-hidden",
+            "true"
+        );
 
-                    const button =
-                        document.createElement(
-                            "button"
-                        );
-
-                    button.type = "button";
-
-                    button.textContent =
-                        `${level.levelNumber}. ${level.levelName}`;
-
-                    button.classList.add(
-                        "skilltree-level"
-                    );
+        return svg;
+    }
 
 
-                    if (
+    /**
+     * Erstellt den Bereich einer einzelnen Kategorie.
+     */
+    function createCategoryBranch(
+        category,
+        isCompleted) {
+
+        const branch =
+            document.createElement(
+                "section"
+            );
+
+        branch.classList.add(
+            "skilltree-branch"
+        );
+
+        branch.dataset.categoryId =
+            category.id;
+
+
+        const categoryNode =
+            createCategoryNode(
+                category
+            );
+
+        branch.appendChild(
+            categoryNode
+        );
+
+
+        const levelContainer =
+            document.createElement(
+                "div"
+            );
+
+        levelContainer.classList.add(
+            "skilltree-levels"
+        );
+
+
+        category.levels.forEach(
+            (level, index) => {
+
+                const levelNode =
+                    createLevelNode(
+                        level,
                         isCompleted(
                             level.levelID
                         )
-                    ) {
-                        button.classList.add(
-                            "completed"
+                    );
+
+
+                positionLevelNode(
+                    levelNode,
+                    index,
+                    category.levels.length
+                );
+
+
+                levelContainer.appendChild(
+                    levelNode
+                );
+            }
+        );
+
+
+        branch.appendChild(
+            levelContainer
+        );
+
+
+        return branch;
+    }
+
+
+    /**
+     * Erstellt den großen zentralen Node einer Kategorie.
+     */
+    function createCategoryNode(
+        category) {
+
+        const node =
+            document.createElement(
+                "div"
+            );
+
+        node.classList.add(
+            "skilltree-category-node"
+        );
+
+        node.dataset.categoryId =
+            category.id;
+
+        node.dataset.categoryOrder =
+            category.order;
+
+
+        const name =
+            document.createElement(
+                "span"
+            );
+
+        name.classList.add(
+            "skilltree-category-name"
+        );
+
+        name.textContent =
+            category.name;
+
+
+        node.appendChild(
+            name
+        );
+
+
+        return node;
+    }
+
+
+    /**
+     * Erstellt einen einzelnen anklickbaren Level-Node.
+     */
+    function createLevelNode(
+        level,
+        completed) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.type = "button";
+
+        button.classList.add(
+            "skilltree-level-node"
+        );
+
+
+        if (completed) {
+            button.classList.add(
+                "completed"
+            );
+        }
+
+
+        button.dataset.levelId =
+            level.levelID;
+
+        button.dataset.levelNumber =
+            level.levelNumber;
+
+
+        const number =
+            document.createElement(
+                "span"
+            );
+
+        number.classList.add(
+            "skilltree-level-number"
+        );
+
+        number.textContent =
+            level.levelNumber;
+
+
+        const label =
+            document.createElement(
+                "span"
+            );
+
+        label.classList.add(
+            "skilltree-level-label"
+        );
+
+        label.textContent =
+            level.levelName;
+
+
+        button.appendChild(
+            number
+        );
+
+        button.appendChild(
+            label
+        );
+
+
+        button.addEventListener(
+            "click",
+            () =>
+                onLevelSelect(
+                    level
+                )
+        );
+
+
+        return button;
+    }
+
+
+    /**
+     * Verteilt die Level eines Branches in einem flachen Fächer.
+     *
+     * Die Position wird über CSS-Variablen gespeichert,
+     * damit eine spätere Physics-Schicht darauf aufbauen kann.
+     */
+    function positionLevelNode(
+        node,
+        index,
+        total) {
+
+        const center =
+            (total - 1) / 2;
+
+        const relativeIndex =
+            index - center;
+
+
+        /*
+         * Horizontaler Abstand der Nodes.
+         * Bei vielen Leveln wird der Abstand etwas kompakter.
+         */
+        const spacing =
+            total <= 3
+                ? 185
+                : 165;
+
+        const x =
+            relativeIndex * spacing;
+
+        const y =
+            65
+            + Math.abs(relativeIndex) * 38;
+
+
+        node.style.setProperty(
+            "--node-x",
+            `${x}px`
+        );
+
+        node.style.setProperty(
+            "--node-y",
+            `${y}px`
+        );
+    }
+
+
+    /**
+     * Zeichnet sämtliche Verbindungen anhand der aktuellen DOM-Positionen neu.
+     */
+    function drawConnections() {
+
+        const svg =
+            skilltreeElement.querySelector(
+                ".skilltree-connections"
+            );
+
+
+        if (!svg) {
+            return;
+        }
+
+
+        svg.innerHTML = "";
+
+
+        const branches =
+            [
+                ...skilltreeElement
+                    .querySelectorAll(
+                        ".skilltree-branch"
+                    )
+            ];
+
+
+        branches.forEach(
+            (branch, index) => {
+
+                const categoryNode =
+                    branch.querySelector(
+                        ".skilltree-category-node"
+                    );
+
+
+                const levelNodes =
+                    branch.querySelectorAll(
+                        ".skilltree-level-node"
+                    );
+
+
+                // Kategorie → einzelne Level.
+                levelNodes.forEach(
+                    levelNode => {
+
+                        drawConnection(
+                            svg,
+                            categoryNode,
+                            levelNode,
+                            "skilltree-level-connection"
                         );
                     }
+                );
 
 
-                    button.addEventListener(
-                        "click",
-                        () =>
-                            onLevelSelect(
-                                level
-                            )
-                    );
+                // Kategorie → nächste Kategorie.
+                const nextBranch =
+                    branches[index + 1];
 
 
-                    section.appendChild(
-                        button
+                if (nextBranch) {
+
+                    const nextCategoryNode =
+                        nextBranch.querySelector(
+                            ".skilltree-category-node"
+                        );
+
+
+                    drawConnection(
+                        svg,
+                        categoryNode,
+                        nextCategoryNode,
+                        "skilltree-category-connection"
                     );
                 }
+            }
+        );
+    }
+
+
+    /**
+     * Zeichnet eine einzelne Linie zwischen zwei DOM-Elementen.
+     */
+    function drawConnection(
+        svg,
+        fromElement,
+        toElement,
+        cssClass) {
+
+        if (
+            !fromElement
+            || !toElement
+        ) {
+            return;
+        }
+
+
+        const treeRect =
+            skilltreeElement
+                .getBoundingClientRect();
+
+        const fromRect =
+            fromElement
+                .getBoundingClientRect();
+
+        const toRect =
+            toElement
+                .getBoundingClientRect();
+
+
+        const x1 =
+            fromRect.left
+            + fromRect.width / 2
+            - treeRect.left;
+
+        const y1 =
+            fromRect.top
+            + fromRect.height / 2
+            - treeRect.top;
+
+        const x2 =
+            toRect.left
+            + toRect.width / 2
+            - treeRect.left;
+
+        const y2 =
+            toRect.top
+            + toRect.height / 2
+            - treeRect.top;
+
+
+        const line =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "line"
             );
 
 
-            skilltreeElement.appendChild(
-                section
-            );
-        });
+        line.setAttribute(
+            "x1",
+            x1
+        );
+
+        line.setAttribute(
+            "y1",
+            y1
+        );
+
+        line.setAttribute(
+            "x2",
+            x2
+        );
+
+        line.setAttribute(
+            "y2",
+            y2
+        );
+
+
+        line.classList.add(
+            cssClass
+        );
+
+
+        svg.appendChild(
+            line
+        );
     }
 
 
@@ -162,12 +611,19 @@ function groupByCategory(levels) {
                 level.categoryID
             )
         ) {
+
             categoryMap.set(
                 level.categoryID,
                 {
-                    id: level.categoryID,
-                    name: level.category,
-                    order: level.categoryOrder,
+                    id:
+                        level.categoryID,
+
+                    name:
+                        level.category,
+
+                    order:
+                        level.categoryOrder,
+
                     levels: []
                 }
             );
@@ -175,9 +631,13 @@ function groupByCategory(levels) {
 
 
         categoryMap
-            .get(level.categoryID)
+            .get(
+                level.categoryID
+            )
             .levels
-            .push(level);
+            .push(
+                level
+            );
     });
 
 

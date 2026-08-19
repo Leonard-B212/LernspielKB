@@ -1086,3 +1086,310 @@ h2 {
     }
 
 }
+
+/* =========================================================
+   SKILLTREE
+   ========================================================= */
+
+.skilltree-page {
+    width: min(1200px, calc(100% - 2rem));
+    margin: 2rem auto;
+    display: grid;
+    gap: 1rem;
+}
+
+
+/* -------------------------
+   Sprachwahl
+   ------------------------- */
+
+.language-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+
+    margin-top: 1rem;
+}
+
+.language-option {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.language-option.active {
+    background: #2563eb;
+    color: white;
+}
+
+
+/* -------------------------
+   Baum-Grundstruktur
+   ------------------------- */
+
+/* -------------------------
+   Baum-Grundstruktur
+   ------------------------- */
+
+.skilltree {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 2rem;
+
+    padding: 3rem 1rem 5rem;
+
+    overflow: hidden;
+}
+
+
+/*
+ * SVG-Ebene hinter dem eigentlichen Tree.
+ */
+.skilltree-connections {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 0;
+
+    pointer-events: none;
+}
+
+
+/*
+ * Ein Branch enthält eine Kategorie und ihre Level.
+ */
+.skilltree-branch {
+    position: relative;
+
+    width: min(900px, 100%);
+    min-height: 370px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    z-index: 1;
+}
+
+
+/* -------------------------
+   Kategorie-Node
+   ------------------------- */
+
+.skilltree-category-node {
+    width: 150px;
+    min-height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 1rem;
+
+    border-radius: 22px;
+
+    background: #f97316;
+    color: white;
+
+    font-weight: 800;
+    text-align: center;
+
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, .12);
+
+    position: relative;
+    z-index: 3;
+}
+
+
+.skilltree-category-name {
+    line-height: 1.2;
+}
+
+
+/* -------------------------
+   Level-Bereich
+   ------------------------- */
+
+.skilltree-levels {
+    position: relative;
+
+    width: 100%;
+    height: 190px;
+
+    margin-top: .5rem;
+}
+
+
+/* -------------------------
+   Level-Nodes
+   ------------------------- */
+
+.skilltree-level-node {
+    position: absolute;
+
+    left: 50%;
+    top: 0;
+
+    width: 58px;
+    height: 58px;
+
+    padding: 0;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: white;
+    color: #374151;
+
+    border: 3px solid #f97316;
+
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, .10);
+
+    /*
+     * Die eigentliche Position kommt aus dem Renderer.
+     * Später kann die Physics-Schicht zusätzlich kleine
+     * Abweichungen auf diese Grundposition anwenden.
+     */
+    transform:
+        translateX(-50%)
+        translate(
+            var(--node-x),
+            var(--node-y)
+        );
+
+    z-index: 3;
+
+    transition:
+        box-shadow .15s ease,
+        background .15s ease;
+}
+
+
+.skilltree-level-node:hover {
+    box-shadow:
+        0 10px 22px rgba(0, 0, 0, .16);
+}
+
+
+/*
+ * Die Nummer bleibt direkt im Node sichtbar.
+ */
+.skilltree-level-number {
+    font-size: .95rem;
+    font-weight: 800;
+}
+
+
+/*
+ * Der Name erscheint unter dem Node.
+ */
+.skilltree-level-label {
+    position: absolute;
+
+    top: calc(100% + .55rem);
+    left: 50%;
+
+    width: 150px;
+
+    transform:
+        translateX(-50%);
+
+    color: #374151;
+
+    font-size: .78rem;
+    font-weight: 700;
+
+    line-height: 1.25;
+
+    text-align: center;
+
+    pointer-events: none;
+}
+
+
+/* -------------------------
+   Abgeschlossene Level
+   ------------------------- */
+
+.skilltree-level-node.completed {
+    background: #f97316;
+    color: white;
+
+    box-shadow:
+        0 0 0 4px rgba(249, 115, 22, .12),
+        0 7px 18px rgba(0, 0, 0, .12);
+}
+
+
+/* -------------------------
+   Verbindungslinien
+   ------------------------- */
+
+/*
+ * Dünne Äste zwischen einer Kategorie und ihren Leveln.
+ */
+.skilltree-level-connection {
+    stroke: #cbd5e1;
+    stroke-width: 2;
+
+    stroke-linecap: round;
+}
+
+
+/*
+ * Hauptpfad zwischen zwei Kategorien.
+ *
+ * Diese Klasse bleibt bewusst separat.
+ * Später kann hier Fortschritt wie 4/5 optisch
+ * auf der Verbindung dargestellt werden.
+ */
+.skilltree-category-connection {
+    stroke: #94a3b8;
+    stroke-width: 5;
+
+    stroke-linecap: round;
+}
+
+
+/* -------------------------
+   Mobile
+   ------------------------- */
+
+@media (max-width: 760px) {
+
+    .skilltree {
+        gap: 4rem;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .skilltree-branch {
+        width: 100%;
+    }
+
+    .skilltree-levels {
+        gap: 1.4rem;
+    }
+
+    .skilltree-level-node {
+        width: 64px;
+        height: 64px;
+    }
+
+    .skilltree-level-label {
+        width: 115px;
+        font-size: .72rem;
+    }
+}
