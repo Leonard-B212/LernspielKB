@@ -31,7 +31,11 @@ public class LevelOverviewResponse {
 
         this.levelID = levelID;
         this.levelName = levelName;
+
+        this.categoryID = categoryID;
         this.category = category;
+        this.categoryOrder = categoryOrder;
+
         this.levelNumber = levelNumber;
         this.languageID = languageID;
         this.language = language;

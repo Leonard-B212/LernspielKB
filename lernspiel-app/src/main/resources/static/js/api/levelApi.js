@@ -1,36 +1,32 @@
 /**
- * Enthält die HTTP-Kommunikation mit dem Level-Service.
+ * API-Zugriff auf den Level-Service.
  *
- * Die Level-Seite muss dadurch nicht wissen, wie der konkrete
- * REST-Aufruf aufgebaut ist.
+ * Alle Requests laufen über die zentrale apiRequest()-Funktion,
+ * damit Fehlerbehandlung und Authentifizierung einheitlich bleiben.
  */
+
+import {
+    apiRequest
+} from "./api.js";
 
 
 /**
  * Lädt ein einzelnes Level anhand seiner ID.
- *
- * @param {number} levelID
- * @returns {Promise<Object>}
  */
 export async function getLevel(levelID) {
 
-    const response =
-        await fetch(
-            `/api/levels/${levelID}`
-        );
+    return apiRequest(
+        `/api/levels/${levelID}`
+    );
+}
 
 
-    if (!response.ok) {
+/**
+ * Lädt alle verfügbaren Level in kompakter Form.
+ */
+export async function getAllLevels() {
 
-        const errorText =
-            await response.text();
-
-        throw new Error(
-            errorText ||
-            `Level konnte nicht geladen werden: HTTP ${response.status}`
-        );
-    }
-
-
-    return response.json();
+    return apiRequest(
+        "/api/levels"
+    );
 }
