@@ -24,6 +24,99 @@ button, input, select { font: inherit; }
   color: white;
 }
 
+/* -------------------------
+   Hauptnavigation
+   ------------------------- */
+
+/*
+ * Drei gleich große Bereiche sorgen dafür,
+ * dass der Titel unabhängig von den Links
+ * exakt in der Mitte bleibt.
+ */
+.app-navigation {
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        auto
+        1fr;
+
+    align-items: center;
+}
+
+
+.app-navigation-left {
+    justify-self: start;
+}
+
+
+.app-navigation-center {
+    justify-self: center;
+}
+
+
+.app-navigation-right {
+    justify-self: end;
+}
+
+
+.app-navigation-title {
+    font-size: 1.05rem;
+}
+
+
+.topbar-nav-link {
+    color: #d1d5db;
+
+    font-size: .9rem;
+    font-weight: 700;
+
+    text-decoration: none;
+
+    transition:
+        color .15s ease,
+        transform .15s ease;
+}
+
+
+.topbar-nav-link:hover {
+    color: white;
+}
+
+.topbar-nav-button {
+    padding: 0;
+
+    border: 0;
+    background: transparent;
+
+    color: #d1d5db;
+
+    font: inherit;
+    font-size: .9rem;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color .15s ease;
+}
+
+
+.topbar-nav-button:hover {
+    color: white;
+}
+
+
+/*
+ * Der Rückweg bewegt sich beim Hover
+ * minimal in seine Navigationsrichtung.
+ */
+.app-navigation-left
+.topbar-nav-link:hover {
+    transform:
+        translateX(-2px);
+}
+
 .badge {
   display: inline-block;
   margin-left: .6rem;
@@ -1284,7 +1377,7 @@ h2 {
     border: 2px solid #f97316;
 
     box-shadow:
-        0 5px 14px rgba(0, 0, 0, .10);
+        0 5px 14px rgba(0, 0, 0, .08);
 
     transition:
         box-shadow .2s ease,
@@ -1305,7 +1398,7 @@ h2 {
     scale: 1.025;
 
     box-shadow:
-        0 10px 22px rgba(0, 0, 0, .16);
+        0 10px 22px rgba(0, 0, 0, .08);
 }
 
 /*

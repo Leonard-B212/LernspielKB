@@ -14,11 +14,32 @@
 
 <body>
 
-<header class="topbar">
-    <div>
-        <strong>Lernspiel</strong>
-        <span class="badge">Level</span>
+<header class="topbar app-navigation">
+
+    <div class="app-navigation-left">
     </div>
+
+
+    <div class="app-navigation-center">
+
+        <a href="/sandbox.html"
+           class="topbar-nav-link">
+            Sandbox
+        </a>
+
+    </div>
+
+
+    <div class="app-navigation-right">
+
+        <button id="logout-button"
+                type="button"
+                class="topbar-nav-button">
+            Logout
+        </button>
+
+    </div>
+
 </header>
 
 <main class="skilltree-page">
@@ -58,6 +79,10 @@
 
 <script type="module"
         src="/js/pages/skilltree.js">
+</script>
+
+<script type="module"
+        src="/js/navigation/navigation.js">
 </script>
 
 </body>
