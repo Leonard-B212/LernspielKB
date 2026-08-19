@@ -16,14 +16,38 @@
 
 <body>
 
-<header class="topbar">
-    <div>
-        <strong>Lernspiel</strong>
+<header class="topbar app-navigation">
 
-        <span class="badge">
-            Level
-        </span>
+    <div class="app-navigation-left">
+
+        <a href="/skilltree.html"
+           class="topbar-nav-link">
+            ← Lernpfad
+        </a>
+
     </div>
+
+
+    <div class="app-navigation-center">
+
+        <a href="/sandbox.html"
+           class="topbar-nav-link">
+            Sandbox
+        </a>
+
+    </div>
+
+
+    <div class="app-navigation-right">
+
+        <button id="logout-button"
+                type="button"
+                class="topbar-nav-button">
+            Logout
+        </button>
+
+    </div>
+
 </header>
 
 
@@ -239,6 +263,10 @@
 
 <script type="module"
         src="/js/pages/level.js">
+</script>
+
+<script type="module"
+        src="/js/navigation/navigation.js">
 </script>
 
 </body>

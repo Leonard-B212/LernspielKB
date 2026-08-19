@@ -2,6 +2,12 @@ package de.lernspiel.level.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * Repräsentiert ein einzelnes Lernlevel.
+ *
+ * Ein Level gehört zu einer Kategorie und einer Programmiersprache.
+ * Die Kombination aus Kategorie, Levelnummer und Sprache ist fachlich eindeutig.
+ */
 @Entity
 @Table(
     name = "level",
@@ -9,7 +15,7 @@ import jakarta.persistence.*;
         @UniqueConstraint(
             name = "uk_level_category_number_language",
             columnNames = {
-                "category",
+                "category_id",
                 "level_number",
                 "language_id"
             }
@@ -25,16 +31,41 @@ public class Level {
     @Column(nullable = false)
     private String levelName;
 
-    @Column(nullable = false, length = 1000)
+    @Column(
+        nullable = false,
+        length = 1000
+    )
     private String levelDescription;
 
-    @Column(nullable = false)
-    private String category;
+    /**
+     * Fachliche Kategorie des Levels.
+     */
+    @ManyToOne(
+        fetch = FetchType.LAZY,
+        optional = false
+    )
+    @JoinColumn(
+        name = "category_id",
+        nullable = false
+    )
+    private LevelCategory category;
 
-    @Column(name = "level_number", nullable = false)
+    /**
+     * Reihenfolge des Levels innerhalb seiner Kategorie.
+     */
+    @Column(
+        name = "level_number",
+        nullable = false
+    )
     private Integer levelNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /**
+     * Programmiersprache, für die das Level vorgesehen ist.
+     */
+    @ManyToOne(
+        fetch = FetchType.LAZY,
+        optional = false
+    )
     @JoinColumn(
         name = "language_id",
         nullable = false
@@ -66,11 +97,11 @@ public class Level {
         this.levelDescription = levelDescription;
     }
 
-    public String getCategory() {
+    public LevelCategory getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(LevelCategory category) {
         this.category = category;
     }
 

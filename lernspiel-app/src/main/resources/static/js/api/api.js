@@ -88,7 +88,7 @@ export function redirectByRole(role) {
   const routes = {
     ADMIN: "/admin.html",
     TEACHER: "/teacher.html",
-    STUDENT: "/student.html"
+    STUDENT: "/skilltree.html"
   };
 
   window.location.href = routes[role] || "/index.html";

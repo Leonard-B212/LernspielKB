@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Level auswählen</title>
+
+    <link rel="stylesheet"
+          href="/css/style.css">
+</head>
+
+<body>
+
+<header class="topbar app-navigation">
+
+    <div class="app-navigation-left">
+    </div>
+
+
+    <div class="app-navigation-center">
+
+        <a href="/sandbox.html"
+           class="topbar-nav-link">
+            Sandbox
+        </a>
+
+    </div>
+
+
+    <div class="app-navigation-right">
+
+        <button id="logout-button"
+                type="button"
+                class="topbar-nav-button">
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+<main class="skilltree-page">
+
+    <section class="card">
+
+        <div class="section-header">
+            <div>
+                <h1>Dein Lernpfad</h1>
+
+                <p class="muted">
+                    Wähle ein Level aus und arbeite dich durch die Kategorien.
+                </p>
+            </div>
+        </div>
+
+        <div id="language-selector"
+             class="language-selector">
+        </div>
+
+    </section>
+
+
+    <section class="card">
+
+        <div id="skilltree"
+             class="skilltree">
+        </div>
+
+        <p id="skilltree-message"
+           class="message">
+        </p>
+
+    </section>
+
+</main>
+
+<script type="module"
+        src="/js/pages/skilltree.js">
+</script>
+
+<script type="module"
+        src="/js/navigation/navigation.js">
+</script>
+
+</body>
+
+</html>

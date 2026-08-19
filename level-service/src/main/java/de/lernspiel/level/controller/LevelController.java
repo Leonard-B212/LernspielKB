@@ -1,5 +1,7 @@
 package de.lernspiel.level.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelResponse;
 import de.lernspiel.level.service.LevelService;
+import de.lernspiel.level.dto.LevelOverviewResponse;
 
 /**
  * REST-Controller für Level-Daten.
@@ -28,6 +31,17 @@ public class LevelController {
         this.levelService = levelService;
     }
 
+    /**
+     * Gibt alle verfügbaren Level in kompakter Form zurück.
+     */
+    @GetMapping
+    public ResponseEntity<List<LevelOverviewResponse>> getAllLevels() {
+
+        return ResponseEntity.ok(
+                levelService.getAllLevels()
+        );
+    }
+
 
     /**
      * Gibt ein einzelnes Level inklusive seiner verfügbaren
@@ -38,7 +52,7 @@ public class LevelController {
             @PathVariable Integer levelID) {
 
         try {
-
+            
             LevelResponse level =
                     levelService.getLevelById(
                             levelID

@@ -11,11 +11,32 @@
 
 <body>
 
-<header class="topbar">
-    <div>
-        <strong>Lernspiel</strong>
-        <span class="badge">Sandbox</span>
+<header class="topbar app-navigation">
+
+    <div class="app-navigation-left">
+
+        <a href="/skilltree.html"
+           class="topbar-nav-link">
+            ← Lernpfad
+        </a>
+
     </div>
+
+
+    <div class="app-navigation-center">
+    </div>
+
+
+    <div class="app-navigation-right">
+
+        <button id="logout-button"
+                type="button"
+                class="topbar-nav-button">
+            Logout
+        </button>
+
+    </div>
+
 </header>
 
 <main class="sandbox-page">
@@ -223,6 +244,8 @@
 </main>
 
 <script type="module" src="/js/pages/sandbox.js"></script>
+
+<script type="module" src="/js/navigation/navigation.js"></script>
 
 </body>
 </html>

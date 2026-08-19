@@ -2,6 +2,7 @@ package de.lernspiel.level.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
 import de.lernspiel.level.dto.LevelComponentResponse;
+import de.lernspiel.level.dto.LevelOverviewResponse;
 import de.lernspiel.level.dto.LevelResponse;
 import de.lernspiel.level.entity.Component;
 import de.lernspiel.level.entity.Level;
@@ -18,6 +20,9 @@ import de.lernspiel.level.repository.ComponentRepository;
 import de.lernspiel.level.repository.LevelComponentRepository;
 import de.lernspiel.level.repository.LevelRepository;
 import de.lernspiel.level.repository.ProgrammingLanguageRepository;
+import de.lernspiel.level.dto.LevelOverviewResponse;
+import de.lernspiel.level.entity.LevelCategory;
+import de.lernspiel.level.repository.LevelCategoryRepository;
 
 /**
  * Service für das Laden und Anlegen von Level-Daten.
@@ -32,19 +37,21 @@ public class LevelService {
     private final LevelComponentRepository levelComponentRepository;
     private final ComponentRepository componentRepository;
     private final ProgrammingLanguageRepository programmingLanguageRepository;
-
+    private final LevelCategoryRepository levelCategoryRepository;
 
     public LevelService(
-            LevelRepository levelRepository,
-            LevelComponentRepository levelComponentRepository,
-            ComponentRepository componentRepository,
-            ProgrammingLanguageRepository programmingLanguageRepository) {
+                LevelRepository levelRepository,
+                LevelComponentRepository levelComponentRepository,
+                ComponentRepository componentRepository,
+                ProgrammingLanguageRepository programmingLanguageRepository,
+                LevelCategoryRepository levelCategoryRepository) {
 
         this.levelRepository = levelRepository;
         this.levelComponentRepository = levelComponentRepository;
         this.componentRepository = componentRepository;
         this.programmingLanguageRepository = programmingLanguageRepository;
-    }
+        this.levelCategoryRepository = levelCategoryRepository;
+        }
 
 
     /**
@@ -87,15 +94,19 @@ public class LevelService {
 
         ProgrammingLanguage language =
                 getOrCreateLanguage(request.getLanguage());
-
+        LevelCategory category =
+        getOrCreateCategory(
+                request.getCategory(),
+                request.getCategoryOrder()
+        );
 
         if (
             levelRepository
                 .existsByCategoryAndLevelNumberAndLanguage(
-                    request.getCategory(),
-                    request.getLevelNumber(),
-                    language
-                )
+                        category,
+                        request.getLevelNumber(),
+                        language
+    )
         ) {
             throw new IllegalArgumentException(
                     "Für Kategorie "
@@ -120,7 +131,7 @@ public class LevelService {
         );
 
         level.setCategory(
-                request.getCategory()
+                category
         );
 
         level.setLevelNumber(
@@ -240,6 +251,53 @@ public class LevelService {
                 });
     }
 
+        /**
+         * Lädt eine Level-Kategorie oder legt sie an, falls sie noch nicht existiert.
+         */
+        private LevelCategory getOrCreateCategory(
+                String categoryName,
+                Integer categoryOrder) {
+
+        if (
+                categoryName == null
+                || categoryName.isBlank()
+        ) {
+                throw new IllegalArgumentException(
+                        "Kategorie darf nicht leer sein."
+                );
+        }
+
+        String normalizedCategory =
+                categoryName
+                        .trim()
+                        .toUpperCase();
+
+        return levelCategoryRepository
+                .findByCategoryName(normalizedCategory)
+                .orElseGet(() -> {
+
+                        if (categoryOrder == null) {
+                        throw new IllegalArgumentException(
+                                "Für eine neue Kategorie muss categoryOrder angegeben werden."
+                        );
+                        }
+
+                        LevelCategory category =
+                                new LevelCategory();
+
+                        category.setCategoryName(
+                                normalizedCategory
+                        );
+
+                        category.setCategoryOrder(
+                                categoryOrder
+                        );
+
+                        return levelCategoryRepository
+                                .save(category);
+                });
+        }
+
 
     /**
      * Lädt eine Component oder legt sie anhand des gemeinsamen CodeType neu an.
@@ -299,11 +357,62 @@ public class LevelService {
                 level.getLevelID(),
                 level.getLevelName(),
                 level.getLevelDescription(),
-                level.getCategory(),
+                level.getCategory().getCategoryID(),
+                level.getCategory().getCategoryName(),
+                level.getCategory().getCategoryOrder(),
                 level.getLevelNumber(),
                 level.getLanguage().getLanguageID(),
                 level.getLanguage().getLanguageName(),
                 components
+        );
+    }
+
+    /**
+     * Liefert alle vorhandenen Level in kompakter Form für Übersichtsseiten.
+     *
+     * Die Level werden nach Programmiersprache, Kategorie und Levelnummer sortiert.
+     */
+    public List<LevelOverviewResponse> getAllLevels() {
+
+        return levelRepository
+                .findAll()
+                .stream()
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        (Level level) ->
+                                                level.getLanguage()
+                                                        .getLanguageName()
+                                )
+                                .thenComparing(
+                                        level ->
+                                                level.getCategory()
+                                                        .getCategoryOrder()
+                                )
+                                .thenComparing(
+                                        Level::getLevelNumber
+                                )
+                )
+                .map(this::mapToOverviewResponse)
+                .toList();
+    }
+
+
+    /**
+     * Wandelt ein Level in die kompakte Darstellung für Übersichtsseiten um.
+     */
+    private LevelOverviewResponse mapToOverviewResponse(
+            Level level) {
+
+        return new LevelOverviewResponse(
+                level.getLevelID(),
+                level.getLevelName(),
+                level.getCategory().getCategoryID(),
+                level.getCategory().getCategoryName(),
+                level.getCategory().getCategoryOrder(),
+                level.getLevelNumber(),
+                level.getLanguage().getLanguageID(),
+                level.getLanguage().getLanguageName()
         );
     }
 }
