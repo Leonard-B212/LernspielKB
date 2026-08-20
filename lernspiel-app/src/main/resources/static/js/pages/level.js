@@ -19,6 +19,10 @@ import {
 } from "../editor/blockDefinitions.js";
 
 import {
+    buildLevelPalette
+} from "../editor/paletteBuilder.js";
+
+import {
     createEditorState
 } from "../editor/editorState.js";
 
@@ -173,8 +177,14 @@ async function loadLevel() {
         loadedLevel.language;
 
 
-    renderPalette(
+    const paletteComponents =
+    buildLevelPalette(
         loadedLevel.components
+    );
+
+
+    renderPalette(
+        paletteComponents
     );
 }
 

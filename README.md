@@ -25,12 +25,14 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
   - [Skilltree-Architektur](#skilltree-architektur)
   - [Interpreter](#interpreter)
   - [Level-Service](#level-service)
+  - [Level-Bootstrap](#level-bootstrap)
   - [Level-Fortschritt](#level-fortschritt)
   - [Datenbank](#datenbank)
 - [Projektstruktur](#projektstruktur)
 - [API-Endpunkte](#api-endpunkte)
 - [Entwicklung](#entwicklung)
   - [Manueller Start](#manueller-start)
+  - [XSS Security Check](#xss-security-check)
   - [Aktueller Entwicklungsstand](#aktueller-entwicklungsstand)
   - [Noch offene Punkte](#noch-offene-punkte)
 
@@ -63,8 +65,12 @@ Aktuell umgesetzt sind unter anderem:
 - REST-Schnittstellen zum Anlegen und Laden von Leveln
 - dynamisches Laden von Leveln im Frontend
 - dynamische Bereitstellung der für ein Level verfügbaren Code-Blöcke
+- automatische Ergänzung zufälliger zusätzlicher Code-Blöcke
+- zufällige Anordnung der Block-Palette
 - Programmiersprachen als eigene Datenbankobjekte
 - Level-Kategorien mit definierter Reihenfolge
+- automatischer Bootstrap vordefinierter Level
+- automatische Erkennung neuer Levelgruppen über Spring
 - Level-Übersicht für den Skilltree
 - visueller Skilltree als zentrale Schüleroberfläche
 - Wechsel zwischen verschiedenen Programmiersprachen im Skilltree
@@ -75,10 +81,13 @@ Aktuell umgesetzt sind unter anderem:
 - benutzerbezogener Level-Fortschritt
 - gemeinsame Navigation zwischen Lernpfad, Level und Sandbox
 - Logout über die gemeinsame Navigation
+- automatisierter XSS-Codecheck als Entwicklungshilfe
 
 Die Code-Sandbox dient weiterhin als frei nutzbare technische Umgebung für den visuellen Editor und Interpreter.
 
-Zusätzlich können Level dynamisch aus der Datenbank geladen werden. Ein Level definiert unter anderem Aufgabenstellung, Kategorie, Programmiersprache und die dafür verfügbaren Code-Blöcke.
+Zusätzlich können Level dynamisch aus der Datenbank geladen werden. Ein Level definiert unter anderem Aufgabenstellung, Kategorie, Programmiersprache und die für die Lösung vorgesehenen Code-Blöcke.
+
+Vordefinierte Standardlevel werden beim Start der Anwendung automatisch geprüft und bei Bedarf angelegt.
 
 ---
 
@@ -131,6 +140,7 @@ Im Menü anschließend:
 [1] Clean Install
 [2] Clean Install und Start
 [3] Nur Start
+[4] XSS Security Check
 [0] Beenden
 ```
 
@@ -145,6 +155,8 @@ Die Anwendung ist anschließend erreichbar unter:
 ```text
 http://localhost:8080
 ```
+
+Der XSS Security Check kann unabhängig vom Start der Anwendung über Menüpunkt `[4]` ausgeführt werden.
 
 ## Test-Zugangsdaten
 
@@ -384,14 +396,44 @@ Ein Level enthält aktuell unter anderem:
 - eine Kategorie
 - eine Levelnummer
 - eine Programmiersprache
-- die für das Level verfügbaren Code-Blöcke
+- die für die Lösung vorgesehenen Code-Blöcke
 - die konfigurierte Anzahl der jeweiligen Code-Blöcke
 
 Die Kombination aus Kategorie, Levelnummer und Programmiersprache dient zur strukturierten Einordnung eines Levels.
 
 Die Level-Seite verwendet dieselben wiederverwendbaren Editor-Komponenten wie die Sandbox.
 
-Die Block-Palette wird jedoch nicht statisch im HTML definiert, sondern anhand der Daten des geladenen Levels erzeugt.
+Die Block-Palette wird jedoch nicht statisch im HTML definiert, sondern dynamisch aus den Daten des geladenen Levels aufgebaut.
+
+Damit die für ein Level gespeicherten Komponenten nicht unmittelbar die Lösung vorgeben, wird die Palette vor der Darstellung zusätzlich erweitert und gemischt.
+
+Der Ablauf ist:
+
+```text
+Level-Components aus dem Backend
+          ↓
+2–3 zufällige zusätzliche Blocktypen
+          ↓
+zufällige Reihenfolge der gesamten Palette
+          ↓
+Darstellung im Level
+```
+
+Die zusätzlichen Blöcke werden ausschließlich für die sichtbare Palette erzeugt. Die eigentliche Leveldefinition und die in der Datenbank gespeicherten `LevelComponent`-Einträge werden dadurch nicht verändert.
+
+Bereits im Level vorhandene Blocktypen werden bei der Auswahl der zusätzlichen Blöcke ausgeschlossen.
+
+Als mögliche zusätzliche Blocktypen werden nur Blocktypen verwendet, die das Frontend über die zentralen `BLOCK_DEFINITIONS` aktuell unterstützt.
+
+Die gesamte Palette wird anschließend mit einem Fisher-Yates-Shuffle zufällig angeordnet.
+
+Dadurch sollen weder die Auswahl der verfügbaren Blöcke noch deren Reihenfolge die Lösung einer Aufgabe direkt vorgeben.
+
+Die entsprechende Logik befindet sich in:
+
+```text
+js/editor/paletteBuilder.js
+```
 
 Ein Level kann über seine ID geladen werden:
 
@@ -408,7 +450,7 @@ Die Level-Seite lädt anschließend die zugehörigen Daten über den Level-Servi
 
 an.
 
-Die in der Datenbank gespeicherte Anzahl der verfügbaren Komponenten wird bereits an das Frontend übertragen.
+Die in der Datenbank gespeicherte Anzahl der vorgesehenen Komponenten wird bereits an das Frontend übertragen.
 
 Eine tatsächliche Begrenzung der maximal verwendbaren Blockanzahl im Editor ist aktuell noch nicht vollständig umgesetzt.
 
@@ -443,6 +485,7 @@ level-service
      ├── Kategorien
      ├── Programmiersprachen
      ├── Components
+     ├── Level-Bootstrap
      └── Fortschritt
 
 lernspiel-app
@@ -472,7 +515,7 @@ Die JavaScript-Komponenten sind nach ihrer jeweiligen Aufgabe gegliedert.
 js/
 │
 ├── api/          # Kommunikation mit dem Backend
-├── editor/       # Wiederverwendbarer visueller Code-Editor
+├── editor/       # Wiederverwendbarer visueller Code-Editor und Palette
 ├── navigation/   # Gemeinsame Navigation
 ├── pages/        # Seitenspezifische Controller
 └── skilltree/    # Darstellung und Zustand des Skilltrees
@@ -495,6 +538,17 @@ Dazu gehören unter anderem:
 Die Editor-Komponenten unter `js/editor/` werden sowohl von der Sandbox als auch von der dynamischen Level-Seite verwendet.
 
 Dadurch müssen Drag & Drop, Rendering und Editor-State nicht für jede Seite separat implementiert werden.
+
+Zusätzlich befindet sich dort mit `paletteBuilder.js` die Logik für den dynamischen Aufbau der Block-Palette eines Levels.
+
+Der `paletteBuilder`:
+
+- übernimmt die vom Backend gelieferten Level-Komponenten
+- bestimmt weitere verfügbare Blocktypen über `BLOCK_DEFINITIONS`
+- schließt bereits vorhandene Typen als zusätzliche Blöcke aus
+- ergänzt zufällig zwei bis drei zusätzliche Blocktypen
+- mischt die vollständige Palette
+- verändert die ursprünglichen Leveldaten nicht
 
 ### Navigation
 
@@ -708,6 +762,91 @@ Dadurch muss der Skilltree nicht für jedes Level sämtliche Editor- und Compone
 
 ---
 
+## Level-Bootstrap
+
+Vordefinierte Standardlevel werden beim Start der Anwendung automatisch über den Level-Bootstrap geprüft.
+
+Die grundlegende Struktur ist:
+
+```text
+LevelBootstrap
+      ↓
+List<LevelDefinitionProvider>
+      ↓
+JavaBasicLevels
+JavaVariableLevels
+weitere zukünftige Provider
+      ↓
+LevelService
+      ↓
+Datenbank
+```
+
+`LevelBootstrap` implementiert `CommandLineRunner` und wird dadurch beim Start der Spring-Boot-Anwendung ausgeführt.
+
+Die konkreten Leveldefinitionen sind vom eigentlichen Bootstrap getrennt.
+
+Das Interface:
+
+```text
+LevelDefinitionProvider
+```
+
+definiert dafür eine gemeinsame Schnittstelle.
+
+Die einzelnen Levelgruppen, aktuell beispielsweise:
+
+```text
+JavaBasicLevels
+JavaVariableLevels
+```
+
+implementieren dieses Interface und werden als Spring-Komponenten registriert.
+
+Spring stellt dem `LevelBootstrap` automatisch alle vorhandenen `LevelDefinitionProvider` zur Verfügung.
+
+Dadurch muss `LevelBootstrap` keine konkreten Levelgruppen kennen.
+
+Wird zukünftig beispielsweise eine weitere Gruppe angelegt:
+
+```text
+JavaConditionLevels
+```
+
+muss diese lediglich:
+
+- `LevelDefinitionProvider` implementieren
+- als Spring-Komponente registriert werden
+- ihre Level über `createLevels()` bereitstellen
+
+Eine zusätzliche manuelle Registrierung in `LevelBootstrap` ist nicht notwendig.
+
+Für jedes definierte Level wird beim Start geprüft, ob bereits ein Level mit der entsprechenden Kombination aus:
+
+```text
+Programmiersprache
++
+Kategorie
++
+Levelnummer
+```
+
+existiert.
+
+Ist das Level bereits vorhanden, wird es nicht erneut angelegt.
+
+Fehlt es, wird es über den `LevelService` erstellt.
+
+Dadurch kann der Bootstrap bei jedem Start ausgeführt werden, ohne bestehende Standardlevel zu duplizieren.
+
+Nach Abschluss des Bootstraps wird im Terminal ausgegeben, ob alle Level bereits vorhanden waren oder neue Level angelegt wurden.
+
+Die Bootstrap-Definitionen dienen damit als zentrale Definition der mitgelieferten Standardlevel.
+
+Der REST-Endpunkt zum manuellen Anlegen von Leveln bleibt unabhängig davon weiterhin vorhanden.
+
+---
+
 ## Level-Fortschritt
 
 Der Fortschritt eines Schülers wird getrennt von den eigentlichen Leveldaten verwaltet.
@@ -792,7 +931,6 @@ spring.jpa.hibernate.ddl-auto=update
 ```text
 User
 SchoolClass
-
 Level
 LevelCategory
 ProgrammingLanguage
@@ -802,6 +940,8 @@ CompletedLevel
 ```
 
 Die Datenbankstruktur ergibt sich damit direkt aus dem aktuellen Stand der Entity-Klassen.
+
+Zusätzlich werden die mitgelieferten Standardlevel über den `LevelBootstrap` geprüft und bei Bedarf angelegt.
 
 ---
 
@@ -817,11 +957,12 @@ LernspielKB/
 ├── auth-service/       # Authentifizierung sowie Benutzer- und Klassenverwaltung
 ├── common/             # Modulübergreifend verwendete Typen und Komponenten
 ├── game-service/       # Interpreter und Ausführung der erstellten Programme
-├── level-service/      # Level, Kategorien, Programmiersprachen und Fortschritt
+├── level-service/      # Level, Bootstrap, Kategorien, Programmiersprachen und Fortschritt
 ├── lernspiel-app/      # Spring-Boot-Hauptanwendung und Frontend
 │
 ├── .gitignore          # Von Git ignorierte Dateien und Ordner
-├── dev.ps1             # Entwicklungs-Skript zum Bauen und Starten
+├── dev.ps1             # Entwicklungs-Skript zum Bauen, Starten und für Security-Checks
+├── xss-check.ps1       # Automatisierter Check auf potenzielle XSS-Sinks
 ├── README.md           # Projektdokumentation
 └── pom.xml             # Parent-POM und Maven-Modulverwaltung
 ```
@@ -834,7 +975,8 @@ LernspielKB/
 LernspielKB/
 │
 ├── .gitignore                                      # Definiert Dateien und Ordner, die von Git ignoriert werden
-├── dev.ps1                                         # PowerShell-Skript zum Bauen und Starten der Anwendung
+├── dev.ps1                                         # PowerShell-Skript zum Bauen, Starten und Ausführen von Entwicklungstools
+├── xss-check.ps1                                   # Durchsucht das Frontend nach potenziellen XSS-Sinks
 ├── pom.xml                                         # Parent-POM zur Verwaltung der Maven-Module
 ├── README.md                                       # Projektdokumentation
 │
@@ -925,7 +1067,7 @@ LernspielKB/
 │                           └── service/
 │                               └── InterpreterService.java          # Interpretiert und verarbeitet die Code-Blöcke
 │
-├── level-service/                                  # Levelverwaltung, Skilltree-Daten und Lernfortschritt
+├── level-service/                                  # Levelverwaltung, Bootstrap, Skilltree-Daten und Lernfortschritt
 │   ├── pom.xml                                     # Maven-Konfiguration des Level-Moduls
 │   │
 │   └── src/
@@ -934,6 +1076,14 @@ LernspielKB/
 │               └── de/
 │                   └── lernspiel/
 │                       └── level/
+│                           │
+│                           ├── config/                              # Konfiguration und Bootstrap der Standardlevel
+│                           │   ├── LevelBootstrap.java              # Prüft und erstellt Standardlevel beim Anwendungsstart
+│                           │   │
+│                           │   └── bootstrap/                       # Definition der automatisch angelegten Levelgruppen
+│                           │       ├── LevelDefinitionProvider.java # Gemeinsame Schnittstelle aller Levelgruppen
+│                           │       ├── JavaBasicLevels.java         # Vordefinierte Java-Level der Kategorie BASICS
+│                           │       └── JavaVariableLevels.java      # Vordefinierte Java-Level der Kategorie VARIABLES
 │                           │
 │                           ├── controller/                          # REST-Schnittstellen der Levelverwaltung
 │                           │   ├── LevelController.java             # Erstellen, Laden und Übersicht von Leveln
@@ -1006,12 +1156,13 @@ LernspielKB/
                         │
                         ├── auth/                                   # Vorgesehen für gemeinsame Authentifizierungslogik
                         │
-                        ├── editor/                                 # Wiederverwendbare Editor-Komponenten
+                        ├── editor/                                 # Wiederverwendbare Editor- und Palette-Komponenten
                         │   ├── blockDefinitions.js                 # Definition und Darstellung der Code-Blöcke
                         │   ├── blockFactory.js                     # Erzeugt Blockobjekte für das Programm
                         │   ├── consoleTheme.js                     # Darstellungsmodi der Interpreter-Konsole
                         │   ├── dragDrop.js                         # Drag & Drop, Verschieben und Löschen
                         │   ├── editorState.js                      # Zustand des visuellen Programms
+                        │   ├── paletteBuilder.js                   # Ergänzt Distraktoren und mischt die Level-Palette
                         │   └── renderer.js                         # Rendert den Editor-State
                         │
                         ├── navigation/
@@ -1156,15 +1307,18 @@ Beispiel:
 POST /api/levels
 ```
 
-können neue Level angelegt werden.
+können neue Level weiterhin manuell angelegt werden.
 
-Beispiel:
+Die mitgelieferten Standardlevel werden dagegen beim Anwendungsstart automatisch über den `LevelBootstrap` geprüft und bei Bedarf erstellt.
+
+Beispiel für das manuelle Anlegen eines Levels:
 
 ```json
 {
   "levelName": "Erste Variable",
   "levelDescription": "Erstelle eine int-Variable x mit dem Wert 5.",
   "category": "BASICS",
+  "categoryOrder": 1,
   "levelNumber": 1,
   "language": "JAVA",
   "components": [
@@ -1339,6 +1493,8 @@ Für die alltägliche Entwicklung kann das im Projekt enthaltene PowerShell-Skri
 
 Die Einrichtung und Verwendung des Skripts ist unter [Projekt starten](#projekt-starten) beschrieben.
 
+Neben dem Bauen und Starten der Anwendung kann darüber auch der lokale XSS Security Check ausgeführt werden.
+
 ## Manueller Start
 
 Alternativ kann das Projekt vollständig über Maven gebaut und gestartet werden.
@@ -1361,6 +1517,75 @@ Die Anwendung ist anschließend erreichbar unter:
 ```text
 http://localhost:8080
 ```
+
+---
+
+## XSS Security Check
+
+Für die lokale Entwicklung steht zusätzlich das Skript:
+
+```text
+xss-check.ps1
+```
+
+zur Verfügung.
+
+Es kann direkt ausgeführt werden:
+
+```powershell
+.\xss-check.ps1
+```
+
+oder über:
+
+```powershell
+.\dev.ps1
+```
+
+und anschließend:
+
+```text
+[4] XSS Security Check
+```
+
+Der Check durchsucht das statische Frontend rekursiv nach JavaScript- und HTML-Konstrukten, die bei unsicherer Verwendung Cross-Site-Scripting ermöglichen können.
+
+Aktuell werden unter anderem folgende Muster geprüft:
+
+```text
+innerHTML
+insertAdjacentHTML(...)
+document.write(...)
+eval(...)
+new Function(...)
+```
+
+Werden keine Stellen für ein Muster gefunden, wird dieses mit `[OK]` ausgegeben.
+
+Gefundene potenziell relevante Stellen werden mit `[REVIEW]` markiert und inklusive Datei, Zeilennummer und Codezeile im Terminal ausgegeben.
+
+Beispiel:
+
+```text
+[REVIEW] innerHTML
+
+lernspiel-app\src\main\resources\static\js\pages\admin.js:128
+  row.innerHTML = `
+```
+
+Ein Treffer bedeutet ausdrücklich **nicht automatisch, dass eine XSS-Sicherheitslücke vorhanden ist**.
+
+Beispielsweise ist:
+
+```javascript
+element.innerHTML = "";
+```
+
+grundsätzlich nur das Leeren eines Elements.
+
+Dagegen müssen Stellen genauer geprüft werden, an denen externe oder vom Benutzer beeinflussbare Daten über `innerHTML` in das DOM eingesetzt werden.
+
+Der Check dient deshalb als automatisierte Entwicklungshilfe, um potenziell relevante Codebereiche schnell zu finden. Er ersetzt keine vollständige Sicherheitsprüfung der Anwendung.
 
 ---
 
@@ -1435,9 +1660,27 @@ Aktuell umgesetzt sind unter anderem:
 - dynamische Level-Seite
 - Laden vollständiger Levelinformationen aus der Datenbank
 - dynamischer Aufbau der Block-Palette
+- automatische Ergänzung von zwei bis drei zufälligen zusätzlichen Blocktypen
+- Ausschluss bereits benötigter Blocktypen bei der Auswahl der zusätzlichen Blöcke
+- zufälliges Mischen der vollständigen Block-Palette
+- getrennte Palette-Logik über `paletteBuilder.js`
 - Wiederverwendung der Sandbox-Editor-Module
 - Übergabe von Level- und Sprachinformationen an den Interpreter
 - kompakte Levelübersichten über `LevelOverviewResponse`
+
+### Level-Bootstrap
+
+- automatisches Prüfen der Standardlevel beim Start
+- automatisches Anlegen fehlender Standardlevel
+- keine erneute Anlage bereits vorhandener Level
+- `LevelBootstrap` als zentraler Bootstrap
+- `LevelDefinitionProvider` als gemeinsame Schnittstelle
+- getrennte Definition von Levelgruppen
+- `JavaBasicLevels`
+- `JavaVariableLevels`
+- automatische Erkennung aller Provider durch Spring
+- keine manuelle Registrierung neuer Provider im `LevelBootstrap`
+- Terminal-Ausgabe über neu angelegte bzw. bereits vorhandene Level
 
 ### Skilltree
 
@@ -1481,6 +1724,14 @@ Aktuell umgesetzt sind unter anderem:
 - Navigation von der Sandbox zurück zum Lernpfad
 - gemeinsamer Logout
 
+### Entwicklungstools
+
+- `dev.ps1` für Build und Start
+- integrierter Menüpunkt für den XSS Security Check
+- separates `xss-check.ps1`
+- rekursive Prüfung des statischen Frontends auf potenzielle XSS-Sinks
+- Ausgabe der Fundstellen inklusive Datei und Zeilennummer
+
 Der aktuelle Schülerfluss ist damit grundsätzlich vollständig navigierbar:
 
 ```text
@@ -1514,9 +1765,13 @@ Darauf aufbauend soll ein erfolgreich gelöstes Level automatisch als abgeschlos
 
 ### Begrenzung verfügbarer Blöcke
 
-Die Anzahl verfügbarer Komponenten wird bereits über `LevelComponent.amount` gespeichert und an das Frontend übertragen.
+Die für die Lösung vorgesehenen Komponenten und ihre Mengen werden über `LevelComponent.amount` gespeichert und an das Frontend übertragen.
 
-Die tatsächliche Begrenzung der maximal verwendbaren Anzahl eines Blocktyps im Editor ist noch nicht vollständig umgesetzt.
+Zusätzlich ergänzt `paletteBuilder.js` ausschließlich für die Darstellung zwei bis drei zufällige zusätzliche Blocktypen als Distraktoren.
+
+Diese zusätzlichen Blöcke verändern die gespeicherte Leveldefinition nicht.
+
+Die tatsächliche Begrenzung der maximal verwendbaren Anzahl eines Blocktyps im Editor ist weiterhin noch nicht vollständig umgesetzt.
 
 ### Freischaltung von Leveln
 
@@ -1541,6 +1796,14 @@ Beispielsweise könnte eine Verbindung abhängig vom Anteil abgeschlossener Leve
 
 Diese Darstellung ist aktuell bewusst noch nicht implementiert, da sie von der endgültigen Progress- und Unlock-Logik abhängt.
 
+### XSS-Review
+
+Der automatisierte XSS Security Check kann potenziell relevante Stellen im Frontend erkennen und ausgeben.
+
+Die aktuell gefundenen `innerHTML`-Verwendungen müssen noch einzeln darauf geprüft werden, ob dort vom Benutzer oder über APIs gelieferte Daten unsicher in das DOM eingesetzt werden.
+
+Der Scanner dient dabei als Unterstützung für die manuelle Prüfung und nicht als automatischer Nachweis, dass eine Stelle sicher oder unsicher ist.
+
 ### Visueller Feinschliff
 
 Der Skilltree ist funktional und besitzt bereits eine grundlegende visuelle Darstellung inklusive Physics und Hover-Effekten.
@@ -1564,6 +1827,8 @@ Dazu gehören insbesondere:
 
 - Debug-Endpunkte entfernen oder absichern
 - nicht mehr benötigte Seiten überprüfen
+- Secrets und DB-Config aus application.properties löschen, rerollen und in Umgebungsvariable anlegen
 - Testdaten bereinigen
+- XSS-Fundstellen überprüfen
 - finale Security-Konfiguration prüfen
 - README auf den finalen Projektstand bringen

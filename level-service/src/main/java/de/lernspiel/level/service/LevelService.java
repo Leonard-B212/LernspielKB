@@ -20,7 +20,6 @@ import de.lernspiel.level.repository.ComponentRepository;
 import de.lernspiel.level.repository.LevelComponentRepository;
 import de.lernspiel.level.repository.LevelRepository;
 import de.lernspiel.level.repository.ProgrammingLanguageRepository;
-import de.lernspiel.level.dto.LevelOverviewResponse;
 import de.lernspiel.level.entity.LevelCategory;
 import de.lernspiel.level.repository.LevelCategoryRepository;
 
@@ -415,4 +414,65 @@ public class LevelService {
                 level.getLanguage().getLanguageName()
         );
     }
+
+        /**
+         * Prüft, ob für eine Kombination aus Sprache,
+         * Kategorie und Levelnummer bereits ein Level existiert.
+         */
+        public boolean levelExists(
+                String languageName,
+                String categoryName,
+                Integer levelNumber) {
+
+        if (
+                languageName == null
+                || categoryName == null
+                || levelNumber == null
+        ) {
+                return false;
+        }
+
+
+        String normalizedLanguage =
+                languageName
+                        .trim()
+                        .toUpperCase();
+
+        String normalizedCategory =
+                categoryName
+                        .trim()
+                        .toUpperCase();
+
+
+        ProgrammingLanguage language =
+                programmingLanguageRepository
+                        .findByLanguageName(
+                                normalizedLanguage
+                        )
+                        .orElse(null);
+
+
+        LevelCategory category =
+                levelCategoryRepository
+                        .findByCategoryName(
+                                normalizedCategory
+                        )
+                        .orElse(null);
+
+
+        if (
+                language == null
+                || category == null
+        ) {
+                return false;
+        }
+
+
+        return levelRepository
+                .existsByCategoryAndLevelNumberAndLanguage(
+                        category,
+                        levelNumber,
+                        language
+                );
+        }
 }
