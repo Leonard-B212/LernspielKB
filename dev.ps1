@@ -14,6 +14,9 @@ $RootPom = Join-Path $ProjectRoot "pom.xml"
 # Maven-POM der startbaren Spring-Boot-Anwendung.
 $AppPom = Join-Path $ProjectRoot "lernspiel-app\pom.xml"
 
+# XSS-Security-Check.
+$XssCheckScript = Join-Path $ProjectRoot "xss-check.ps1"
+
 # Maven-Kommando. Kann später z. B. auf ".\mvnw.cmd" geändert werden.
 $MavenCommand = "mvn"
 
@@ -72,6 +75,19 @@ function Start-Lernspiel {
 }
 
 
+function Invoke-XssCheck {
+    if (-not (Test-Path $XssCheckScript)) {
+        throw "XSS-Check wurde nicht gefunden: $XssCheckScript"
+    }
+
+    Write-Host ""
+    Write-Host "Starte XSS Security Check..." -ForegroundColor Cyan
+    Write-Host ""
+
+    & $XssCheckScript
+}
+
+
 function Show-Menu {
     Clear-Host
 
@@ -82,6 +98,7 @@ function Show-Menu {
     Write-Host "[1] Clean Install"
     Write-Host "[2] Clean Install und Start"
     Write-Host "[3] Nur Start"
+    Write-Host "[4] XSS Security Check"
     Write-Host "[0] Beenden"
     Write-Host ""
 }
@@ -111,6 +128,10 @@ try {
             Start-Lernspiel
         }
 
+        "4" {
+            Invoke-XssCheck
+        }
+
         "0" {
             Write-Host "Skript beendet."
             exit 0
@@ -118,7 +139,7 @@ try {
 
         default {
             Write-Host ""
-            Write-Host "Ungültige Auswahl. Bitte 0, 1, 2 oder 3 eingeben." `
+            Write-Host "Ungültige Auswahl. Bitte 0, 1, 2, 3 oder 4 eingeben." `
                 -ForegroundColor Yellow
             exit 1
         }
