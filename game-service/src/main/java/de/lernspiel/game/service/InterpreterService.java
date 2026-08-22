@@ -231,9 +231,30 @@ public class InterpreterService {
     }
 
     public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
+        List<CodeBlock> expression = ifBlock.getExpression();
+        if(expression.size() == 1){
+            CodeBlock cb = expression.getFirst();
+            if(cb.getType().equals(CodeType.VAR_NAME)){
+                VarNameBlock varNameBlock = (VarNameBlock) cb;
+                if(!variableAlreadyDeclared(varNameBlock.getName(), variables)){
+                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " wurde nicht deklariert");
+                } else if(!variables.get(varNameBlock.getName()).getType().equals(CodeType.BOOLEAN)){
+                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " ist kein Boolean");
+                }
+                return (boolean) variables.get(varNameBlock.getName()).getValue();
+            } else if(cb.getType().equals(CodeType.VALUE)){
+                ValueBlock valueBlock = (ValueBlock) cb;
+                Variable var = valueBlock.getValue();
+                if(!var.getType().equals(CodeType.BOOLEAN)){
+                    throw new IllegalArgumentException("Wert " + var.getValue() + " ist kein Boolean");
+                }
+                return (boolean) var.getValue();
+            }
+        }   
         // TODO Auto-generated method stub
         return true;
     }
+
 
     public void executeConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, ExecutionLog output){
         output.add("Conditional Statement (Body) gestartet mit " + program.size() + " Blöcken");
