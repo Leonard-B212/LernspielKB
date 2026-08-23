@@ -5,28 +5,14 @@
  * damit Fehlerbehandlung und Authentifizierung einheitlich bleiben.
  */
 
-import {
-    apiRequest
-} from "./api.js";
+import { apiRequest } from "./api.js";
 
-
-/**
- * Lädt ein einzelnes Level anhand seiner ID.
- */
+// Lädt ein einzelnes Level anhand seiner ID.
 export async function getLevel(levelID) {
-
-    return apiRequest(
-        `/api/levels/${levelID}`
-    );
+    return apiRequest(`/api/levels/${levelID}`);
 }
 
-
-/**
- * Lädt alle verfügbaren Level in kompakter Form.
- */
+// Lädt alle verfügbaren Level in kompakter Form.
 export async function getAllLevels() {
-
-    return apiRequest(
-        "/api/levels"
-    );
+    return apiRequest("/api/levels");
 }
