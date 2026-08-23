@@ -38,7 +38,6 @@ public class Component {
      */
     private String componentDescription;
 
-
     public Integer getComponentID() {
         return componentID;
     }

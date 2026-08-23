@@ -2,15 +2,21 @@ package de.lernspiel.level.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * Repräsentiert eine vom Lernspiel unterstützte Programmiersprache.
+ *
+ * Level referenzieren diese Entity, um ihre jeweilige
+ * Programmiersprache eindeutig festzulegen.
+ */
 @Entity
 @Table(
-    name = "programming_language",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_programming_language_name",
-            columnNames = "language_name"
-        )
-    }
+        name = "programming_language",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_programming_language_name",
+                        columnNames = "language_name"
+                )
+        }
 )
 public class ProgrammingLanguage {
 
@@ -18,12 +24,8 @@ public class ProgrammingLanguage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer languageID;
 
-    @Column(
-        name = "language_name",
-        nullable = false
-    )
+    @Column(name = "language_name", nullable = false)
     private String languageName;
-
 
     public Integer getLanguageID() {
         return languageID;

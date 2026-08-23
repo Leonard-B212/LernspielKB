@@ -14,13 +14,13 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(
-    name = "level_category",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_level_category_name",
-            columnNames = "category_name"
-        )
-    }
+        name = "level_category",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_level_category_name",
+                        columnNames = "category_name"
+                )
+        }
 )
 public class LevelCategory {
 
@@ -28,18 +28,11 @@ public class LevelCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer categoryID;
 
-    @Column(
-        name = "category_name",
-        nullable = false
-    )
+    @Column(name = "category_name", nullable = false)
     private String categoryName;
 
-    @Column(
-        name = "category_order",
-        nullable = false
-    )
+    @Column(name = "category_order", nullable = false)
     private Integer categoryOrder;
-
 
     public Integer getCategoryID() {
         return categoryID;
