@@ -12,8 +12,11 @@ import de.lernspiel.auth.entity.UserType;
 import de.lernspiel.auth.repository.SchoolClassRepository;
 import de.lernspiel.auth.repository.UserRepository;
 
-/*
- * Servicelogik für Schulklassen.
+/**
+ * Verwaltet die Servicelogik für Schulklassen.
+ *
+ * Der Service ermöglicht das Laden und Anlegen von Schulklassen und prüft
+ * beim Anlegen, ob der zugewiesene Benutzer als Lehrer verwendet werden kann.
  */
 @Service
 public class SchoolClassService {
@@ -24,25 +27,23 @@ public class SchoolClassService {
     @Autowired
     private UserRepository userRepository;
 
-    // Alle Schulklassen abrufen
+    // Liefert alle vorhandenen Schulklassen.
     public List<SchoolClass> getAllClasses() {
         return schoolClassRepository.findAll();
     }
 
-    // Schulklasse anhand ihrer ID abrufen
+    // Liefert eine Schulklasse anhand ihrer ID.
     public Optional<SchoolClass> getClassById(int classID) {
         return schoolClassRepository.findById(classID);
     }
 
-    // Neue Schulklasse erstellen
+    // Legt eine neue Schulklasse nach Prüfung von Klassenname und Lehrer an.
     public SchoolClass addClass(SchoolClass schoolClass) {
-
         if (schoolClassRepository.existsByClassName(schoolClass.getClassName())) {
             throw new IllegalArgumentException("Eine Klasse mit diesem Namen existiert bereits.");
         }
 
-        Optional<User> optionalTeacher =
-                userRepository.findById(schoolClass.getTeacherID());
+        Optional<User> optionalTeacher = userRepository.findById(schoolClass.getTeacherID());
 
         if (optionalTeacher.isEmpty()) {
             throw new IllegalArgumentException("Der angegebene Lehrer existiert nicht.");
