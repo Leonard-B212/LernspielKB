@@ -13,16 +13,13 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(
-    name = "completed_level",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_completed_level_user_level",
-            columnNames = {
-                "user_id",
-                "level_id"
-            }
-        )
-    }
+        name = "completed_level",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_completed_level_user_level",
+                        columnNames = {"user_id", "level_id"}
+                )
+        }
 )
 public class CompletedLevel {
 
@@ -34,22 +31,15 @@ public class CompletedLevel {
      * ID des Benutzers, der das Level abgeschlossen hat.
      * Der Benutzer selbst wird im auth-service verwaltet.
      */
-    @Column(
-        name = "user_id",
-        nullable = false
-    )
+    @Column(name = "user_id", nullable = false)
     private Integer userID;
 
     /**
      * Das abgeschlossene Level.
      */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-        name = "level_id",
-        nullable = false
-    )
+    @JoinColumn(name = "level_id", nullable = false)
     private Level level;
-
 
     public Integer getCompletedLevelID() {
         return completedLevelID;

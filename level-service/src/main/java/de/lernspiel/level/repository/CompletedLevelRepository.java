@@ -12,21 +12,11 @@ import de.lernspiel.level.entity.CompletedLevel;
  * Ermöglicht das Speichern und Abfragen des Fortschritts
  * eines Benutzers.
  */
-public interface CompletedLevelRepository
-        extends JpaRepository<CompletedLevel, Integer> {
+public interface CompletedLevelRepository extends JpaRepository<CompletedLevel, Integer> {
 
-    /**
-     * Prüft, ob ein Benutzer ein bestimmtes Level bereits abgeschlossen hat.
-     */
-    boolean existsByUserIDAndLevelLevelID(
-            Integer userID,
-            Integer levelID
-    );
+    // Prüft, ob ein Benutzer ein bestimmtes Level bereits abgeschlossen hat.
+    boolean existsByUserIDAndLevelLevelID(Integer userID, Integer levelID);
 
-    /**
-     * Liefert alle abgeschlossenen Level eines Benutzers.
-     */
-    List<CompletedLevel> findByUserID(
-            Integer userID
-    );
+    // Liefert alle abgeschlossenen Level eines Benutzers.
+    List<CompletedLevel> findByUserID(Integer userID);
 }

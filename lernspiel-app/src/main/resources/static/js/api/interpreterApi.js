@@ -8,42 +8,23 @@
  * in diesem API-Bereich ergänzt werden.
  */
 
-
-/**
- * Sendet einen ProgramRequest an den Interpreter
- * und liefert dessen Ausgabe als String-Liste zurück.
- *
- * @param {Object} programRequest
- * @returns {Promise<string[]>}
- */
+// Sendet einen ProgramRequest an den Interpreter und liefert dessen Ausgabe als String-Liste zurück.
 export async function runProgram(programRequest) {
-
-    const response = await fetch(
-        "/game/interpreter/run",
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(
-                programRequest
-            )
-        }
-    );
-
+    const response = await fetch("/game/interpreter/run", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(programRequest)
+    });
 
     if (!response.ok) {
-        const errorText =
-            await response.text();
+        const errorText = await response.text();
 
         throw new Error(
-            errorText ||
-            `Interpreter-Fehler: HTTP ${response.status}`
+            errorText || `Interpreter-Fehler: HTTP ${response.status}`
         );
     }
-
 
     return response.json();
 }

@@ -7,24 +7,16 @@ import org.springframework.stereotype.Component;
 import de.lernspiel.common.code.CodeType;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
-import org.springframework.stereotype.Component;
 
 /**
  * Enthält die fest definierten Java-Level der Kategorie BASICS.
  */
 @Component
-public class JavaBasicLevels
-        implements LevelDefinitionProvider {
+public class JavaBasicLevels implements LevelDefinitionProvider {
 
-    
-
-
-    /**
-     * Liefert alle Java-BASICS-Level in der vorgesehenen Reihenfolge.
-     */
+    // Liefert alle Java-BASICS-Level in der vorgesehenen Reihenfolge.
     @Override
     public List<CreateLevelRequest> createLevels() {
-
         return List.of(
                 createLevel1(),
                 createLevel2(),
@@ -34,9 +26,8 @@ public class JavaBasicLevels
         );
     }
 
-
+    // Erstellt das erste Java-BASICS-Level.
     private static CreateLevelRequest createLevel1() {
-
         return createLevel(
                 "Erste Variable",
                 "Erstelle eine int-Variable x mit dem Wert 5.",
@@ -51,9 +42,8 @@ public class JavaBasicLevels
         );
     }
 
-
+    // Erstellt das zweite Java-BASICS-Level.
     private static CreateLevelRequest createLevel2() {
-
         return createLevel(
                 "String-Variable",
                 "Erstelle eine String-Variable name mit dem Wert \"Hallo\".",
@@ -68,9 +58,8 @@ public class JavaBasicLevels
         );
     }
 
-
+    // Erstellt das dritte Java-BASICS-Level.
     private static CreateLevelRequest createLevel3() {
-
         return createLevel(
                 "Boolean-Variable",
                 "Erstelle eine boolean-Variable isActive mit dem Wert true.",
@@ -85,9 +74,8 @@ public class JavaBasicLevels
         );
     }
 
-
+    // Erstellt das vierte Java-BASICS-Level.
     private static CreateLevelRequest createLevel4() {
-
         return createLevel(
                 "Variable ohne Startwert",
                 "Deklariere eine int-Variable number ohne ihr direkt einen Wert zuzuweisen.",
@@ -100,9 +88,8 @@ public class JavaBasicLevels
         );
     }
 
-
+    // Erstellt das fünfte Java-BASICS-Level.
     private static CreateLevelRequest createLevel5() {
-
         return createLevel(
                 "Zwei Variablen",
                 "Erstelle zwei int-Variablen mit jeweils einem Wert.",
@@ -117,70 +104,32 @@ public class JavaBasicLevels
         );
     }
 
-
-    /**
-     * Erstellt die gemeinsamen Metadaten eines Java-BASICS-Levels.
-     */
+    // Erstellt die gemeinsamen Metadaten eines Java-BASICS-Levels.
     private static CreateLevelRequest createLevel(
             String levelName,
             String levelDescription,
             Integer levelNumber,
             List<LevelComponentRequest> components) {
 
-        CreateLevelRequest request =
-                new CreateLevelRequest();
+        CreateLevelRequest request = new CreateLevelRequest();
 
-        request.setLevelName(
-                levelName
-        );
-
-        request.setLevelDescription(
-                levelDescription
-        );
-
-        request.setCategory(
-                "BASICS"
-        );
-
-        request.setCategoryOrder(
-                1
-        );
-
-        request.setLevelNumber(
-                levelNumber
-        );
-
-        request.setLanguage(
-                "JAVA"
-        );
-
-        request.setComponents(
-                components
-        );
-
+        request.setLevelName(levelName);
+        request.setLevelDescription(levelDescription);
+        request.setCategory("BASICS");
+        request.setCategoryOrder(1);
+        request.setLevelNumber(levelNumber);
+        request.setLanguage("JAVA");
+        request.setComponents(components);
 
         return request;
     }
 
+    // Erstellt eine verfügbare Code-Komponente für ein Level.
+    private static LevelComponentRequest component(CodeType type, Integer amount) {
+        LevelComponentRequest component = new LevelComponentRequest();
 
-    /**
-     * Erstellt eine verfügbare Code-Komponente für ein Level.
-     */
-    private static LevelComponentRequest component(
-            CodeType type,
-            Integer amount) {
-
-        LevelComponentRequest component =
-                new LevelComponentRequest();
-
-        component.setType(
-                type
-        );
-
-        component.setAmount(
-                amount
-        );
-
+        component.setType(type);
+        component.setAmount(amount);
 
         return component;
     }

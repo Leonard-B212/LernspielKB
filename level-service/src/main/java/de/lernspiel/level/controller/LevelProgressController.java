@@ -29,82 +29,40 @@ public class LevelProgressController {
 
     private final LevelProgressService levelProgressService;
 
-
-    public LevelProgressController(
-            LevelProgressService levelProgressService) {
-
+    // Initialisiert den Controller mit dem Service für den Level-Fortschritt.
+    public LevelProgressController(LevelProgressService levelProgressService) {
         this.levelProgressService = levelProgressService;
     }
 
-
-    /**
-     * Liefert alle Level, die der aktuell angemeldete Benutzer abgeschlossen hat.
-     */
+    // Liefert alle Level, die der aktuell angemeldete Benutzer abgeschlossen hat.
     @GetMapping("/completed-levels")
-    public ResponseEntity<LevelProgressResponse> getCompletedLevels(
-            Principal principal) {
+    public ResponseEntity<LevelProgressResponse> getCompletedLevels(Principal principal) {
+        Integer userID = getUserID(principal);
+        List<Integer> completedLevelIDs = levelProgressService.getCompletedLevelIDs(userID);
 
-        Integer userID =
-                getUserID(principal);
-
-        List<Integer> completedLevelIDs =
-                levelProgressService
-                        .getCompletedLevelIDs(userID);
-
-        return ResponseEntity.ok(
-                new LevelProgressResponse(
-                        completedLevelIDs
-                )
-        );
+        return ResponseEntity.ok(new LevelProgressResponse(completedLevelIDs));
     }
 
-
-    /**
-     * Markiert ein Level testweise als abgeschlossen.
-     *
-     * Dieser Endpoint simuliert aktuell eine erfolgreiche Level-Prüfung.
-     * Später soll completeLevel() von der echten Ergebnisprüfung aufgerufen werden.
-     */
+    // Markiert ein Level testweise als abgeschlossen.
     @PostMapping("/levels/{levelID}/complete")
-    public ResponseEntity<?> completeLevel(
-            @PathVariable Integer levelID,
-            Principal principal) {
-
+    public ResponseEntity<?> completeLevel(@PathVariable Integer levelID, Principal principal) {
         try {
-            Integer userID =
-                    getUserID(principal);
+            Integer userID = getUserID(principal);
 
-            levelProgressService.completeLevel(
-                    userID,
-                    levelID
-            );
+            levelProgressService.completeLevel(userID, levelID);
 
-            return ResponseEntity
-                    .noContent()
-                    .build();
-
+            return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
-
-            return ResponseEntity
-                    .status(404)
-                    .body(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 
-
-    /**
-     * Liest die UserID aus dem authentifizierten Principal.
-     */
+    // Liest die UserID aus dem authentifizierten Principal.
     private Integer getUserID(Principal principal) {
-
         if (principal == null) {
-            throw new IllegalStateException(
-                    "Kein authentifizierter Benutzer vorhanden."
-            );
+            throw new IllegalStateException("Kein authentifizierter Benutzer vorhanden.");
         }
 
-        return Integer.parseInt(
-                principal.getName()
-        );
+        return Integer.parseInt(principal.getName());
     }
 }

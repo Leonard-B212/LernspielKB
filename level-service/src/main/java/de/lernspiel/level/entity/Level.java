@@ -10,17 +10,13 @@ import jakarta.persistence.*;
  */
 @Entity
 @Table(
-    name = "level",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_level_category_number_language",
-            columnNames = {
-                "category_id",
-                "level_number",
-                "language_id"
-            }
-        )
-    }
+        name = "level",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_level_category_number_language",
+                        columnNames = {"category_id", "level_number", "language_id"}
+                )
+        }
 )
 public class Level {
 
@@ -31,47 +27,28 @@ public class Level {
     @Column(nullable = false)
     private String levelName;
 
-    @Column(
-        nullable = false,
-        length = 1000
-    )
+    @Column(nullable = false, length = 1000)
     private String levelDescription;
 
     /**
      * Fachliche Kategorie des Levels.
      */
-    @ManyToOne(
-        fetch = FetchType.LAZY,
-        optional = false
-    )
-    @JoinColumn(
-        name = "category_id",
-        nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
     private LevelCategory category;
 
     /**
      * Reihenfolge des Levels innerhalb seiner Kategorie.
      */
-    @Column(
-        name = "level_number",
-        nullable = false
-    )
+    @Column(name = "level_number", nullable = false)
     private Integer levelNumber;
 
     /**
      * Programmiersprache, für die das Level vorgesehen ist.
      */
-    @ManyToOne(
-        fetch = FetchType.LAZY,
-        optional = false
-    )
-    @JoinColumn(
-        name = "language_id",
-        nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "language_id", nullable = false)
     private ProgrammingLanguage language;
-
 
     public Integer getLevelID() {
         return levelID;

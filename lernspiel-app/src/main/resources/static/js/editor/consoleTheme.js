@@ -9,45 +9,20 @@
  * Sandbox und Editor.
  */
 
-
-/**
- * Registriert die Theme-Buttons und synchronisiert Button,
- * Slider und data-theme der Interpreter-Konsole.
- */
-export function initializeConsoleTheme({
-    interpreterConsole,
-    consoleThemeSwitch
-}) {
-
-    const options =
-        consoleThemeSwitch.querySelectorAll(
-            ".console-theme-option"
-        );
-
+// Registriert die Theme-Buttons und synchronisiert Button, Slider und data-theme der Interpreter-Konsole.
+export function initializeConsoleTheme({ interpreterConsole, consoleThemeSwitch }) {
+    const options = consoleThemeSwitch.querySelectorAll(".console-theme-option");
 
     options.forEach((button) => {
+        button.addEventListener("click", () => {
+            const selectedTheme = button.dataset.theme;
 
-        button.addEventListener(
-            "click",
-            () => {
+            interpreterConsole.dataset.theme = selectedTheme;
+            consoleThemeSwitch.dataset.activeTheme = selectedTheme;
 
-                const selectedTheme =
-                    button.dataset.theme;
-
-                interpreterConsole.dataset.theme =
-                    selectedTheme;
-
-                consoleThemeSwitch.dataset.activeTheme =
-                    selectedTheme;
-
-
-                options.forEach((option) => {
-                    option.classList.toggle(
-                        "active",
-                        option === button
-                    );
-                });
-            }
-        );
+            options.forEach((option) => {
+                option.classList.toggle("active", option === button);
+            });
+        });
     });
 }

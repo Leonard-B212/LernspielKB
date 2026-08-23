@@ -12,14 +12,11 @@ import de.lernspiel.level.entity.LevelCategory;
  * Ermöglicht neben den Standardoperationen insbesondere das Laden
  * einer Kategorie anhand ihres eindeutigen Namens.
  */
-public interface LevelCategoryRepository
-        extends JpaRepository<LevelCategory, Integer> {
+public interface LevelCategoryRepository extends JpaRepository<LevelCategory, Integer> {
 
-    Optional<LevelCategory> findByCategoryName(
-            String categoryName
-    );
+    // Lädt eine Level-Kategorie anhand ihres eindeutigen Namens.
+    Optional<LevelCategory> findByCategoryName(String categoryName);
 
-    boolean existsByCategoryName(
-            String categoryName
-    );
+    // Prüft, ob eine Level-Kategorie mit dem angegebenen Namen existiert.
+    boolean existsByCategoryName(String categoryName);
 }
