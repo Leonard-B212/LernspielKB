@@ -11,72 +11,45 @@
  * BREAK-Blöcke markieren später beim Rendern das Ende einer Codezeile.
  */
 
-
-/**
- * Erstellt einen neuen unabhängigen Editor-State.
- */
+// Erstellt einen neuen unabhängigen Editor-State.
 export function createEditorState() {
     let program = [];
 
-
-    /**
-     * Liefert das aktuelle Programm als Blockliste.
-     */
+    // Liefert das aktuelle Programm als Blockliste.
     function getProgram() {
         return program;
     }
 
-
-    /**
-     * Liefert die aktuelle Anzahl der Blöcke.
-     */
+    // Liefert die aktuelle Anzahl der Blöcke.
     function getLength() {
         return program.length;
     }
 
-
-    /**
-     * Fügt einen neuen Block an einer bestimmten Position ein.
-     */
+    // Fügt einen neuen Block an einer bestimmten Position ein.
     function insertBlock(index, block) {
         program.splice(index, 0, block);
     }
 
-
-    /**
-     * Verschiebt einen bestehenden Block innerhalb des Programms.
-     */
+    // Verschiebt einen bestehenden Block innerhalb des Programms.
     function moveBlock(oldIndex, newIndex) {
-        const movedBlock =
-            program.splice(oldIndex, 1)[0];
+        const movedBlock = program.splice(oldIndex, 1)[0];
 
         if (newIndex > oldIndex) {
             newIndex--;
         }
 
-        program.splice(
-            newIndex,
-            0,
-            movedBlock
-        );
+        program.splice(newIndex, 0, movedBlock);
     }
 
-
-    /**
-     * Entfernt einen Block anhand seines Index.
-     */
+    // Entfernt einen Block anhand seines Index.
     function removeBlock(index) {
         program.splice(index, 1);
     }
 
-
-    /**
-     * Löscht das komplette aktuelle Programm.
-     */
+    // Löscht das komplette aktuelle Programm.
     function clear() {
         program = [];
     }
-
 
     return {
         getProgram,

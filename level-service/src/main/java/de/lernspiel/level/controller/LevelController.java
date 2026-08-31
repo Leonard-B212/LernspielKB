@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.lernspiel.level.dto.CreateLevelRequest;
+import de.lernspiel.level.dto.LevelOverviewResponse;
 import de.lernspiel.level.dto.LevelResponse;
 import de.lernspiel.level.service.LevelService;
-import de.lernspiel.level.dto.LevelOverviewResponse;
 
 /**
  * REST-Controller für Level-Daten.
@@ -26,71 +26,36 @@ public class LevelController {
 
     private final LevelService levelService;
 
-
+    // Initialisiert den Controller mit dem Level-Service.
     public LevelController(LevelService levelService) {
         this.levelService = levelService;
     }
 
-    /**
-     * Gibt alle verfügbaren Level in kompakter Form zurück.
-     */
+    // Gibt alle verfügbaren Level in kompakter Form zurück.
     @GetMapping
     public ResponseEntity<List<LevelOverviewResponse>> getAllLevels() {
-
-        return ResponseEntity.ok(
-                levelService.getAllLevels()
-        );
+        return ResponseEntity.ok(levelService.getAllLevels());
     }
 
-
-    /**
-     * Gibt ein einzelnes Level inklusive seiner verfügbaren
-     * Code-Komponenten zurück.
-     */
+    // Gibt ein einzelnes Level inklusive seiner verfügbaren Code-Komponenten zurück.
     @GetMapping("/{levelID}")
-    public ResponseEntity<?> getLevelById(
-            @PathVariable Integer levelID) {
-
+    public ResponseEntity<?> getLevelById(@PathVariable Integer levelID) {
         try {
-            
-            LevelResponse level =
-                    levelService.getLevelById(
-                            levelID
-                    );
-
+            LevelResponse level = levelService.getLevelById(levelID);
             return ResponseEntity.ok(level);
-
         } catch (IllegalArgumentException e) {
-
-            return ResponseEntity
-                    .status(404)
-                    .body(e.getMessage());
+            return ResponseEntity.status(404).body(e.getMessage());
         }
     }
 
-
-    /**
-     * Legt ein neues Level inklusive seiner verfügbaren
-     * Code-Komponenten an.
-     */
+    // Legt ein neues Level inklusive seiner verfügbaren Code-Komponenten an.
     @PostMapping
-    public ResponseEntity<?> createLevel(
-            @RequestBody CreateLevelRequest request) {
-
+    public ResponseEntity<?> createLevel(@RequestBody CreateLevelRequest request) {
         try {
-
-            LevelResponse level =
-                    levelService.createLevel(
-                            request
-                    );
-
+            LevelResponse level = levelService.createLevel(request);
             return ResponseEntity.ok(level);
-
         } catch (IllegalArgumentException e) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

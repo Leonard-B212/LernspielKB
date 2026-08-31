@@ -9,13 +9,7 @@
  * die später als JSON an das Backend bzw. den Interpreter gesendet wird.
  */
 
-
-/**
- * Erzeugt anhand eines Blocktyps das passende Datenobjekt.
- *
- * onError wird als Callback übergeben, damit dieses Modul selbst
- * keine direkte Abhängigkeit von der Sandbox-Oberfläche besitzt.
- */
+// Erzeugt anhand eines Blocktyps das passende Datenobjekt.
 export function createBlockData(type, onError = () => {}) {
     switch (type) {
         case "VAR_NAME":
@@ -25,20 +19,13 @@ export function createBlockData(type, onError = () => {}) {
             return createValueBlock(onError);
 
         default:
-            return {
-                type
-            };
+            return { type };
     }
 }
 
-
-/**
- * Fragt einen Variablennamen ab, validiert ihn und erzeugt einen VAR_NAME-Block.
- */
+// Fragt einen Variablennamen ab, validiert ihn und erzeugt einen VAR_NAME-Block.
 function createVariableBlock(onError) {
-    const name = window.prompt(
-        "Wie soll die Variable heißen?"
-    );
+    const name = window.prompt("Wie soll die Variable heißen?");
 
     if (name === null) {
         return null;
@@ -47,21 +34,14 @@ function createVariableBlock(onError) {
     const cleanedName = name.trim();
 
     if (!cleanedName) {
-        onError(
-            "Der Variablenname darf nicht leer sein."
-        );
-
+        onError("Der Variablenname darf nicht leer sein.");
         return null;
     }
 
-    const validName =
-        /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cleanedName);
+    const validName = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cleanedName);
 
     if (!validName) {
-        onError(
-            "Ungültiger Variablenname."
-        );
-
+        onError("Ungültiger Variablenname.");
         return null;
     }
 
@@ -71,10 +51,7 @@ function createVariableBlock(onError) {
     };
 }
 
-
-/**
- * Fragt Datentyp und Inhalt eines Wertes ab und erzeugt einen VALUE-Block.
- */
+// Fragt Datentyp und Inhalt eines Wertes ab und erzeugt einen VALUE-Block.
 function createValueBlock(onError) {
     const typeInput = window.prompt(
         "Welchen Datentyp hat der Wert?\n\n" +
@@ -86,30 +63,20 @@ function createValueBlock(onError) {
         return null;
     }
 
-    const valueType =
-        typeInput.trim().toUpperCase();
+    const valueType = typeInput.trim().toUpperCase();
 
-    if (
-        !["INT", "STRING", "BOOLEAN"]
-            .includes(valueType)
-    ) {
-        onError(
-            "Datentyp muss INT, STRING oder BOOLEAN sein."
-        );
-
+    if (!["INT", "STRING", "BOOLEAN"].includes(valueType)) {
+        onError("Datentyp muss INT, STRING oder BOOLEAN sein.");
         return null;
     }
 
-    const rawValue = window.prompt(
-        `Wert für ${valueType}:`
-    );
+    const rawValue = window.prompt(`Wert für ${valueType}:`);
 
     if (rawValue === null) {
         return null;
     }
 
-    const parsedValue =
-        parseValue(rawValue, valueType, onError);
+    const parsedValue = parseValue(rawValue, valueType, onError);
 
     if (parsedValue === undefined) {
         return null;
@@ -117,7 +84,6 @@ function createValueBlock(onError) {
 
     return {
         type: "VALUE",
-
         value: {
             value: parsedValue,
             type: valueType
@@ -125,20 +91,14 @@ function createValueBlock(onError) {
     };
 }
 
-
-/**
- * Konvertiert eine Benutzereingabe passend zum gewählten Datentyp.
- */
+// Konvertiert eine Benutzereingabe passend zum gewählten Datentyp.
 function parseValue(rawValue, valueType, onError) {
     switch (valueType) {
         case "INT": {
             const value = Number(rawValue);
 
             if (!Number.isInteger(value)) {
-                onError(
-                    "Bitte eine gültige ganze Zahl eingeben."
-                );
-
+                onError("Bitte eine gültige ganze Zahl eingeben.");
                 return undefined;
             }
 
@@ -146,17 +106,10 @@ function parseValue(rawValue, valueType, onError) {
         }
 
         case "BOOLEAN": {
-            const normalized =
-                rawValue.toLowerCase();
+            const normalized = rawValue.toLowerCase();
 
-            if (
-                normalized !== "true" &&
-                normalized !== "false"
-            ) {
-                onError(
-                    "Boolean muss true oder false sein."
-                );
-
+            if (normalized !== "true" && normalized !== "false") {
+                onError("Boolean muss true oder false sein.");
                 return undefined;
             }
 

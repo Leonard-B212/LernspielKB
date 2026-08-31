@@ -12,16 +12,11 @@ import de.lernspiel.level.dto.LevelComponentRequest;
  * Enthält die fest definierten Java-Level der Kategorie VARIABLES.
  */
 @Component
-public class JavaVariableLevels
-        implements LevelDefinitionProvider {
+public class JavaVariableLevels implements LevelDefinitionProvider {
 
-
-    /**
-     * Liefert alle Java-VARIABLES-Level in der vorgesehenen Reihenfolge.
-     */
+    // Liefert alle Java-VARIABLES-Level in der vorgesehenen Reihenfolge.
     @Override
     public List<CreateLevelRequest> createLevels() {
-
         return List.of(
                 createLevel1(),
                 createLevel2(),
@@ -30,9 +25,8 @@ public class JavaVariableLevels
         );
     }
 
-
+    // Erstellt das erste Java-VARIABLES-Level.
     private CreateLevelRequest createLevel1() {
-
         return createLevel(
                 "Variablen addieren",
                 "Addiere zwei Variablen und speichere das Ergebnis in einer neuen Variable.",
@@ -47,9 +41,8 @@ public class JavaVariableLevels
         );
     }
 
-
+    // Erstellt das zweite Java-VARIABLES-Level.
     private CreateLevelRequest createLevel2() {
-
         return createLevel(
                 "Variablen multiplizieren",
                 "Multipliziere zwei Variablen und speichere das Ergebnis in einer neuen Variable.",
@@ -64,9 +57,8 @@ public class JavaVariableLevels
         );
     }
 
-
+    // Erstellt das dritte Java-VARIABLES-Level.
     private CreateLevelRequest createLevel3() {
-
         return createLevel(
                 "Variablen subtrahieren",
                 "Subtrahiere eine Variable von einer anderen und speichere das Ergebnis in einer neuen Variable.",
@@ -81,9 +73,8 @@ public class JavaVariableLevels
         );
     }
 
-
+    // Erstellt das vierte Java-VARIABLES-Level.
     private CreateLevelRequest createLevel4() {
-
         return createLevel(
                 "Variablen dividieren",
                 "Dividiere eine Variable durch eine andere und speichere das Ergebnis in einer neuen Variable.",
@@ -98,70 +89,32 @@ public class JavaVariableLevels
         );
     }
 
-
-    /**
-     * Erstellt die gemeinsamen Metadaten eines Java-VARIABLES-Levels.
-     */
+    // Erstellt die gemeinsamen Metadaten eines Java-VARIABLES-Levels.
     private CreateLevelRequest createLevel(
             String levelName,
             String levelDescription,
             Integer levelNumber,
             List<LevelComponentRequest> components) {
 
-        CreateLevelRequest request =
-                new CreateLevelRequest();
+        CreateLevelRequest request = new CreateLevelRequest();
 
-        request.setLevelName(
-                levelName
-        );
-
-        request.setLevelDescription(
-                levelDescription
-        );
-
-        request.setCategory(
-                "VARIABLES"
-        );
-
-        request.setCategoryOrder(
-                2
-        );
-
-        request.setLevelNumber(
-                levelNumber
-        );
-
-        request.setLanguage(
-                "JAVA"
-        );
-
-        request.setComponents(
-                components
-        );
-
+        request.setLevelName(levelName);
+        request.setLevelDescription(levelDescription);
+        request.setCategory("VARIABLES");
+        request.setCategoryOrder(2);
+        request.setLevelNumber(levelNumber);
+        request.setLanguage("JAVA");
+        request.setComponents(components);
 
         return request;
     }
 
+    // Erstellt eine verfügbare Code-Komponente für ein Level.
+    private LevelComponentRequest component(CodeType type, Integer amount) {
+        LevelComponentRequest component = new LevelComponentRequest();
 
-    /**
-     * Erstellt eine verfügbare Code-Komponente für ein Level.
-     */
-    private LevelComponentRequest component(
-            CodeType type,
-            Integer amount) {
-
-        LevelComponentRequest component =
-                new LevelComponentRequest();
-
-        component.setType(
-                type
-        );
-
-        component.setAmount(
-                amount
-        );
-
+        component.setType(type);
+        component.setAmount(amount);
 
         return component;
     }

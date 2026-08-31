@@ -9,12 +9,11 @@ import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
 
 /**
- * Enthält die fest definierten Java-Level der Kategorie BASICS.
+ * Enthält die fest definierten Java-Level der Kategorie EXPRESSIONS.
  */
 @Component
-public class JavaBasicLevels implements LevelDefinitionProvider {
+public class JavaExpressionLevels implements LevelDefinitionProvider {
 
-    // Liefert alle Java-BASICS-Level in der vorgesehenen Reihenfolge.
     @Override
     public List<CreateLevelRequest> createLevels() {
         return List.of(
@@ -26,97 +25,96 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
         );
     }
 
-    // Erstellt das erste Java-BASICS-Level.
     private static CreateLevelRequest createLevel1() {
         return createLevel(
-                "Erste Variable",
-                "Erstelle eine int-Variable x mit dem Wert 5.",
+                "Einfache Addition",
+                "Erstelle eine int-Variable result und speichere das Ergebnis von 5 + 3 darin.",
                 1,
                 List.of(
                         component(CodeType.INT, 1),
                         component(CodeType.VAR_NAME, 1),
                         component(CodeType.EQUALS, 1),
-                        component(CodeType.VALUE, 1),
+                        component(CodeType.VALUE, 2),
+                        component(CodeType.ADD, 1),
                         component(CodeType.BREAK, 1)
                 )
         );
     }
 
-    // Erstellt das zweite Java-BASICS-Level.
     private static CreateLevelRequest createLevel2() {
         return createLevel(
-                "String-Variable",
-                "Erstelle eine String-Variable name mit dem Wert \"Hallo\".",
+                "Subtraktion",
+                "Erstelle eine int-Variable result und speichere das Ergebnis von 10 - 4 darin.",
                 2,
                 List.of(
-                        component(CodeType.STRING, 1),
+                        component(CodeType.INT, 1),
                         component(CodeType.VAR_NAME, 1),
                         component(CodeType.EQUALS, 1),
-                        component(CodeType.VALUE, 1),
+                        component(CodeType.VALUE, 2),
+                        component(CodeType.SUBTRACT, 1),
                         component(CodeType.BREAK, 1)
                 )
         );
     }
 
-    // Erstellt das dritte Java-BASICS-Level.
     private static CreateLevelRequest createLevel3() {
         return createLevel(
-                "Boolean-Variable",
-                "Erstelle eine boolean-Variable isActive mit dem Wert true.",
+                "Multiplikation",
+                "Erstelle eine int-Variable result und speichere das Ergebnis von 6 * 3 darin.",
                 3,
                 List.of(
-                        component(CodeType.BOOLEAN, 1),
+                        component(CodeType.INT, 1),
                         component(CodeType.VAR_NAME, 1),
                         component(CodeType.EQUALS, 1),
-                        component(CodeType.VALUE, 1),
+                        component(CodeType.VALUE, 2),
+                        component(CodeType.MULTIPLY, 1),
                         component(CodeType.BREAK, 1)
                 )
         );
     }
 
-    // Erstellt das vierte Java-BASICS-Level.
     private static CreateLevelRequest createLevel4() {
         return createLevel(
-                "Variable ohne Startwert",
-                "Deklariere eine int-Variable number ohne ihr direkt einen Wert zuzuweisen.",
+                "Division",
+                "Erstelle eine int-Variable result und speichere das Ergebnis von 20 / 4 darin.",
                 4,
                 List.of(
                         component(CodeType.INT, 1),
                         component(CodeType.VAR_NAME, 1),
+                        component(CodeType.EQUALS, 1),
+                        component(CodeType.VALUE, 2),
+                        component(CodeType.DIVIDE, 1),
                         component(CodeType.BREAK, 1)
                 )
         );
     }
 
-    // Erstellt das fünfte Java-BASICS-Level.
     private static CreateLevelRequest createLevel5() {
         return createLevel(
-                "Zwei Variablen",
-                "Erstelle zwei int-Variablen mit jeweils einem Wert.",
+                "Mehrere Rechenoperationen",
+                "Erstelle eine int-Variable result und speichere das Ergebnis von 5 + 3 * 2 darin.",
                 5,
                 List.of(
-                        component(CodeType.INT, 2),
-                        component(CodeType.VAR_NAME, 2),
-                        component(CodeType.EQUALS, 2),
-                        component(CodeType.VALUE, 2),
-                        component(CodeType.BREAK, 2)
+                        component(CodeType.INT, 1),
+                        component(CodeType.VAR_NAME, 1),
+                        component(CodeType.EQUALS, 1),
+                        component(CodeType.VALUE, 3),
+                        component(CodeType.ADD, 1),
+                        component(CodeType.MULTIPLY, 1),
+                        component(CodeType.BREAK, 1)
                 )
         );
     }
 
-    // Erstellt die gemeinsamen Metadaten eines Java-BASICS-Levels.
-    private static CreateLevelRequest createLevel(
-            String levelName,
-            String levelDescription,
-            Integer levelNumber,
-            List<LevelComponentRequest> components) {
+    private static CreateLevelRequest createLevel(String levelName, String levelDescription,
+            Integer levelNumber, List<LevelComponentRequest> components) {
 
         CreateLevelRequest request = new CreateLevelRequest();
 
         request.setLevelName(levelName);
         request.setLevelDescription(levelDescription);
-        request.setCategory("BASICS");
-        request.setCategoryOrder(1);
+        request.setCategory("EXPRESSIONS");
+        request.setCategoryOrder(3);
         request.setLevelNumber(levelNumber);
         request.setLanguage("JAVA");
         request.setComponents(components);
@@ -124,7 +122,6 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
         return request;
     }
 
-    // Erstellt eine verfügbare Code-Komponente für ein Level.
     private static LevelComponentRequest component(CodeType type, Integer amount) {
         LevelComponentRequest component = new LevelComponentRequest();
 

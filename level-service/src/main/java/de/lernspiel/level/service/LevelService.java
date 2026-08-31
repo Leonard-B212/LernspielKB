@@ -1,12 +1,13 @@
 package de.lernspiel.level.service;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.lernspiel.common.code.CodeType;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
 import de.lernspiel.level.dto.LevelComponentResponse;
@@ -14,14 +15,14 @@ import de.lernspiel.level.dto.LevelOverviewResponse;
 import de.lernspiel.level.dto.LevelResponse;
 import de.lernspiel.level.entity.Component;
 import de.lernspiel.level.entity.Level;
+import de.lernspiel.level.entity.LevelCategory;
 import de.lernspiel.level.entity.LevelComponent;
 import de.lernspiel.level.entity.ProgrammingLanguage;
 import de.lernspiel.level.repository.ComponentRepository;
+import de.lernspiel.level.repository.LevelCategoryRepository;
 import de.lernspiel.level.repository.LevelComponentRepository;
 import de.lernspiel.level.repository.LevelRepository;
 import de.lernspiel.level.repository.ProgrammingLanguageRepository;
-import de.lernspiel.level.entity.LevelCategory;
-import de.lernspiel.level.repository.LevelCategoryRepository;
 
 /**
  * Service für das Laden und Anlegen von Level-Daten.
@@ -38,320 +39,171 @@ public class LevelService {
     private final ProgrammingLanguageRepository programmingLanguageRepository;
     private final LevelCategoryRepository levelCategoryRepository;
 
+    // Initialisiert den Service mit den benötigten Repositories.
     public LevelService(
-                LevelRepository levelRepository,
-                LevelComponentRepository levelComponentRepository,
-                ComponentRepository componentRepository,
-                ProgrammingLanguageRepository programmingLanguageRepository,
-                LevelCategoryRepository levelCategoryRepository) {
+            LevelRepository levelRepository,
+            LevelComponentRepository levelComponentRepository,
+            ComponentRepository componentRepository,
+            ProgrammingLanguageRepository programmingLanguageRepository,
+            LevelCategoryRepository levelCategoryRepository) {
 
         this.levelRepository = levelRepository;
         this.levelComponentRepository = levelComponentRepository;
         this.componentRepository = componentRepository;
         this.programmingLanguageRepository = programmingLanguageRepository;
         this.levelCategoryRepository = levelCategoryRepository;
-        }
-
-
-    /**
-     * Lädt ein Level anhand seiner ID inklusive der verfügbaren Komponenten.
-     */
-    public LevelResponse getLevelById(Integer levelID) {
-
-        Level level = levelRepository
-                .findById(levelID)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Level mit ID " + levelID + " wurde nicht gefunden."
-                        )
-                );
-
-
-        List<LevelComponentResponse> componentResponses =
-                levelComponentRepository
-                        .findByLevelLevelID(levelID)
-                        .stream()
-                        .map(this::mapToComponentResponse)
-                        .toList();
-
-
-        return mapToLevelResponse(
-                level,
-                componentResponses
-        );
     }
 
+    // Lädt ein Level anhand seiner ID inklusive der verfügbaren Komponenten.
+    public LevelResponse getLevelById(Integer levelID) {
+        Level level = levelRepository.findById(levelID)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Level mit ID " + levelID + " wurde nicht gefunden."
+                ));
 
-    /**
-     * Erstellt ein neues Level inklusive Sprache und verfügbarer Komponenten.
-     *
-     * Noch nicht vorhandene Programmiersprachen und Components werden
-     * automatisch angelegt.
-     */
+        List<LevelComponentResponse> componentResponses = levelComponentRepository
+                .findByLevelLevelID(levelID)
+                .stream()
+                .map(this::mapToComponentResponse)
+                .toList();
+
+        return mapToLevelResponse(level, componentResponses);
+    }
+
+    // Erstellt ein neues Level inklusive Sprache und verfügbarer Komponenten.
     @Transactional
     public LevelResponse createLevel(CreateLevelRequest request) {
-
-        ProgrammingLanguage language =
-                getOrCreateLanguage(request.getLanguage());
-        LevelCategory category =
-        getOrCreateCategory(
+        ProgrammingLanguage language = getOrCreateLanguage(request.getLanguage());
+        LevelCategory category = getOrCreateCategory(
                 request.getCategory(),
                 request.getCategoryOrder()
         );
 
-        if (
-            levelRepository
-                .existsByCategoryAndLevelNumberAndLanguage(
-                        category,
-                        request.getLevelNumber(),
-                        language
-    )
-        ) {
+        if (levelRepository.existsByCategoryAndLevelNumberAndLanguage(
+                category,
+                request.getLevelNumber(),
+                language
+        )) {
             throw new IllegalArgumentException(
                     "Für Kategorie "
-                    + request.getCategory()
-                    + ", Level "
-                    + request.getLevelNumber()
-                    + " und Sprache "
-                    + language.getLanguageName()
-                    + " existiert bereits ein Level."
+                            + request.getCategory()
+                            + ", Level "
+                            + request.getLevelNumber()
+                            + " und Sprache "
+                            + language.getLanguageName()
+                            + " existiert bereits ein Level."
             );
         }
 
-
         Level level = new Level();
 
-        level.setLevelName(
-                request.getLevelName()
-        );
+        level.setLevelName(request.getLevelName());
+        level.setLevelDescription(request.getLevelDescription());
+        level.setCategory(category);
+        level.setLevelNumber(request.getLevelNumber());
+        level.setLanguage(language);
 
-        level.setLevelDescription(
-                request.getLevelDescription()
-        );
-
-        level.setCategory(
-                category
-        );
-
-        level.setLevelNumber(
-                request.getLevelNumber()
-        );
-
-        level.setLanguage(
-                language
-        );
-
-
-        Level savedLevel =
-                levelRepository.save(level);
-
-
-        List<LevelComponentResponse> componentResponses =
-                new ArrayList<>();
-
+        Level savedLevel = levelRepository.save(level);
+        List<LevelComponentResponse> componentResponses = new ArrayList<>();
 
         if (request.getComponents() != null) {
-
-            for (
-                LevelComponentRequest componentRequest
-                : request.getComponents()
-            ) {
-
-                if (
-                    componentRequest.getAmount() == null
-                    || componentRequest.getAmount() <= 0
-                ) {
+            for (LevelComponentRequest componentRequest : request.getComponents()) {
+                if (componentRequest.getAmount() == null || componentRequest.getAmount() <= 0) {
                     throw new IllegalArgumentException(
                             "ComponentAmount muss größer als 0 sein."
                     );
                 }
 
+                Component component = getOrCreateComponent(componentRequest.getType());
 
-                Component component =
-                        getOrCreateComponent(
-                                componentRequest
-                                    .getType()
-                        );
+                LevelComponent levelComponent = new LevelComponent();
+                levelComponent.setLevel(savedLevel);
+                levelComponent.setComponent(component);
+                levelComponent.setComponentAmount(componentRequest.getAmount());
 
+                levelComponentRepository.save(levelComponent);
 
-                LevelComponent levelComponent =
-                        new LevelComponent();
-
-                levelComponent.setLevel(
-                        savedLevel
-                );
-
-                levelComponent.setComponent(
-                        component
-                );
-
-                levelComponent.setComponentAmount(
+                componentResponses.add(new LevelComponentResponse(
+                        component.getComponentType(),
                         componentRequest.getAmount()
-                );
-
-
-                levelComponentRepository.save(
-                        levelComponent
-                );
-
-
-                componentResponses.add(
-                        new LevelComponentResponse(
-                                component.getComponentType(),
-                                componentRequest.getAmount()
-                        )
-                );
+                ));
             }
         }
 
-
-        return mapToLevelResponse(
-                savedLevel,
-                componentResponses
-        );
+        return mapToLevelResponse(savedLevel, componentResponses);
     }
 
-
-    /**
-     * Lädt eine Programmiersprache oder legt sie an, falls sie noch nicht existiert.
-     */
-    private ProgrammingLanguage getOrCreateLanguage(
-            String languageName) {
-
-        if (
-            languageName == null
-            || languageName.isBlank()
-        ) {
+    // Lädt eine Programmiersprache oder legt sie an, falls sie noch nicht existiert.
+    private ProgrammingLanguage getOrCreateLanguage(String languageName) {
+        if (languageName == null || languageName.isBlank()) {
             throw new IllegalArgumentException(
                     "Programmiersprache darf nicht leer sein."
             );
         }
 
-
-        String normalizedLanguage =
-                languageName
-                        .trim()
-                        .toUpperCase();
-
+        String normalizedLanguage = languageName.trim().toUpperCase();
 
         return programmingLanguageRepository
                 .findByLanguageName(normalizedLanguage)
                 .orElseGet(() -> {
+                    ProgrammingLanguage language = new ProgrammingLanguage();
+                    language.setLanguageName(normalizedLanguage);
 
-                    ProgrammingLanguage language =
-                            new ProgrammingLanguage();
-
-                    language.setLanguageName(
-                            normalizedLanguage
-                    );
-
-                    return programmingLanguageRepository
-                            .save(language);
+                    return programmingLanguageRepository.save(language);
                 });
     }
 
-        /**
-         * Lädt eine Level-Kategorie oder legt sie an, falls sie noch nicht existiert.
-         */
-        private LevelCategory getOrCreateCategory(
-                String categoryName,
-                Integer categoryOrder) {
-
-        if (
-                categoryName == null
-                || categoryName.isBlank()
-        ) {
-                throw new IllegalArgumentException(
-                        "Kategorie darf nicht leer sein."
-                );
+    // Lädt eine Level-Kategorie oder legt sie an, falls sie noch nicht existiert.
+    private LevelCategory getOrCreateCategory(String categoryName, Integer categoryOrder) {
+        if (categoryName == null || categoryName.isBlank()) {
+            throw new IllegalArgumentException("Kategorie darf nicht leer sein.");
         }
 
-        String normalizedCategory =
-                categoryName
-                        .trim()
-                        .toUpperCase();
+        String normalizedCategory = categoryName.trim().toUpperCase();
 
         return levelCategoryRepository
                 .findByCategoryName(normalizedCategory)
                 .orElseGet(() -> {
-
-                        if (categoryOrder == null) {
+                    if (categoryOrder == null) {
                         throw new IllegalArgumentException(
                                 "Für eine neue Kategorie muss categoryOrder angegeben werden."
                         );
-                        }
+                    }
 
-                        LevelCategory category =
-                                new LevelCategory();
+                    LevelCategory category = new LevelCategory();
+                    category.setCategoryName(normalizedCategory);
+                    category.setCategoryOrder(categoryOrder);
 
-                        category.setCategoryName(
-                                normalizedCategory
-                        );
-
-                        category.setCategoryOrder(
-                                categoryOrder
-                        );
-
-                        return levelCategoryRepository
-                                .save(category);
+                    return levelCategoryRepository.save(category);
                 });
-        }
+    }
 
-
-    /**
-     * Lädt eine Component oder legt sie anhand des gemeinsamen CodeType neu an.
-     */
-    private Component getOrCreateComponent(
-            de.lernspiel.common.code.CodeType type) {
-
+    // Lädt eine Component oder legt sie anhand des gemeinsamen CodeType neu an.
+    private Component getOrCreateComponent(CodeType type) {
         if (type == null) {
-            throw new IllegalArgumentException(
-                    "ComponentType darf nicht leer sein."
-            );
+            throw new IllegalArgumentException("ComponentType darf nicht leer sein.");
         }
-
 
         return componentRepository
                 .findByComponentType(type)
                 .orElseGet(() -> {
+                    Component component = new Component();
+                    component.setComponentType(type);
 
-                    Component component =
-                            new Component();
-
-                    component.setComponentType(
-                            type
-                    );
-
-                    return componentRepository
-                            .save(component);
+                    return componentRepository.save(component);
                 });
     }
 
-
-    /**
-     * Wandelt eine LevelComponent-Entity in das entsprechende Response-DTO um.
-     */
-    private LevelComponentResponse mapToComponentResponse(
-            LevelComponent levelComponent) {
-
+    // Wandelt eine LevelComponent-Entity in das entsprechende Response-DTO um.
+    private LevelComponentResponse mapToComponentResponse(LevelComponent levelComponent) {
         return new LevelComponentResponse(
-                levelComponent
-                        .getComponent()
-                        .getComponentType(),
-
-                levelComponent
-                        .getComponentAmount()
+                levelComponent.getComponent().getComponentType(),
+                levelComponent.getComponentAmount()
         );
     }
 
-
-    /**
-     * Erstellt aus Level und Components den vollständigen Response fürs Frontend.
-     */
-    private LevelResponse mapToLevelResponse(
-            Level level,
-            List<LevelComponentResponse> components) {
-
+    // Erstellt aus Level und Components den vollständigen Response für das Frontend.
+    private LevelResponse mapToLevelResponse(Level level, List<LevelComponentResponse> components) {
         return new LevelResponse(
                 level.getLevelID(),
                 level.getLevelName(),
@@ -366,43 +218,23 @@ public class LevelService {
         );
     }
 
-    /**
-     * Liefert alle vorhandenen Level in kompakter Form für Übersichtsseiten.
-     *
-     * Die Level werden nach Programmiersprache, Kategorie und Levelnummer sortiert.
-     */
+    // Liefert alle vorhandenen Level in kompakter und sortierter Form für Übersichtsseiten.
     public List<LevelOverviewResponse> getAllLevels() {
-
         return levelRepository
                 .findAll()
                 .stream()
                 .sorted(
                         Comparator
-                                .comparing(
-                                        (Level level) ->
-                                                level.getLanguage()
-                                                        .getLanguageName()
-                                )
-                                .thenComparing(
-                                        level ->
-                                                level.getCategory()
-                                                        .getCategoryOrder()
-                                )
-                                .thenComparing(
-                                        Level::getLevelNumber
-                                )
+                                .comparing((Level level) -> level.getLanguage().getLanguageName())
+                                .thenComparing(level -> level.getCategory().getCategoryOrder())
+                                .thenComparing(Level::getLevelNumber)
                 )
                 .map(this::mapToOverviewResponse)
                 .toList();
     }
 
-
-    /**
-     * Wandelt ein Level in die kompakte Darstellung für Übersichtsseiten um.
-     */
-    private LevelOverviewResponse mapToOverviewResponse(
-            Level level) {
-
+    // Wandelt ein Level in die kompakte Darstellung für Übersichtsseiten um.
+    private LevelOverviewResponse mapToOverviewResponse(Level level) {
         return new LevelOverviewResponse(
                 level.getLevelID(),
                 level.getLevelName(),
@@ -415,64 +247,31 @@ public class LevelService {
         );
     }
 
-        /**
-         * Prüft, ob für eine Kombination aus Sprache,
-         * Kategorie und Levelnummer bereits ein Level existiert.
-         */
-        public boolean levelExists(
-                String languageName,
-                String categoryName,
-                Integer levelNumber) {
-
-        if (
-                languageName == null
-                || categoryName == null
-                || levelNumber == null
-        ) {
-                return false;
+    // Prüft, ob für eine Kombination aus Sprache, Kategorie und Levelnummer bereits ein Level existiert.
+    public boolean levelExists(String languageName, String categoryName, Integer levelNumber) {
+        if (languageName == null || categoryName == null || levelNumber == null) {
+            return false;
         }
 
+        String normalizedLanguage = languageName.trim().toUpperCase();
+        String normalizedCategory = categoryName.trim().toUpperCase();
 
-        String normalizedLanguage =
-                languageName
-                        .trim()
-                        .toUpperCase();
+        ProgrammingLanguage language = programmingLanguageRepository
+                .findByLanguageName(normalizedLanguage)
+                .orElse(null);
 
-        String normalizedCategory =
-                categoryName
-                        .trim()
-                        .toUpperCase();
+        LevelCategory category = levelCategoryRepository
+                .findByCategoryName(normalizedCategory)
+                .orElse(null);
 
-
-        ProgrammingLanguage language =
-                programmingLanguageRepository
-                        .findByLanguageName(
-                                normalizedLanguage
-                        )
-                        .orElse(null);
-
-
-        LevelCategory category =
-                levelCategoryRepository
-                        .findByCategoryName(
-                                normalizedCategory
-                        )
-                        .orElse(null);
-
-
-        if (
-                language == null
-                || category == null
-        ) {
-                return false;
+        if (language == null || category == null) {
+            return false;
         }
 
-
-        return levelRepository
-                .existsByCategoryAndLevelNumberAndLanguage(
-                        category,
-                        levelNumber,
-                        language
-                );
-        }
+        return levelRepository.existsByCategoryAndLevelNumberAndLanguage(
+                category,
+                levelNumber,
+                language
+        );
+    }
 }

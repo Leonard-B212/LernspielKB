@@ -1,77 +1,58 @@
 /**
- * Zentrale Definition aller verfügbaren Code-Blöcke.
- *
- * Diese Datei beschreibt, wie ein Block heißt und welche CSS-Klasse
- * für seine Darstellung verwendet wird.
- *
- * Andere Editor-Module greifen auf diese Definitionen zurück,
- * damit Labels und Styles nicht an mehreren Stellen dupliziert werden.
- *
- * Später können Level anhand dieser Typen festlegen,
- * welche Blöcke für eine Aufgabe verfügbar sind.
+ * Definiert zentral alle verfügbaren Code-Blöcke mit Typ, Anzeigetext und CSS-Klasse.
+ * Die Definitionen werden von den Editor-Modulen für eine einheitliche Darstellung der Blöcke verwendet.
  */
-
 export const BLOCK_DEFINITIONS = {
     INT: {
         type: "INT",
         label: "int",
         cssClass: "block-type"
     },
-
     STRING: {
         type: "STRING",
         label: "String",
         cssClass: "block-type"
     },
-
     BOOLEAN: {
         type: "BOOLEAN",
         label: "boolean",
         cssClass: "block-type"
     },
-
     VAR_NAME: {
         type: "VAR_NAME",
         label: "Variable",
         cssClass: "block-variable"
     },
-
     VALUE: {
         type: "VALUE",
         label: "Wert",
         cssClass: "block-value"
     },
-
     EQUALS: {
         type: "EQUALS",
         label: "=",
         cssClass: "block-operator"
     },
-
     ADD: {
         type: "ADD",
         label: "+",
         cssClass: "block-operator"
     },
-
     SUBTRACT: {
         type: "SUBTRACT",
         label: "-",
         cssClass: "block-operator"
     },
-
     MULTIPLY: {
         type: "MULTIPLY",
         label: "*",
         cssClass: "block-operator"
     },
-
     DIVIDE: {
         type: "DIVIDE",
         label: "/",
         cssClass: "block-operator"
     },
-
     BREAK: {
         type: "BREAK",
         label: ";",
@@ -79,11 +60,7 @@ export const BLOCK_DEFINITIONS = {
     }
 };
 
-
-/**
- * Liefert den Text, der für einen konkreten Block im Editor angezeigt wird.
- * Dynamische Blöcke wie Variablen und Werte verwenden ihre eigenen Daten.
- */
+// Ermittelt den im Editor angezeigten Text eines Blocks.
 export function getBlockLabel(block) {
     switch (block.type) {
         case "VAR_NAME":
@@ -93,7 +70,6 @@ export function getBlockLabel(block) {
             if (block.value.type === "STRING") {
                 return `"${block.value.value}"`;
             }
-
             return String(block.value.value);
 
         default:
@@ -101,10 +77,7 @@ export function getBlockLabel(block) {
     }
 }
 
-
-/**
- * Liefert die passende CSS-Klasse für einen bestimmten Blocktyp.
- */
+// Ermittelt die CSS-Klasse für einen Blocktyp.
 export function getBlockCssClass(type) {
     return BLOCK_DEFINITIONS[type]?.cssClass ?? "block-operator";
 }

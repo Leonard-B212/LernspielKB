@@ -3,6 +3,12 @@ package de.lernspiel.auth.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Stellt die JWT-Konfiguration für Benutzer- und Service-Tokens bereit.
+ *
+ * Die Schlüssel und Gültigkeitsdauern werden aus der Anwendungskonfiguration
+ * geladen und von den Komponenten zur Token-Erzeugung und -Validierung verwendet.
+ */
 @Configuration
 public class JwtConfig {
 
@@ -36,15 +42,15 @@ public class JwtConfig {
 
     public void setExpirationTime(long expirationTime) {
         this.expirationTime = expirationTime;
-    } // kann für Tests sinnvoll bleiben
+    }
 
     public void setSecretKey(String secretKey) {
         this.secretKey = secretKey;
-    } 
+    }
 
     public void setServiceSecretKey(String serviceSecretKey) {
         this.serviceSecretKey = serviceSecretKey;
-    } 
+    }
 
     public void setServiceExpirationTime(long serviceExpirationTime) {
         this.serviceExpirationTime = serviceExpirationTime;

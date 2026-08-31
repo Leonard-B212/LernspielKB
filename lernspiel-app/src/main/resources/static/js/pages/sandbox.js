@@ -13,383 +13,191 @@
  * damit sie später auch auf einer Level-Seite wiederverwendet werden kann.
  */
 
-import {
-    createEditorState
-} from "../editor/editorState.js";
-
-import {
-    createProgramRenderer
-} from "../editor/renderer.js";
-
-import {
-    createDragDropController
-} from "../editor/dragDrop.js";
-
-import {
-    initializeConsoleTheme
-} from "../editor/consoleTheme.js";
-
-import {
-    runProgram
-} from "../api/interpreterApi.js";
-
+import { createEditorState } from "../editor/editorState.js";
+import { createProgramRenderer } from "../editor/renderer.js";
+import { createDragDropController } from "../editor/dragDrop.js";
+import { initializeConsoleTheme } from "../editor/consoleTheme.js";
+import { runProgram } from "../api/interpreterApi.js";
 
 /* =========================================================
    DOM
    ========================================================= */
 
-const palette =
-    document.getElementById(
-        "block-palette"
-    );
-
-const programDropzone =
-    document.getElementById(
-        "program-dropzone"
-    );
-
-const trashDropzone =
-    document.getElementById(
-        "trash-dropzone"
-    );
-
-const resetButton =
-    document.getElementById(
-        "reset-button"
-    );
-
-const runButton =
-    document.getElementById(
-        "run-button"
-    );
-
-const message =
-    document.getElementById(
-        "sandbox-message"
-    );
-
-const interpreterOutput =
-    document.getElementById(
-        "interpreter-output"
-    );
-
-const interpreterConsole =
-    document.getElementById(
-        "interpreter-console"
-    );
-
-const consoleThemeSwitch =
-    document.getElementById(
-        "console-theme-switch"
-    );
-
+const palette = document.getElementById("block-palette");
+const programDropzone = document.getElementById("program-dropzone");
+const trashDropzone = document.getElementById("trash-dropzone");
+const resetButton = document.getElementById("reset-button");
+const runButton = document.getElementById("run-button");
+const message = document.getElementById("sandbox-message");
+const interpreterOutput = document.getElementById("interpreter-output");
+const interpreterConsole = document.getElementById("interpreter-console");
+const consoleThemeSwitch = document.getElementById("console-theme-switch");
 
 /* =========================================================
    EDITOR
    ========================================================= */
 
-const editorState =
-    createEditorState();
-
+const editorState = createEditorState();
 
 let renderer;
 let dragDropController;
 
-
-/**
- * Der Renderer erzeugt die sichtbaren Blöcke und reicht
- * deren Drag-Events an den DragDropController weiter.
- */
 renderer = createProgramRenderer({
     programDropzone,
-
-    onBlockDragStart:
-        (...args) =>
-            dragDropController
-                .handleProgramBlockDragStart(
-                    ...args
-                ),
-
-    onBlockDragEnd:
-        (...args) =>
-            dragDropController
-                .handleProgramBlockDragEnd(
-                    ...args
-                )
+    onBlockDragStart: (...args) =>
+        dragDropController.handleProgramBlockDragStart(...args),
+    onBlockDragEnd: (...args) =>
+        dragDropController.handleProgramBlockDragEnd(...args)
 });
 
-
-/**
- * Rendert den aktuellen Editor-State in der Programmfläche.
- */
+// Rendert den aktuellen Editor-State in der Programmfläche.
 function renderProgram() {
-    renderer.render(
-        editorState.getProgram()
-    );
+    renderer.render(editorState.getProgram());
 }
 
-
-/**
- * Initialisiert die Drag-&-Drop-Logik und verbindet sie mit State und Renderer.
- */
-dragDropController =
-    createDragDropController({
-        palette,
-        programDropzone,
-        trashDropzone,
-        editorState,
-        renderProgram,
-
-        showError: (text) =>
-            showMessage(text, true)
-    });
-
+dragDropController = createDragDropController({
+    palette,
+    programDropzone,
+    trashDropzone,
+    editorState,
+    renderProgram,
+    showError: (text) => showMessage(text, true)
+});
 
 dragDropController.initialize();
-
 
 /* =========================================================
    CONSOLE THEME
    ========================================================= */
 
-/**
- * Aktiviert den Theme-Switch der Interpreter-Konsole.
- */
 initializeConsoleTheme({
     interpreterConsole,
     consoleThemeSwitch
 });
 
-
 /* =========================================================
    RESET
    ========================================================= */
 
-/**
- * Löscht Programm, Statusmeldung und Interpreter-Ausgabe.
- */
-resetButton.addEventListener(
-    "click",
-    () => {
-
-        editorState.clear();
-
-        renderProgram();
-
-        showMessage("");
-
-        resetInterpreterOutput();
-    }
-);
-
+// Löscht Programm, Statusmeldung und Interpreter-Ausgabe.
+resetButton.addEventListener("click", () => {
+    editorState.clear();
+    renderProgram();
+    showMessage("");
+    resetInterpreterOutput();
+});
 
 /* =========================================================
    AUSFÜHREN
    ========================================================= */
 
-/**
- * Erstellt aus dem aktuellen Editor-State einen ProgramRequest,
- * sendet ihn an den Interpreter und zeigt dessen Antwort an.
- */
-runButton.addEventListener(
-    "click",
-    async () => {
+// Erstellt aus dem aktuellen Editor-State einen ProgramRequest, sendet ihn an den Interpreter und zeigt dessen Antwort an.
+runButton.addEventListener("click", async () => {
+    const program = editorState.getProgram();
 
-        const program =
-            editorState.getProgram();
+    if (program.length === 0) {
+        showMessage("Das Programm enthält noch keine Blöcke.", true);
+        return;
+    }
 
+    /*
+     * Die Sandbox verwendet aktuell feste Testwerte für Benutzer, Level und Sprache.
+     */
+    const programRequest = {
+        userId: 1,
+        levelId: 1,
+        languageId: 1,
+        program
+    };
 
-        if (program.length === 0) {
-            showMessage(
-                "Das Programm enthält noch keine Blöcke.",
-                true
-            );
+    console.log("ProgramRequest an Interpreter:", programRequest);
 
-            return;
-        }
+    try {
+        const output = await runProgram(programRequest);
 
+        console.log("Antwort vom Interpreter:", output);
 
-        /*
-         * userId und levelId sind für die Sandbox aktuell feste Testwerte.
-         * languageId 1 steht aktuell für Java.
-         */
-        const programRequest = {
-            userId: 1,
-            levelId: 1,
-            languageId: 1,
-            program
-        };
+        renderInterpreterOutput(output);
 
-
-        console.log(
-            "ProgramRequest an Interpreter:",
-            programRequest
+        const hasInterpreterError = output.some(
+            (entry) => entry.includes("Exception:")
         );
 
-
-        try {
-            const output =
-                await runProgram(
-                    programRequest
-                );
-
-
-            console.log(
-                "Antwort vom Interpreter:",
-                output
-            );
-
-
-            renderInterpreterOutput(
-                output
-            );
-
-
-            const hasInterpreterError =
-                output.some(
-                    (entry) =>
-                        entry.includes(
-                            "Exception:"
-                        )
-                );
-
-
-            if (hasInterpreterError) {
-                showMessage(
-                    "Der Interpreter hat einen Fehler im Programm gefunden.",
-                    true
-                );
-            }
-            else {
-                showMessage("");
-            }
-        }
-
-        catch (error) {
-            console.error(
-                "Fehler beim Interpreter-Aufruf:",
-                error
-            );
-
+        if (hasInterpreterError) {
             showMessage(
-                error.message ||
-                "Programm konnte nicht ausgeführt werden.",
+                "Der Interpreter hat einen Fehler im Programm gefunden.",
                 true
             );
+        } else {
+            showMessage("");
         }
-    }
-);
+    } catch (error) {
+        console.error("Fehler beim Interpreter-Aufruf:", error);
 
+        showMessage(
+            error.message || "Programm konnte nicht ausgeführt werden.",
+            true
+        );
+    }
+});
 
 /* =========================================================
    INTERPRETER-AUSGABE
    ========================================================= */
 
-/**
- * Rendert die vom Backend zurückgegebenen Interpreter-Meldungen.
- */
+// Rendert die vom Backend zurückgegebenen Interpreter-Meldungen.
 function renderInterpreterOutput(output) {
     interpreterOutput.innerHTML = "";
 
-
     if (!output || output.length === 0) {
-        const placeholder =
-            document.createElement("span");
+        const placeholder = document.createElement("span");
 
-        placeholder.classList.add(
-            "interpreter-output-placeholder"
-        );
+        placeholder.classList.add("interpreter-output-placeholder");
+        placeholder.textContent = "Der Interpreter hat keine Ausgabe erzeugt.";
 
-        placeholder.textContent =
-            "Der Interpreter hat keine Ausgabe erzeugt.";
-
-        interpreterOutput.appendChild(
-            placeholder
-        );
-
+        interpreterOutput.appendChild(placeholder);
         return;
     }
 
-
     output.forEach((entry) => {
-        const line =
-            document.createElement("div");
+        const line = document.createElement("div");
 
-        line.classList.add(
-            "interpreter-output-line"
-        );
+        line.classList.add("interpreter-output-line");
 
-
-        if (
-            entry.includes("Exception:")
-        ) {
-            line.classList.add(
-                "error"
-            );
+        if (entry.includes("Exception:")) {
+            line.classList.add("error");
         }
 
-
         line.textContent = entry;
-
-        interpreterOutput.appendChild(
-            line
-        );
+        interpreterOutput.appendChild(line);
     });
 }
 
-
-/**
- * Setzt die Interpreter-Konsole auf ihren Ausgangszustand zurück.
- */
+// Setzt die Interpreter-Konsole auf ihren Ausgangszustand zurück.
 function resetInterpreterOutput() {
     interpreterOutput.innerHTML = "";
 
-    const placeholder =
-        document.createElement("span");
+    const placeholder = document.createElement("span");
 
-    placeholder.classList.add(
-        "interpreter-output-placeholder"
-    );
+    placeholder.classList.add("interpreter-output-placeholder");
+    placeholder.textContent = "Noch kein Programm ausgeführt.";
 
-    placeholder.textContent =
-        "Noch kein Programm ausgeführt.";
-
-    interpreterOutput.appendChild(
-        placeholder
-    );
+    interpreterOutput.appendChild(placeholder);
 }
-
 
 /* =========================================================
    STATUSMELDUNG
    ========================================================= */
 
-/**
- * Zeigt eine allgemeine Status- oder Fehlermeldung der Sandbox an.
- */
-function showMessage(
-    text,
-    isError = false
-) {
+// Zeigt eine allgemeine Status- oder Fehlermeldung der Sandbox an.
+function showMessage(text, isError = false) {
     message.textContent = text;
-
-    message.classList.toggle(
-        "error",
-        isError
-    );
-
-    message.classList.toggle(
-        "success",
-        !isError && Boolean(text)
-    );
+    message.classList.toggle("error", isError);
+    message.classList.toggle("success", !isError && Boolean(text));
 }
-
 
 /* =========================================================
    INITIALISIERUNG
    ========================================================= */
 
-/**
- * Zeichnet beim Laden der Seite den initial leeren Editor.
- */
 renderProgram();

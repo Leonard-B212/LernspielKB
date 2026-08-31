@@ -2,18 +2,21 @@ package de.lernspiel.level.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * Verknüpft ein Level mit einem verfügbaren Code-Baustein.
+ *
+ * Zusätzlich wird gespeichert, wie oft der jeweilige Baustein
+ * innerhalb des Levels zur Verfügung steht.
+ */
 @Entity
 @Table(
-    name = "level_component",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_level_component",
-            columnNames = {
-                "level_id",
-                "component_id"
-            }
-        )
-    }
+        name = "level_component",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_level_component",
+                        columnNames = {"level_id", "component_id"}
+                )
+        }
 )
 public class LevelComponent {
 
@@ -22,22 +25,15 @@ public class LevelComponent {
     private Integer levelComponentID;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-        name = "level_id",
-        nullable = false
-    )
+    @JoinColumn(name = "level_id", nullable = false)
     private Level level;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-        name = "component_id",
-        nullable = false
-    )
+    @JoinColumn(name = "component_id", nullable = false)
     private Component component;
 
     @Column(nullable = false)
     private Integer componentAmount;
-
 
     public Integer getLevelComponentID() {
         return levelComponentID;
