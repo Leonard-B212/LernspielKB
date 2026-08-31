@@ -1,15 +1,7 @@
 package de.lernspiel.level.dto;
 
-import java.util.List;
-
 import de.lernspiel.common.code.ExecutionLog;
 
-/**
- * Enthält den aktuellen Level-Fortschritt eines Benutzers.
- *
- * Das DTO kann später um weitere Fortschrittsinformationen erweitert werden,
- * ohne die grundlegende API-Struktur ändern zu müssen.
- */
 public class LevelVerificationRequest {
     private int levelID;
     private ExecutionLog expectedExecutionLog;
