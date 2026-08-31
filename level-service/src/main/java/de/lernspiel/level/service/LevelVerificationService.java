@@ -1,4 +1,4 @@
-package de.lernspiel.game.service;
+package de.lernspiel.level.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,9 +8,9 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
-import de.lernspiel.game.dto.ExecutionLog;
-import de.lernspiel.game.dto.LogFile;
-import de.lernspiel.game.dto.LogType;
+import de.lernspiel.common.code.ExecutionLog;
+import de.lernspiel.common.code.LogFile;
+import de.lernspiel.common.code.LogType;
 
 @Service
 public class LevelVerificationService {
