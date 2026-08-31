@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExecutionLog {
-    private List<String> entries = new ArrayList<>();
+    private List<LogFile> entries = new ArrayList<>();
 
-    public void add(String message) {
-        entries.add(message);
+    public void add(LogFile logFile) {
+        entries.add(logFile);
     }
 
-    public List<String> getEntries() {
+    public List<LogFile> getEntries() {
         return Collections.unmodifiableList(entries);
     }
 }

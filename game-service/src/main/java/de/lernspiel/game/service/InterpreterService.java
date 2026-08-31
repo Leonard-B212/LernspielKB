@@ -15,6 +15,8 @@ import de.lernspiel.game.dto.CodeBlock;
 import de.lernspiel.game.dto.ElseStatementBlock;
 import de.lernspiel.game.dto.ExecutionLog;
 import de.lernspiel.game.dto.IfStatementBlock;
+import de.lernspiel.game.dto.LogFile;
+import de.lernspiel.game.dto.LogType;
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
 import de.lernspiel.game.dto.VarNameBlock;
@@ -28,7 +30,7 @@ public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
 
-    public List<String> run(ProgramRequest programRequest) {
+    public ExecutionLog run(ProgramRequest programRequest) {
         ExecutionLog output = new ExecutionLog();
         try {
             switch(programRequest.getLanguageId()){
@@ -43,15 +45,25 @@ public class InterpreterService {
             }
 
         } catch (Exception e) {
-            output.add(e.getClass().getSimpleName() + ": " + e.getMessage());
+            Map<String, Object> logContents = new HashMap<>();
+            logContents.put("errorType", e.getClass());
+            logContents.put("errorMessage", e.getMessage());
+            output.add(new LogFile(logContents, LogType.ERROR));
         }
-        return new ArrayList<>(output.getEntries());
+        return output;
     }
 
     public void interpreterMainJava(ProgramRequest programRequest, ExecutionLog output){
         Map<String, Variable<?>> variables = new HashMap<>();
         List<String> globalVariables = new ArrayList<>();
+
+        output.add(new LogFile(new HashMap<>(), LogType.PROGRAM_START));
+
         executeProgram(programRequest.getProgram(), variables, globalVariables, output);
+
+        Map<String, Object> logContents = new HashMap<>();
+        logContents.put("finalVariables", new HashMap<>(variables));
+        output.add(new LogFile(logContents, LogType.PROGRAM_END));
     }
 
     public void executeProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output){
@@ -103,8 +115,6 @@ public class InterpreterService {
      *   int x = 5;       -> Deklaration mit Initialwert
      */
     public void variableDeclaration(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, List<String> localVariables, ExecutionLog output) {
-        output.add("variableDeclaration gestartet mit " + lineOfCode.length + " Blöcken");
-
         CodeType variableType = lineOfCode[0].getType();
 
         CodeBlock variableNameBlockRaw = requireBlock(lineOfCode, 1, "Erwarte einen Variablennamen an Position 1", output);
@@ -127,7 +137,12 @@ public class InterpreterService {
             Variable<?> emptyVariable = createEmptyVariable(variableType, output);
             variables.put(varName, emptyVariable);
             localVariables.add(varName);
-            output.add("Variable " + varName + " " + variableType + " ohne Initialwert deklariert");
+
+            Map<String, Object> logContents = new HashMap<>();
+            logContents.put("variableType", variableType);
+            logContents.put("variableName", varName);
+            output.add(new LogFile(logContents, LogType.SIMPLE_VARIABLE_DECLARATION));
+
             return;
         }
 
@@ -155,12 +170,16 @@ public class InterpreterService {
 
         variables.put(varName, initializedVariable);
         localVariables.add(varName);
-        output.add("Variable " + varName + " " + variableType + " mit Initialwert deklariert: " + initializedVariable.getValue());
+
+        Map<String, Object> logContents = new HashMap<>();
+        logContents.put("variableType", variableType);
+        logContents.put("variableName", varName);
+        logContents.put("variableValue", initializedVariable.getValue());
+        logContents.putAll(describeValueAssignment(valueAssignBlocks, variableType));
+        output.add(new LogFile(logContents, LogType.VARIABLE_DECLARATION_ASSIGNMENT));
     }
 
     public void variableValueAssignment(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
-        output.add("variableValueAssignment gestartet mit " + lineOfCode.length + " Blöcken");
-
         VarNameBlock variableNameBlock = (VarNameBlock) lineOfCode[0];
         String varName = variableNameBlock.getName();
 
@@ -190,11 +209,16 @@ public class InterpreterService {
         }
 
         variables.put(varName, newVariableValue);
-        output.add("Variable " + varName + " " + variables.get(varName).getType() + " wurde der Wert: " + newVariableValue.getValue() + " zugewiesen");
+
+        Map<String, Object> logContents = new HashMap<>();
+        logContents.put("variableType", variables.get(varName).getType());
+        logContents.put("variableName", varName);
+        logContents.put("variableValue", newVariableValue.getValue());
+        logContents.putAll(describeValueAssignment(valueAssignBlocks, variables.get(varName).getType()));
+        output.add(new LogFile(logContents, LogType.VARIABLE_VALUE_ASSIGNMENT));
     }
 
     public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
-        output.add("conditionalStatement gestartet mit " + lineOfCode.length + " Blöcken");
         IfStatementBlock firstIfBlock = (IfStatementBlock) lineOfCode[0];
 
         if(checkExpression(firstIfBlock, variables, output)){
@@ -257,7 +281,6 @@ public class InterpreterService {
 
 
     public void executeConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, ExecutionLog output){
-        output.add("Conditional Statement (Body) gestartet mit " + program.size() + " Blöcken");
         List<String> localVariables = new ArrayList<>();
         try {
             executeProgram(program, variables, localVariables, output);
@@ -371,7 +394,6 @@ public class InterpreterService {
             Variable<?> operand = resolveSingleOperand(blocks.get(i), CodeType.STRING, variables, output);
             result.append((String) operand.getValue());
         }
-        output.add("String concatenation result: \"" + result + "\"");
         return new Variable<>(result.toString(), CodeType.STRING);
     }
 
@@ -418,7 +440,6 @@ public class InterpreterService {
         }
 
         int result = stack.stream().mapToInt(Integer::intValue).sum();
-        output.add("Integer expression evaluated to: " + result);
         return new Variable<>(result, CodeType.INT);
     }
 
@@ -452,4 +473,49 @@ public class InterpreterService {
                 throw new IllegalArgumentException("Unbekannter Variablentyp: " + type);
         }
     }
+
+    /**
+     * Beschreibt den tatsächlich verwendeten Ausdruck einer Wertzuweisung (Rechenweg),
+     * damit die Levelprüfung nicht nur das Endergebnis, sondern auch den Weg dahin abgleichen kann.
+     * Liefert immer die gleiche Struktur (auch bei einem einzelnen Literal/einer einzelnen Variable),
+     * damit die Vergleichslogik nicht zwischen Formen unterscheiden muss.
+     */
+    public Map<String, Object> describeValueAssignment(List<CodeBlock> valueAssignBlocks, CodeType variableType) {
+        List<Map<String, Object>> operands = new ArrayList<>();
+        List<String> operators = new ArrayList<>();
+
+        for (CodeBlock block : valueAssignBlocks) {
+            if (block instanceof ValueBlock valueBlock) {
+                Map<String, Object> operand = new HashMap<>();
+                operand.put("source", "LITERAL");
+                operand.put("value", valueBlock.getValue().getValue());
+                operands.add(operand);
+            } else if (block instanceof VarNameBlock varNameBlock) {
+                Map<String, Object> operand = new HashMap<>();
+                operand.put("source", "VARIABLE");
+                operand.put("variableName", varNameBlock.getName());
+                operands.add(operand);
+            } else {
+                operators.add(block.getType().name());
+            }
+        }
+
+        String expressionForm;
+        if (operands.size() == 1) {
+            expressionForm = "LITERAL".equals(operands.get(0).get("source")) ? "SINGLE_VALUE" : "VARIABLE_REFERENCE";
+        } else if (variableType == CodeType.STRING) {
+            expressionForm = "STRING_CONCATENATION";
+        } else if (variableType == CodeType.INT) {
+            expressionForm = "ARITHMETIC_EXPRESSION";
+        } else {
+            expressionForm = "UNKNOWN";
+        }
+
+        Map<String, Object> description = new HashMap<>();
+        description.put("expressionForm", expressionForm);
+        description.put("expressionOperands", operands);
+        description.put("expressionOperators", operators);
+        return description;
+    }
+
 }
