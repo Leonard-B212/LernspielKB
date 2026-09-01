@@ -33,7 +33,8 @@ public class Level {
     private String levelDescription;
 
     @Lob
-    @Column(name = "expected_execution_log", nullable = false)
+    @Column(name = "expected_execution_log", nullable = false, columnDefinition = "TEXT") 
+    //Text kann bis zu 64kb halten. Aktuell haben expectedExecutionLog nur wenige hundert Zeichen. Bei einem starken ausbau der Levels könnte man überlegen, ob man das Feld auf Medium Text (16mb) erweitert. Das würde aber auch die Datenbankgröße erhöhen.
     @Convert(converter = ExecutionLogConverter.class)
     private ExecutionLog expectedExecutionLog;
 

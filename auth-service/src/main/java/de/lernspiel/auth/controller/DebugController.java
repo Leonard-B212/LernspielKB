@@ -21,6 +21,9 @@ import de.lernspiel.auth.service.UserService;
  *
  * Der Controller ermöglicht unter anderem Datenbankabfragen, das Anlegen
  * und Anzeigen von Testbenutzern sowie das Zurücksetzen ausgewählter Tabellen.
+ * 
+ * Diese Datei ist Notwendig, da wir nur über API zugriff auf die Datenbank haben. In der lokalen Entwicklung kann man so schnell und einfach Testbenutzer anlegen und die Datenbank zurücksetzen.
+ * Vor einem Deployment in einer produktiven Umgebung sollte dieser Controller entfernt oder deaktiviert werden, um Sicherheitsrisiken zu vermeiden.
  */
 @RestController
 @RequestMapping("/debug")
@@ -98,6 +101,14 @@ public class DebugController {
                     "Fehler beim Löschen der Level-Tabellen: " + e.getMessage()
             );
         }
+    }
+
+    // Liefert die gespeicherten Level inklusive Expected ExecutionLog zur Kontrolle.
+    @GetMapping("/levels")
+    public List<Map<String, Object>> levels() {
+        return jdbcTemplate.queryForList(
+                "SELECT levelid, level_name, level_number, expected_execution_log FROM level ORDER BY levelid"
+        );
     }
 
     // Liefert eine einfache Übersicht der verfügbaren Debug-Endpunkte.
