@@ -1271,6 +1271,10 @@ h2 {
     z-index: 1;
 }
 
+.skilltree-branch:has(.skilltree-level-node:hover) {
+    z-index: 50;
+}
+
 
 /* -------------------------
    Kategorie-Node
@@ -1385,13 +1389,6 @@ h2 {
         scale .2s ease;
 }
 
-.skilltree-level-node:hover {
-    animation:
-        skilltree-node-glide
-        2.4s
-        ease-in-out
-        infinite;
-}
 
 
 .skilltree-level-node:hover .skilltree-level-circle {
@@ -1401,34 +1398,7 @@ h2 {
         0 10px 22px rgba(0, 0, 0, .08);
 }
 
-/*
- * Ruhige Schwebebewegung beim Hover.
- *
- * Die eigentliche Position des Nodes bleibt erhalten.
- * translate erzeugt nur eine kleine zusätzliche Abweichung.
- */
-@keyframes skilltree-node-glide {
 
-    0% {
-        translate: 0 0;
-    }
-
-    25% {
-        translate: 2px -1px;
-    }
-
-    50% {
-        translate: -2px 1px;
-    }
-
-    75% {
-        translate: 1px 2px;
-    }
-
-    100% {
-        translate: 0 0;
-    }
-}
 
 /*
  * Die Nummer bleibt direkt im Node sichtbar.
