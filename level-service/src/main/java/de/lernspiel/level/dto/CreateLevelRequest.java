@@ -1,6 +1,7 @@
 package de.lernspiel.level.dto;
 
 import java.util.List;
+import de.lernspiel.common.code.ExecutionLog;
 
 /**
  * Enthält alle Daten, die zum Anlegen eines Levels benötigt werden.
@@ -14,6 +15,7 @@ public class CreateLevelRequest {
     private Integer levelNumber;
     private String language;
     private List<LevelComponentRequest> components;
+    private ExecutionLog expectedExecutionLog;
 
     public String getLevelName() {
         return levelName;
@@ -68,5 +70,13 @@ public class CreateLevelRequest {
 
     public void setCategoryOrder(Integer categoryOrder) {
         this.categoryOrder = categoryOrder;
+    }
+
+    public ExecutionLog getExpectedExecutionLog() {
+        return expectedExecutionLog;
+    }
+
+    public void setExpectedExecutionLog(ExecutionLog expectedExecutionLog) {
+        this.expectedExecutionLog = expectedExecutionLog;
     }
 }

@@ -73,6 +73,10 @@ public class LevelService {
     // Erstellt ein neues Level inklusive Sprache und verfügbarer Komponenten.
     @Transactional
     public LevelResponse createLevel(CreateLevelRequest request) {
+
+        if (request.getExpectedExecutionLog() == null) {
+            throw new IllegalArgumentException("Ein Level benötigt einen erwarteten ExecutionLog.");
+        }
         ProgrammingLanguage language = getOrCreateLanguage(request.getLanguage());
         LevelCategory category = getOrCreateCategory(
                 request.getCategory(),
@@ -102,6 +106,7 @@ public class LevelService {
         level.setCategory(category);
         level.setLevelNumber(request.getLevelNumber());
         level.setLanguage(language);
+        level.setExpectedExecutionLog(request.getExpectedExecutionLog());
 
         Level savedLevel = levelRepository.save(level);
         List<LevelComponentResponse> componentResponses = new ArrayList<>();

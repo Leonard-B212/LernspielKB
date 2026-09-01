@@ -5,8 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import de.lernspiel.common.code.CodeType;
+import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
+
+import static de.lernspiel.level.config.bootstrap.ExpectedExecutionLogs.*;
 
 /**
  * Enthält die fest definierten Java-Level der Kategorie VARIABLES.
@@ -14,7 +17,6 @@ import de.lernspiel.level.dto.LevelComponentRequest;
 @Component
 public class JavaVariableLevels implements LevelDefinitionProvider {
 
-    // Liefert alle Java-VARIABLES-Level in der vorgesehenen Reihenfolge.
     @Override
     public List<CreateLevelRequest> createLevels() {
         return List.of(
@@ -25,76 +27,120 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
         );
     }
 
-    // Erstellt das erste Java-VARIABLES-Level.
-    private CreateLevelRequest createLevel1() {
+    private static CreateLevelRequest createLevel1() {
         return createLevel(
                 "Variablen addieren",
-                "Addiere zwei Variablen und speichere das Ergebnis in einer neuen Variable.",
+                "Erstelle x mit 5 und y mit 3. Addiere anschließend x und y und speichere das Ergebnis in result.",
                 1,
                 List.of(
-                        component(CodeType.INT, 1),
-                        component(CodeType.VAR_NAME, 3),
-                        component(CodeType.EQUALS, 1),
+                        component(CodeType.INT, 3),
+                        component(CodeType.VAR_NAME, 5),
+                        component(CodeType.EQUALS, 3),
+                        component(CodeType.VALUE, 2),
                         component(CodeType.ADD, 1),
-                        component(CodeType.BREAK, 1)
+                        component(CodeType.BREAK, 3)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 5),
+                        assignment(CodeType.INT, "y", 3),
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                8,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(variable("x"), variable("y")),
+                                List.of("ADD")
+                        )
                 )
         );
     }
 
-    // Erstellt das zweite Java-VARIABLES-Level.
-    private CreateLevelRequest createLevel2() {
+    private static CreateLevelRequest createLevel2() {
         return createLevel(
                 "Variablen multiplizieren",
-                "Multipliziere zwei Variablen und speichere das Ergebnis in einer neuen Variable.",
+                "Erstelle x mit 4 und y mit 3. Multipliziere anschließend x und y und speichere das Ergebnis in result.",
                 2,
                 List.of(
-                        component(CodeType.INT, 1),
-                        component(CodeType.VAR_NAME, 3),
-                        component(CodeType.EQUALS, 1),
+                        component(CodeType.INT, 3),
+                        component(CodeType.VAR_NAME, 5),
+                        component(CodeType.EQUALS, 3),
+                        component(CodeType.VALUE, 2),
                         component(CodeType.MULTIPLY, 1),
-                        component(CodeType.BREAK, 1)
+                        component(CodeType.BREAK, 3)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 4),
+                        assignment(CodeType.INT, "y", 3),
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                12,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(variable("x"), variable("y")),
+                                List.of("MULTIPLY")
+                        )
                 )
         );
     }
 
-    // Erstellt das dritte Java-VARIABLES-Level.
-    private CreateLevelRequest createLevel3() {
+    private static CreateLevelRequest createLevel3() {
         return createLevel(
                 "Variablen subtrahieren",
-                "Subtrahiere eine Variable von einer anderen und speichere das Ergebnis in einer neuen Variable.",
+                "Erstelle x mit 10 und y mit 4. Subtrahiere anschließend y von x und speichere das Ergebnis in result.",
                 3,
                 List.of(
-                        component(CodeType.INT, 1),
-                        component(CodeType.VAR_NAME, 3),
-                        component(CodeType.EQUALS, 1),
+                        component(CodeType.INT, 3),
+                        component(CodeType.VAR_NAME, 5),
+                        component(CodeType.EQUALS, 3),
+                        component(CodeType.VALUE, 2),
                         component(CodeType.SUBTRACT, 1),
-                        component(CodeType.BREAK, 1)
+                        component(CodeType.BREAK, 3)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 10),
+                        assignment(CodeType.INT, "y", 4),
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                6,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(variable("x"), variable("y")),
+                                List.of("SUBTRACT")
+                        )
                 )
         );
     }
 
-    // Erstellt das vierte Java-VARIABLES-Level.
-    private CreateLevelRequest createLevel4() {
+    private static CreateLevelRequest createLevel4() {
         return createLevel(
                 "Variablen dividieren",
-                "Dividiere eine Variable durch eine andere und speichere das Ergebnis in einer neuen Variable.",
+                "Erstelle x mit 20 und y mit 4. Dividiere anschließend x durch y und speichere das Ergebnis in result.",
                 4,
                 List.of(
-                        component(CodeType.INT, 1),
-                        component(CodeType.VAR_NAME, 3),
-                        component(CodeType.EQUALS, 1),
+                        component(CodeType.INT, 3),
+                        component(CodeType.VAR_NAME, 5),
+                        component(CodeType.EQUALS, 3),
+                        component(CodeType.VALUE, 2),
                         component(CodeType.DIVIDE, 1),
-                        component(CodeType.BREAK, 1)
+                        component(CodeType.BREAK, 3)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 20),
+                        assignment(CodeType.INT, "y", 4),
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                5,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(variable("x"), variable("y")),
+                                List.of("DIVIDE")
+                        )
                 )
         );
     }
 
-    // Erstellt die gemeinsamen Metadaten eines Java-VARIABLES-Levels.
-    private CreateLevelRequest createLevel(
-            String levelName,
-            String levelDescription,
-            Integer levelNumber,
-            List<LevelComponentRequest> components) {
+    private static CreateLevelRequest createLevel(String levelName, String levelDescription,
+            Integer levelNumber, List<LevelComponentRequest> components, ExecutionLog expectedExecutionLog) {
 
         CreateLevelRequest request = new CreateLevelRequest();
 
@@ -105,12 +151,12 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
         request.setLevelNumber(levelNumber);
         request.setLanguage("JAVA");
         request.setComponents(components);
+        request.setExpectedExecutionLog(expectedExecutionLog);
 
         return request;
     }
 
-    // Erstellt eine verfügbare Code-Komponente für ein Level.
-    private LevelComponentRequest component(CodeType type, Integer amount) {
+    private static LevelComponentRequest component(CodeType type, Integer amount) {
         LevelComponentRequest component = new LevelComponentRequest();
 
         component.setType(type);

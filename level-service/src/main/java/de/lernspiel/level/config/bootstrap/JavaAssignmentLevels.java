@@ -5,8 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import de.lernspiel.common.code.CodeType;
+import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
+
+import static de.lernspiel.level.config.bootstrap.ExpectedExecutionLogs.*;
 
 /**
  * Enthält die fest definierten Java-Level der Kategorie ASSIGNMENTS.
@@ -35,6 +38,10 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
                         component(CodeType.EQUALS, 2),
                         component(CodeType.VALUE, 2),
                         component(CodeType.BREAK, 2)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 5),
+                        valueAssignment(CodeType.INT, "x", 10)
                 )
         );
     }
@@ -50,6 +57,17 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
                         component(CodeType.EQUALS, 2),
                         component(CodeType.VALUE, 1),
                         component(CodeType.BREAK, 2)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 5),
+                        expressionAssignment(
+                                CodeType.INT,
+                                "y",
+                                5,
+                                "VARIABLE_REFERENCE",
+                                List.of(variable("x")),
+                                List.of()
+                        )
                 )
         );
     }
@@ -66,6 +84,17 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
                         component(CodeType.VALUE, 2),
                         component(CodeType.ADD, 1),
                         component(CodeType.BREAK, 2)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 5),
+                        expressionValueAssignment(
+                                CodeType.INT,
+                                "x",
+                                7,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(variable("x"), literal(2)),
+                                List.of("ADD")
+                        )
                 )
         );
     }
@@ -81,12 +110,17 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
                         component(CodeType.EQUALS, 3),
                         component(CodeType.VALUE, 3),
                         component(CodeType.BREAK, 3)
+                ),
+                log(
+                        assignment(CodeType.INT, "x", 5),
+                        valueAssignment(CodeType.INT, "x", 10),
+                        valueAssignment(CodeType.INT, "x", 15)
                 )
         );
     }
 
     private static CreateLevelRequest createLevel(String levelName, String levelDescription,
-            Integer levelNumber, List<LevelComponentRequest> components) {
+            Integer levelNumber, List<LevelComponentRequest> components, ExecutionLog expectedExecutionLog) {
 
         CreateLevelRequest request = new CreateLevelRequest();
 
@@ -97,6 +131,7 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
         request.setLevelNumber(levelNumber);
         request.setLanguage("JAVA");
         request.setComponents(components);
+        request.setExpectedExecutionLog(expectedExecutionLog);
 
         return request;
     }

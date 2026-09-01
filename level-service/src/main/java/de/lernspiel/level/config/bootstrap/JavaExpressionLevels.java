@@ -5,8 +5,11 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import de.lernspiel.common.code.CodeType;
+import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.level.dto.CreateLevelRequest;
 import de.lernspiel.level.dto.LevelComponentRequest;
+
+import static de.lernspiel.level.config.bootstrap.ExpectedExecutionLogs.*;
 
 /**
  * Enthält die fest definierten Java-Level der Kategorie EXPRESSIONS.
@@ -37,6 +40,16 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
                         component(CodeType.VALUE, 2),
                         component(CodeType.ADD, 1),
                         component(CodeType.BREAK, 1)
+                ),
+                log(
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                8,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(literal(5), literal(3)),
+                                List.of("ADD")
+                        )
                 )
         );
     }
@@ -53,6 +66,16 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
                         component(CodeType.VALUE, 2),
                         component(CodeType.SUBTRACT, 1),
                         component(CodeType.BREAK, 1)
+                ),
+                log(
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                6,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(literal(10), literal(4)),
+                                List.of("SUBTRACT")
+                        )
                 )
         );
     }
@@ -69,6 +92,16 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
                         component(CodeType.VALUE, 2),
                         component(CodeType.MULTIPLY, 1),
                         component(CodeType.BREAK, 1)
+                ),
+                log(
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                18,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(literal(6), literal(3)),
+                                List.of("MULTIPLY")
+                        )
                 )
         );
     }
@@ -85,6 +118,16 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
                         component(CodeType.VALUE, 2),
                         component(CodeType.DIVIDE, 1),
                         component(CodeType.BREAK, 1)
+                ),
+                log(
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                5,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(literal(20), literal(4)),
+                                List.of("DIVIDE")
+                        )
                 )
         );
     }
@@ -102,12 +145,22 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
                         component(CodeType.ADD, 1),
                         component(CodeType.MULTIPLY, 1),
                         component(CodeType.BREAK, 1)
+                ),
+                log(
+                        expressionAssignment(
+                                CodeType.INT,
+                                "result",
+                                11,
+                                "ARITHMETIC_EXPRESSION",
+                                List.of(literal(5), literal(3), literal(2)),
+                                List.of("ADD", "MULTIPLY")
+                        )
                 )
         );
     }
 
     private static CreateLevelRequest createLevel(String levelName, String levelDescription,
-            Integer levelNumber, List<LevelComponentRequest> components) {
+            Integer levelNumber, List<LevelComponentRequest> components, ExecutionLog expectedExecutionLog) {
 
         CreateLevelRequest request = new CreateLevelRequest();
 
@@ -118,6 +171,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
         request.setLevelNumber(levelNumber);
         request.setLanguage("JAVA");
         request.setComponents(components);
+        request.setExpectedExecutionLog(expectedExecutionLog);
 
         return request;
     }
