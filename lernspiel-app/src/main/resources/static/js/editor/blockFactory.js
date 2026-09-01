@@ -1,16 +1,11 @@
 /**
- * Erzeugt die Datenobjekte neuer Code-Blöcke.
- *
- * Einfache Blöcke wie INT oder ADD benötigen nur ihren Typ.
- * Komplexere Blöcke wie VAR_NAME und VALUE benötigen zusätzliche
- * Eingaben des Benutzers.
- *
- * Die erzeugten Objekte entsprechen bereits weitgehend der Struktur,
- * die später als JSON an das Backend bzw. den Interpreter gesendet wird.
+ * Erzeugt und validiert die Datenobjekte neuer Code-Blöcke.
+ * Konfigurierbare Eingaben werden über blockInput.js abgefragt.
  */
 
-// Erzeugt anhand eines Blocktyps das passende Datenobjekt.
-export function createBlockData(type, onError = () => {}) {
+import { requestVariableName, requestValue } from "./blockInput.js";
+
+export async function createBlockData(type, onError = () => {}) {
     switch (type) {
         case "VAR_NAME":
             return createVariableBlock(onError);
@@ -23,9 +18,8 @@ export function createBlockData(type, onError = () => {}) {
     }
 }
 
-// Fragt einen Variablennamen ab, validiert ihn und erzeugt einen VAR_NAME-Block.
-function createVariableBlock(onError) {
-    const name = window.prompt("Wie soll die Variable heißen?");
+async function createVariableBlock(onError) {
+    const name = await requestVariableName();
 
     if (name === null) {
         return null;
@@ -38,9 +32,7 @@ function createVariableBlock(onError) {
         return null;
     }
 
-    const validName = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cleanedName);
-
-    if (!validName) {
+    if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cleanedName)) {
         onError("Ungültiger Variablenname.");
         return null;
     }
@@ -51,32 +43,14 @@ function createVariableBlock(onError) {
     };
 }
 
-// Fragt Datentyp und Inhalt eines Wertes ab und erzeugt einen VALUE-Block.
-function createValueBlock(onError) {
-    const typeInput = window.prompt(
-        "Welchen Datentyp hat der Wert?\n\n" +
-        "INT\nSTRING\nBOOLEAN",
-        "INT"
-    );
+async function createValueBlock(onError) {
+    const input = await requestValue();
 
-    if (typeInput === null) {
+    if (!input) {
         return null;
     }
 
-    const valueType = typeInput.trim().toUpperCase();
-
-    if (!["INT", "STRING", "BOOLEAN"].includes(valueType)) {
-        onError("Datentyp muss INT, STRING oder BOOLEAN sein.");
-        return null;
-    }
-
-    const rawValue = window.prompt(`Wert für ${valueType}:`);
-
-    if (rawValue === null) {
-        return null;
-    }
-
-    const parsedValue = parseValue(rawValue, valueType, onError);
+    const parsedValue = parseValue(input.value, input.type, onError);
 
     if (parsedValue === undefined) {
         return null;
@@ -86,12 +60,12 @@ function createValueBlock(onError) {
         type: "VALUE",
         value: {
             value: parsedValue,
-            type: valueType
+            type: input.type
         }
     };
 }
 
-// Konvertiert eine Benutzereingabe passend zum gewählten Datentyp.
+// Konvertiert die Eingabe passend zum ausgewählten Datentyp.
 function parseValue(rawValue, valueType, onError) {
     switch (valueType) {
         case "INT": {
@@ -105,16 +79,8 @@ function parseValue(rawValue, valueType, onError) {
             return value;
         }
 
-        case "BOOLEAN": {
-            const normalized = rawValue.toLowerCase();
-
-            if (normalized !== "true" && normalized !== "false") {
-                onError("Boolean muss true oder false sein.");
-                return undefined;
-            }
-
-            return normalized === "true";
-        }
+        case "BOOLEAN":
+            return Boolean(rawValue);
 
         case "STRING":
             return rawValue;
