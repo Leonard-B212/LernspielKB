@@ -1438,31 +1438,83 @@ h2 {
     font-weight: 800;
 }
 
+/* -------------------------
+   Level Hover-Card
+   ------------------------- */
 
-/*
- * Der Name erscheint unter dem Node.
- */
-.skilltree-level-label {
+.skilltree-level-tooltip {
     position: absolute;
-
-    top: calc(100% + .55rem);
+    top: calc(100% + .8rem);
     left: 50%;
 
-    width: 150px;
+    width: 240px;
+    padding: .8rem .9rem;
 
-    transform:
-        translateX(-50%);
+    border: 2px solid #f97316;
+    border-radius: 10px;
 
+    background: white;
     color: #374151;
 
-    font-size: .78rem;
-    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .1);
 
-    line-height: 1.25;
+    text-align: left;
 
-    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translate(-50%, 5px);
 
     pointer-events: none;
+
+    transition:
+        opacity .15s ease,
+        transform .15s ease,
+        visibility .15s ease;
+
+    z-index: 20;
+}
+
+.skilltree-level-node:hover {
+    z-index: 20;
+}
+
+.skilltree-level-node:hover .skilltree-level-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.skilltree-level-tooltip-title,
+.skilltree-level-tooltip-description,
+.skilltree-level-tooltip-status {
+    display: block;
+}
+
+.skilltree-level-tooltip-title {
+    margin-bottom: .35rem;
+
+    color: #111827;
+
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.skilltree-level-tooltip-description {
+    color: #6b7280;
+
+    font-size: .78rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.skilltree-level-tooltip-status {
+    margin-top: .55rem;
+
+    color: #f97316;
+
+    font-size: .75rem;
+    font-weight: 800;
 }
 
 
@@ -1539,4 +1591,88 @@ h2 {
         width: 115px;
         font-size: .72rem;
     }
+}
+
+/* -------------------------
+   Block-Eingabe
+   ------------------------- */
+
+.block-input-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(17, 24, 39, .38);
+    z-index: 1000;
+}
+
+.block-input-dialog {
+    width: min(380px, 100%);
+    padding: 1.25rem;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .16);
+}
+
+.block-input-dialog h3 {
+    margin: 0 0 1rem;
+}
+
+.block-input-label {
+    display: block;
+    margin-bottom: .4rem;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.block-input-field {
+    width: 100%;
+    box-sizing: border-box;
+    padding: .7rem .8rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.block-input-field:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.block-input-types,
+.block-input-boolean {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+.block-input-type,
+.block-input-boolean-option {
+    flex: 1;
+    padding: .6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+}
+
+.block-input-type.active,
+.block-input-boolean-option.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.block-input-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    margin-top: 1rem;
+}
+
+.block-input-actions button {
+    padding: .6rem .9rem;
 }

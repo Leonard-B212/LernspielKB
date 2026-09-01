@@ -238,6 +238,7 @@ public class LevelService {
         return new LevelOverviewResponse(
                 level.getLevelID(),
                 level.getLevelName(),
+                level.getLevelDescription(),
                 level.getCategory().getCategoryID(),
                 level.getCategory().getCategoryName(),
                 level.getCategory().getCategoryOrder(),

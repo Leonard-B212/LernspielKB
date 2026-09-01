@@ -149,18 +149,14 @@ export function createSkilltreeRenderer({
         circle.classList.add("skilltree-level-circle");
 
         const number = document.createElement("span");
-
         number.classList.add("skilltree-level-number");
         number.textContent = level.levelNumber;
 
-        const label = document.createElement("span");
-
-        label.classList.add("skilltree-level-label");
-        label.textContent = level.levelName;
+        const tooltip = createLevelTooltip(level, completed);
 
         circle.appendChild(number);
         button.appendChild(circle);
-        button.appendChild(label);
+        button.appendChild(tooltip);
 
         button.addEventListener("click", () => onLevelSelect(level));
 
@@ -195,14 +191,43 @@ export function createSkilltreeRenderer({
         return button;
     }
 
-    // Verteilt die Level eines Branches fächerförmig über CSS-Positionsvariablen.
+    // Erstellt die Hover-Card mit Name, Beschreibung und optionalem Abschlussstatus.
+    function createLevelTooltip(level, completed) {
+        const tooltip = document.createElement("span");
+        tooltip.classList.add("skilltree-level-tooltip");
+
+        const title = document.createElement("span");
+        title.classList.add("skilltree-level-tooltip-title");
+        title.textContent = level.levelName;
+
+        const description = document.createElement("span");
+        description.classList.add("skilltree-level-tooltip-description");
+        description.textContent = level.levelDescription;
+
+        tooltip.appendChild(title);
+        tooltip.appendChild(description);
+
+        if (completed) {
+            const status = document.createElement("span");
+            status.classList.add("skilltree-level-tooltip-status");
+            status.textContent = "✓ Abgeschlossen";
+            tooltip.appendChild(status);
+        }
+
+        return tooltip;
+    }
+
+    // Verteilt Level kontrolliert in einem unteren Fächer unterhalb der Kategorie.
     function positionLevelNode(node, index, total) {
         const center = (total - 1) / 2;
         const relativeIndex = index - center;
 
-        const spacing = total <= 3 ? 185 : 165;
+        const spacing = total <= 3 ? 190 : 160;
         const x = relativeIndex * spacing;
-        const y = 65 + Math.abs(relativeIndex) * 38;
+
+        const maxDistance = Math.max(center, 1);
+        const distanceFactor = Math.abs(relativeIndex) / maxDistance;
+        const y = 90 + distanceFactor * 60;
 
         node.style.setProperty("--node-x", `${x}px`);
         node.style.setProperty("--node-y", `${y}px`);

@@ -101,34 +101,34 @@ export function createDragDropController({
     }
 
     // Fügt einen neuen Block ein oder verschiebt einen vorhandenen Programmblock.
-    function handleProgramDrop(event) {
-        event.preventDefault();
-        programDropzone.classList.remove("drag-over");
+    async function handleProgramDrop(event) {
+    event.preventDefault();
+    programDropzone.classList.remove("drag-over");
 
-        const insertIndex = currentDropIndex ?? editorState.getLength();
+    const insertIndex = currentDropIndex ?? editorState.getLength();
 
-        if (draggedSource === "palette") {
-            addPaletteBlock(insertIndex);
-        } else if (draggedSource === "program") {
-            moveProgramBlock(insertIndex);
-        }
-
-        resetDragState();
-        clearDropIndicators();
+    if (draggedSource === "palette") {
+        await addPaletteBlock(insertIndex);
+    } else if (draggedSource === "program") {
+        moveProgramBlock(insertIndex);
     }
+
+    resetDragState();
+    clearDropIndicators();
+}
 
     // Erzeugt einen neuen Block aus der Palette und fügt ihn in den State ein.
-    function addPaletteBlock(insertIndex) {
-        const type = draggedElement.dataset.type;
-        const blockData = createBlockData(type, showError);
+    async function addPaletteBlock(insertIndex) {
+    const type = draggedElement.dataset.type;
+    const blockData = await createBlockData(type, showError);
 
-        if (!blockData) {
-            return;
-        }
-
-        editorState.insertBlock(insertIndex, blockData);
-        renderProgram();
+    if (!blockData) {
+        return;
     }
+
+    editorState.insertBlock(insertIndex, blockData);
+    renderProgram();
+}
 
     // Verschiebt einen bereits vorhandenen Block innerhalb des Programms.
     function moveProgramBlock(insertIndex) {
