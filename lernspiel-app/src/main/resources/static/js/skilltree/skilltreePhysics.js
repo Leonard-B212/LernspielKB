@@ -13,12 +13,12 @@
  * Oben sind Konstanten definiert, die die Stärke der Kräfte und die Dauer der Simulation steuern.
  */
 
-const SIMULATION_DURATION = 2800;
+const SIMULATION_DURATION = 1800;
 
-const REPULSION_DISTANCE = 135;
-const REPULSION_STRENGTH = 0.018;
+const REPULSION_DISTANCE = 110;
+const REPULSION_STRENGTH = 0.010;
 
-const DAMPING = 0.86;
+const DAMPING = 0.84;
 
 // Startet eine kurze Physics-Simulation für die Level-Nodes.
 export function initializeSkilltreePhysics({
