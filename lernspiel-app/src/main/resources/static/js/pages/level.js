@@ -180,9 +180,9 @@ runButton.addEventListener("click", async () => {
 
         renderInterpreterOutput(output);
 
-        const hasInterpreterError = output.some(
-            (entry) => entry.includes("Exception:")
-        );
+        const hasInterpreterError = output.entries?.some(
+            (entry) => entry.logType === "ERROR"
+        ) ?? false;
 
         if (hasInterpreterError) {
             showMessage(
@@ -206,11 +206,13 @@ runButton.addEventListener("click", async () => {
    INTERPRETER-AUSGABE
    ========================================================= */
 
-// Zeigt die vom Interpreter zurückgegebenen Meldungen an.
-function renderInterpreterOutput(output) {
+// Zeigt die Einträge des vom Interpreter erzeugten ExecutionLogs an.
+function renderInterpreterOutput(executionLog) {
     interpreterOutput.innerHTML = "";
 
-    if (!output || output.length === 0) {
+    const entries = executionLog?.entries ?? [];
+
+    if (entries.length === 0) {
         const placeholder = document.createElement("span");
 
         placeholder.classList.add("interpreter-output-placeholder");
@@ -220,16 +222,23 @@ function renderInterpreterOutput(output) {
         return;
     }
 
-    output.forEach((entry) => {
+    entries.forEach((entry) => {
         const line = document.createElement("div");
 
         line.classList.add("interpreter-output-line");
 
-        if (entry.includes("Exception:")) {
+        if (entry.logType === "ERROR") {
             line.classList.add("error");
         }
 
-        line.textContent = entry;
+        const contents = Object.entries(entry.contents ?? {})
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(", ");
+
+        line.textContent = contents
+            ? `${entry.logType}: ${contents}`
+            : entry.logType;
+
         interpreterOutput.appendChild(line);
     });
 }
