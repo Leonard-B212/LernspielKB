@@ -30,7 +30,7 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel1() {
         return createLevel(
                 "Neuer Wert",
-                "Erstelle eine int-Variable x mit dem Wert 5 und weise ihr anschließend den Wert 10 zu.",
+                "Erstelle eine int-Variable \"x\" mit dem Wert 5 und weise ihr anschließend den Wert 10 zu.",
                 1,
                 List.of(
                         component(CodeType.INT, 1),
@@ -49,7 +49,7 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel2() {
         return createLevel(
                 "Wert übernehmen",
-                "Erstelle die int-Variablen x und y. Setze x auf 5 und weise anschließend den Wert von x der Variable y zu.",
+                "Erstelle die int-Variablen \"x\" und \"y\". Setze \"x\" auf 5 und weise anschließend den Wert von \"x\" der Variable \"y\" zu.",
                 2,
                 List.of(
                         component(CodeType.INT, 2),
@@ -75,7 +75,7 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel3() {
         return createLevel(
                 "Variable erhöhen",
-                "Erstelle eine int-Variable x mit dem Wert 5 und erhöhe ihren Wert anschließend um 2.",
+                "Erstelle eine int-Variable \"x\" mit dem Wert 5 und erhöhe ihren Wert anschließend um 2.",
                 3,
                 List.of(
                         component(CodeType.INT, 1),
@@ -102,7 +102,7 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel4() {
         return createLevel(
                 "Mehrere Zuweisungen",
-                "Erstelle eine int-Variable x mit dem Wert 5. Setze x anschließend auf 10 und danach auf 15.",
+                "Erstelle eine int-Variable \"x\" mit dem Wert 5. Setze \"x\" anschließend auf 10 und danach auf 15.",
                 4,
                 List.of(
                         component(CodeType.INT, 1),

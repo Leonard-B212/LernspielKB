@@ -31,7 +31,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel1() {
         return createLevel(
                 "Einfache Addition",
-                "Erstelle eine int-Variable result und speichere das Ergebnis von 5 + 3 darin.",
+                "Erstelle eine int-Variable \"result\" und speichere das Ergebnis von 5 + 3 darin.",
                 1,
                 List.of(
                         component(CodeType.INT, 1),
@@ -57,7 +57,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel2() {
         return createLevel(
                 "Subtraktion",
-                "Erstelle eine int-Variable result und speichere das Ergebnis von 10 - 4 darin.",
+                "Erstelle eine int-Variable \"result\" und speichere das Ergebnis von 10 - 4 darin.",
                 2,
                 List.of(
                         component(CodeType.INT, 1),
@@ -83,7 +83,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel3() {
         return createLevel(
                 "Multiplikation",
-                "Erstelle eine int-Variable result und speichere das Ergebnis von 6 * 3 darin.",
+                "Erstelle eine int-Variable \"result\" und speichere das Ergebnis von 6 * 3 darin.",
                 3,
                 List.of(
                         component(CodeType.INT, 1),
@@ -109,7 +109,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel4() {
         return createLevel(
                 "Division",
-                "Erstelle eine int-Variable result und speichere das Ergebnis von 20 / 4 darin.",
+                "Erstelle eine int-Variable \"result\" und speichere das Ergebnis von 20 / 4 darin.",
                 4,
                 List.of(
                         component(CodeType.INT, 1),
@@ -135,7 +135,7 @@ public class JavaExpressionLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel5() {
         return createLevel(
                 "Mehrere Rechenoperationen",
-                "Erstelle eine int-Variable result und speichere das Ergebnis von 5 + 3 * 2 darin.",
+                "Erstelle eine int-Variable \"result\" und speichere das Ergebnis von 5 + 3 * 2 darin.",
                 5,
                 List.of(
                         component(CodeType.INT, 1),

@@ -8,12 +8,14 @@
 
 import { getLevel } from "../api/levelApi.js";
 import { runProgram } from "../api/interpreterApi.js";
+import { verifyLevel } from "../api/levelVerificationApi.js";
 import { BLOCK_DEFINITIONS } from "../editor/blockDefinitions.js";
 import { buildLevelPalette } from "../editor/paletteBuilder.js";
 import { createEditorState } from "../editor/editorState.js";
 import { createProgramRenderer } from "../editor/renderer.js";
 import { createDragDropController } from "../editor/dragDrop.js";
 import { initializeConsoleTheme } from "../editor/consoleTheme.js";
+import { completeLevel } from "../api/progressApi.js";
 
 /* =========================================================
    DOM
@@ -154,7 +156,7 @@ resetButton.addEventListener("click", () => {
    AUSFÜHREN
    ========================================================= */
 
-// Sendet das gebaute Programm mit Level- und Sprachinformationen an den Interpreter.
+// Führt das Programm aus und prüft das Ergebnis anschließend gegen das Level.
 runButton.addEventListener("click", async () => {
     const program = editorState.getProgram();
 
@@ -189,14 +191,28 @@ runButton.addEventListener("click", async () => {
                 "Der Interpreter hat einen Fehler im Programm gefunden.",
                 true
             );
+            return;
+        }
+
+        const successful = await verifyLevel(
+            loadedLevel.levelID,
+            output
+        );
+
+        if (successful) {
+            await completeLevel(loadedLevel.levelID);
+            showMessage("Level erfolgreich abgeschlossen.");
         } else {
-            showMessage("");
+            showMessage(
+                "Die Lösung erfüllt die Anforderungen des Levels noch nicht.",
+                true
+            );
         }
     } catch (error) {
-        console.error("Fehler beim Interpreter-Aufruf:", error);
+        console.error("Fehler beim Ausführen oder Prüfen des Levels:", error);
 
         showMessage(
-            error.message || "Programm konnte nicht ausgeführt werden.",
+            error.message || "Programm konnte nicht ausgeführt oder geprüft werden.",
             true
         );
     }

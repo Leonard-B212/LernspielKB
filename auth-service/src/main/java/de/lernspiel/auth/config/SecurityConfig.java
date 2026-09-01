@@ -61,6 +61,7 @@ public class SecurityConfig {
                                 "/api/benutzer/login",
                                 "/api/benutzer/register",
                                 "/api/token/generate-service-token",
+                                "/api/levelVerification/verify",
                                 "/debug/db-info",
                                 "/debug/create-test-user",
                                 "/debug/list-users",

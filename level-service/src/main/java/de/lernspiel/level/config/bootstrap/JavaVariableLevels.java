@@ -30,7 +30,7 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel1() {
         return createLevel(
                 "Variablen addieren",
-                "Erstelle x mit 5 und y mit 3. Addiere anschließend x und y und speichere das Ergebnis in result.",
+                "Erstelle die int-Variable \"x\" mit dem Wert 5 und die int-Variable \"y\" mit dem Wert 3. Addiere anschließend \"x\" und \"y\" und speichere das Ergebnis in der int-Variable \"result\".",
                 1,
                 List.of(
                         component(CodeType.INT, 3),
@@ -58,7 +58,7 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel2() {
         return createLevel(
                 "Variablen multiplizieren",
-                "Erstelle x mit 4 und y mit 3. Multipliziere anschließend x und y und speichere das Ergebnis in result.",
+                "Erstelle die int-Variable \"x\" mit dem Wert 4 und die int-Variable \"y\" mit dem Wert 3. Multipliziere anschließend \"x\" und \"y\" und speichere das Ergebnis in der int-Variable \"result\".",
                 2,
                 List.of(
                         component(CodeType.INT, 3),
@@ -86,7 +86,7 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel3() {
         return createLevel(
                 "Variablen subtrahieren",
-                "Erstelle x mit 10 und y mit 4. Subtrahiere anschließend y von x und speichere das Ergebnis in result.",
+                "Erstelle die int-Variable \"x\" mit dem Wert 10 und die int-Variable \"y\" mit dem Wert 4. Subtrahiere anschließend \"y\" von \"x\" und speichere das Ergebnis in der int-Variable \"result\".",
                 3,
                 List.of(
                         component(CodeType.INT, 3),
@@ -114,7 +114,7 @@ public class JavaVariableLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel4() {
         return createLevel(
                 "Variablen dividieren",
-                "Erstelle x mit 20 und y mit 4. Dividiere anschließend x durch y und speichere das Ergebnis in result.",
+                "Erstelle die int-Variable \"x\" mit dem Wert 20 und die int-Variable \"y\" mit dem Wert 4. Dividiere anschließend \"x\" durch \"y\" und speichere das Ergebnis in der int-Variable \"result\".",
                 4,
                 List.of(
                         component(CodeType.INT, 3),

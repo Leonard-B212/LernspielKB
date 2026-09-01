@@ -31,7 +31,7 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel1() {
         return createLevel(
                 "Erste Variable",
-                "Erstelle eine int-Variable x mit dem Wert 5.",
+                "Erstelle eine int-Variable \"x\" mit dem Wert 5.",
                 1,
                 List.of(
                         component(CodeType.INT, 1),
@@ -49,7 +49,7 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel2() {
         return createLevel(
                 "String-Variable",
-                "Erstelle eine String-Variable name mit dem Wert \"Hallo\".",
+                "Erstelle eine String-Variable \"name\" mit dem Wert \"Hallo\".",
                 2,
                 List.of(
                         component(CodeType.STRING, 1),
@@ -67,7 +67,7 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel3() {
         return createLevel(
                 "Boolean-Variable",
-                "Erstelle eine boolean-Variable isActive mit dem Wert true.",
+                "Erstelle eine boolean-Variable \"isActive\" mit dem Wert true.",
                 3,
                 List.of(
                         component(CodeType.BOOLEAN, 1),
@@ -85,7 +85,7 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel4() {
         return createLevel(
                 "Variable ohne Startwert",
-                "Deklariere eine int-Variable number ohne ihr direkt einen Wert zuzuweisen.",
+                "Deklariere eine int-Variable \"number\", ohne ihr direkt einen Wert zuzuweisen.",
                 4,
                 List.of(
                         component(CodeType.INT, 1),
@@ -101,7 +101,7 @@ public class JavaBasicLevels implements LevelDefinitionProvider {
     private static CreateLevelRequest createLevel5() {
         return createLevel(
                 "Zwei Variablen",
-                "Erstelle die int-Variable x mit dem Wert 5 und die int-Variable y mit dem Wert 10.",
+                "Erstelle die int-Variable \"x\" mit dem Wert 5 und die int-Variable \"y\" mit dem Wert 10.",
                 5,
                 List.of(
                         component(CodeType.INT, 2),
