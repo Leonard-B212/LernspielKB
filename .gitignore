@@ -32,4 +32,5 @@ Thumbs.db
 Mgmnt.md
 
 #Application Properties
-application.properties
+**/application.properties
+!**/application.properties.example
