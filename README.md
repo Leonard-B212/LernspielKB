@@ -4,6 +4,7 @@ Webbasiertes Lernspiel für Schülerinnen und Schüler der Klassenstufen 9–10 
 
 Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen visuellen Drag-&-Drop-Code-Editor mit einem eigenen Interpreter, dynamisch bereitgestellten Leveln und einem visuellen Skilltree.
 
+![Lernspiel Level-Editor](lernspiel-app/src/main/resources/static/images/Screenshot_1.png)
 ---
 
 ## Inhalt
