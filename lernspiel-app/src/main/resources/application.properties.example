@@ -1,11 +1,10 @@
-#Alles passwörter und secrets sind outdated und damit nur Platzhalter
+#Alle passwörter und secrets sind outdated und damit nur beispielhafte Platzhalter
 
 spring.application.name=Benutzerverwaltung
 
 spring.datasource.url=jdbc:mysql://www.kirchbergnet.de:3306/prg_spiel?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 spring.datasource.username=prg_spiel
 spring.datasource.password=DHBWRavensburg1
-#sollte bei deployment geändert werden, da sonst jeder die Datenbank auslesen kann
 
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
