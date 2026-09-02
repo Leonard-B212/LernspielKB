@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,6 +23,13 @@ import de.lernspiel.auth.service.UserService;
  *
  * Der Controller ermöglicht unter anderem Datenbankabfragen, das Anlegen
  * und Anzeigen von Testbenutzern sowie das Zurücksetzen ausgewählter Tabellen.
+ *
+ * Diese Datei ist notwendig, da wir nur über API-Zugriff auf die Datenbank haben.
+ * In der lokalen Entwicklung kann man so schnell und einfach Testbenutzer anlegen
+ * und die Datenbank zurücksetzen.
+ *
+ * Vor einem Deployment in einer produktiven Umgebung sollte dieser Controller
+ * entfernt oder deaktiviert werden, um Sicherheitsrisiken zu vermeiden.
  */
 @RestController
 @RequestMapping("/debug")
@@ -28,6 +37,9 @@ public class DebugController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Value("${db.new-password}")
+    private String newDbPassword;
 
     @Autowired
     private UserService userService;
@@ -39,7 +51,7 @@ public class DebugController {
     @GetMapping("/db-info")
     public Map<String, Object> dbInfo() {
         return jdbcTemplate.queryForMap(
-                "SELECT DATABASE() as db, USER() as user, @@hostname as host, @@port as port, @@version as version"
+                "SELECT DATABASE() as db, USER() as user, CURRENT_USER() as currentUser, @@hostname as host, @@port as port, @@version as version"
         );
     }
 
@@ -96,6 +108,32 @@ public class DebugController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(
                     "Fehler beim Löschen der Level-Tabellen: " + e.getMessage()
+            );
+        }
+    }
+
+    // Liefert die gespeicherten Level inklusive Expected ExecutionLog zur Kontrolle.
+    @GetMapping("/levels")
+    public List<Map<String, Object>> levels() {
+        return jdbcTemplate.queryForList(
+                "SELECT levelid, level_name, level_number, expected_execution_log FROM level ORDER BY levelid"
+        );
+    }
+
+    // Ändert das Passwort des aktuell verwendeten Datenbankbenutzers.
+    @PostMapping("/change-db-password")
+    public ResponseEntity<?> changeDbPassword() {
+        try {
+            jdbcTemplate.execute(
+                    "SET PASSWORD FOR 'prg_spiel'@'%' = PASSWORD('" +
+                    newDbPassword.replace("'", "''") +
+                    "')"
+            );
+
+            return ResponseEntity.ok("Datenbankpasswort wurde geändert.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                    "Datenbankpasswort konnte nicht geändert werden: " + e.getMessage()
             );
         }
     }

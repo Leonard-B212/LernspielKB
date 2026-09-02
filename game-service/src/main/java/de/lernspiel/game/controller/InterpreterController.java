@@ -1,5 +1,7 @@
 package de.lernspiel.game.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.service.InterpreterService;
 
@@ -19,11 +22,9 @@ public class InterpreterController {
     private InterpreterService interpreterService;
 
     @PostMapping("/run")
-    public ResponseEntity<List<String>> run(@RequestBody ProgramRequest programRequest) {
-        List<String> output = interpreterService.run(programRequest);
-        for(String s : output){
-            System.out.println(s);
-        }
+    public ResponseEntity<ExecutionLog> run(@RequestBody ProgramRequest programRequest) {
+        ExecutionLog output = interpreterService.run(programRequest);
+
         return ResponseEntity.ok(output);
     }
 }

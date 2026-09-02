@@ -12,3 +12,10 @@ import { apiRequest } from "./api.js";
 export async function getCompletedLevels() {
     return apiRequest("/api/progress/completed-levels");
 }
+
+// Markiert ein Level für den aktuell angemeldeten Benutzer als abgeschlossen.
+export async function completeLevel(levelID) {
+    return apiRequest(`/api/progress/levels/${levelID}/complete`, {
+        method: "POST"
+    });
+}

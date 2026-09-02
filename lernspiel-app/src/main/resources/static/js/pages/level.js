@@ -8,12 +8,14 @@
 
 import { getLevel } from "../api/levelApi.js";
 import { runProgram } from "../api/interpreterApi.js";
+import { verifyLevel } from "../api/levelVerificationApi.js";
 import { BLOCK_DEFINITIONS } from "../editor/blockDefinitions.js";
 import { buildLevelPalette } from "../editor/paletteBuilder.js";
 import { createEditorState } from "../editor/editorState.js";
 import { createProgramRenderer } from "../editor/renderer.js";
 import { createDragDropController } from "../editor/dragDrop.js";
 import { initializeConsoleTheme } from "../editor/consoleTheme.js";
+import { completeLevel } from "../api/progressApi.js";
 
 /* =========================================================
    DOM
@@ -154,7 +156,7 @@ resetButton.addEventListener("click", () => {
    AUSFÜHREN
    ========================================================= */
 
-// Sendet das gebaute Programm mit Level- und Sprachinformationen an den Interpreter.
+// Führt das Programm aus und prüft das Ergebnis anschließend gegen das Level.
 runButton.addEventListener("click", async () => {
     const program = editorState.getProgram();
 
@@ -180,23 +182,37 @@ runButton.addEventListener("click", async () => {
 
         renderInterpreterOutput(output);
 
-        const hasInterpreterError = output.some(
-            (entry) => entry.includes("Exception:")
-        );
+        const hasInterpreterError = output.entries?.some(
+            (entry) => entry.logType === "ERROR"
+        ) ?? false;
 
         if (hasInterpreterError) {
             showMessage(
                 "Der Interpreter hat einen Fehler im Programm gefunden.",
                 true
             );
+            return;
+        }
+
+        const successful = await verifyLevel(
+            loadedLevel.levelID,
+            output
+        );
+
+        if (successful) {
+            await completeLevel(loadedLevel.levelID);
+            showMessage("Level erfolgreich abgeschlossen.");
         } else {
-            showMessage("");
+            showMessage(
+                "Die Lösung erfüllt die Anforderungen des Levels noch nicht.",
+                true
+            );
         }
     } catch (error) {
-        console.error("Fehler beim Interpreter-Aufruf:", error);
+        console.error("Fehler beim Ausführen oder Prüfen des Levels:", error);
 
         showMessage(
-            error.message || "Programm konnte nicht ausgeführt werden.",
+            error.message || "Programm konnte nicht ausgeführt oder geprüft werden.",
             true
         );
     }
@@ -206,11 +222,13 @@ runButton.addEventListener("click", async () => {
    INTERPRETER-AUSGABE
    ========================================================= */
 
-// Zeigt die vom Interpreter zurückgegebenen Meldungen an.
-function renderInterpreterOutput(output) {
+// Zeigt die Einträge des vom Interpreter erzeugten ExecutionLogs an.
+function renderInterpreterOutput(executionLog) {
     interpreterOutput.innerHTML = "";
 
-    if (!output || output.length === 0) {
+    const entries = executionLog?.entries ?? [];
+
+    if (entries.length === 0) {
         const placeholder = document.createElement("span");
 
         placeholder.classList.add("interpreter-output-placeholder");
@@ -220,16 +238,23 @@ function renderInterpreterOutput(output) {
         return;
     }
 
-    output.forEach((entry) => {
+    entries.forEach((entry) => {
         const line = document.createElement("div");
 
         line.classList.add("interpreter-output-line");
 
-        if (entry.includes("Exception:")) {
+        if (entry.logType === "ERROR") {
             line.classList.add("error");
         }
 
-        line.textContent = entry;
+        const contents = Object.entries(entry.contents ?? {})
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(", ");
+
+        line.textContent = contents
+            ? `${entry.logType}: ${contents}`
+            : entry.logType;
+
         interpreterOutput.appendChild(line);
     });
 }

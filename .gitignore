@@ -30,3 +30,7 @@ Thumbs.db
 .VSCodeCounter*
 
 Mgmnt.md
+
+#Application Properties
+**/application.properties
+!**/application.properties.example

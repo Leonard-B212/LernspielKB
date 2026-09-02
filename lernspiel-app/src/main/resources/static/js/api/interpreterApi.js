@@ -8,7 +8,7 @@
  * in diesem API-Bereich ergänzt werden.
  */
 
-// Sendet einen ProgramRequest an den Interpreter und liefert dessen Ausgabe als String-Liste zurück.
+// Sendet einen ProgramRequest an den Interpreter und liefert den erzeugten ExecutionLog zurück.
 export async function runProgram(programRequest) {
     const response = await fetch("/game/interpreter/run", {
         method: "POST",

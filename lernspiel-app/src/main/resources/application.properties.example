@@ -1,9 +1,11 @@
+#Alle passwörter und secrets sind outdated und damit nur beispielhafte Platzhalter
+
 spring.application.name=Benutzerverwaltung
 
 spring.datasource.url=jdbc:mysql://www.kirchbergnet.de:3306/prg_spiel?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
 spring.datasource.username=prg_spiel
 spring.datasource.password=DHBWRavensburg1
-#krasses Passwort ich weiß
+
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
 spring.jpa.hibernate.ddl-auto=update
@@ -12,16 +14,16 @@ management.endpoints.web.exposure.include=*
 #höheres Logging für endpoints weil fehler
 logging.level.org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping=DEBUG
 
-#Admin Passwort bei Bootstrap
+#Admin Passwort bei Bootstrap, sollte bei Deployment geändert werden
 app.bootstrap-admin.password=admin123
 
 #für frontend
 spring.web.resources.static-locations=classpath:/static/
 
-#secret key für JWT für Benutzervalidierung
+#secret key für JWT für Benutzervalidierung, sollten bei Deployment rotiert werden
 jwt.secret=D9J8BjKm32RGlFm+YzxkZpH3XGmRDFBqp+g8HzIHdxo=
 jwt.expiration=86400000
 
-#secret key für JWT für Servicevalidierung
+#secret key für JWT für Servicevalidierung, sollten bei Deployment rotiert werden
 jwt.service.secret=K92JzKl28XGpLmFp+Y8xkYzH3MGpJDFBqp+g8HzI7dxo=
 jwt.service.expiration=3600000

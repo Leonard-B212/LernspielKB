@@ -1,5 +1,7 @@
 package de.lernspiel.level.entity;
 
+import de.lernspiel.common.code.ExecutionLog;
+import de.lernspiel.level.converter.ExecutionLogConverter;
 import jakarta.persistence.*;
 
 /**
@@ -29,6 +31,12 @@ public class Level {
 
     @Column(nullable = false, length = 1000)
     private String levelDescription;
+
+    @Lob
+    @Column(name = "expected_execution_log", nullable = false, columnDefinition = "TEXT") 
+    //Text kann bis zu 64kb halten. Aktuell haben expectedExecutionLog nur wenige hundert Zeichen. Bei einem starken ausbau der Levels könnte man überlegen, ob man das Feld auf Medium Text (16mb) erweitert. Das würde aber auch die Datenbankgröße erhöhen.
+    @Convert(converter = ExecutionLogConverter.class)
+    private ExecutionLog expectedExecutionLog;
 
     /**
      * Fachliche Kategorie des Levels.
@@ -96,5 +104,13 @@ public class Level {
 
     public void setLanguage(ProgrammingLanguage language) {
         this.language = language;
+    }
+
+    public ExecutionLog getExpectedExecutionLog() {
+    return expectedExecutionLog;
+}
+
+    public void setExpectedExecutionLog(ExecutionLog expectedExecutionLog) {
+        this.expectedExecutionLog = expectedExecutionLog;
     }
 }
