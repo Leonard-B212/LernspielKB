@@ -12,6 +12,7 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
 - [Schnellstart](#schnellstart)
   - [Voraussetzungen](#voraussetzungen)
   - [Repository klonen](#repository-klonen)
+  - [Anwendung konfigurieren](#anwendung-konfigurieren)
   - [Projekt starten](#projekt-starten)
   - [Test-Zugangsdaten](#test-zugangsdaten)
 - [Bedienung und Testen](#bedienung-und-testen)
@@ -112,6 +113,14 @@ Für die lokale Ausführung werden folgende Komponenten benötigt:
 git clone https://github.com/Leonard-B212/LernspielKB
 cd LernspielKB
 ```
+
+## Anwendung konfigurieren
+
+Vor dem ersten Start die Datei `lernspiel-app/src/main/resources/application.properties.example` kopieren und in `application.properties` umbenennen.
+
+Anschließend die enthaltenen Platzhalter für Datenbankzugang, Passwörter und Secrets an die eigene Umgebung anpassen.
+
+Die `application.properties` wird über `.gitignore` nicht versioniert.
 
 ## Projekt starten
 
