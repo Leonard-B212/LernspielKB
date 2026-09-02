@@ -76,6 +76,9 @@ Aktuell umgesetzt sind unter anderem:
 - Wechsel zwischen verschiedenen Programmiersprachen im Skilltree
 - dynamische Gruppierung von Leveln nach Kategorien
 - physikbasierte leichte Bewegung der Skilltree-Nodes
+- strukturierte ExecutionLogs mit typisierten Log-Einträgen
+- serverseitige automatische Level-Verifikation
+- automatische Speicherung erfolgreich abgeschlossener Level
 - visuelle Verbindungen zwischen Kategorien und Leveln
 - Speicherung abgeschlossener Level
 - benutzerbezogener Level-Fortschritt
@@ -133,10 +136,9 @@ Danach kann das Projekt gestartet werden mit:
 Im Menü anschließend:
 
 ```text
-==========================================
+\==========================================
           Lernspiel Entwicklung
-==========================================
-
+\==========================================
 [1] Clean Install
 [2] Clean Install und Start
 [3] Nur Start
@@ -320,7 +322,7 @@ Die Level-Nodes können sich dadurch beim Laden geringfügig voneinander abstoß
 
 Die Kategorien selbst bleiben an ihrer vorgesehenen Position und wirken gleichzeitig als Hindernisse für die Level-Nodes.
 
-Beim Hover über einen Level-Node wird dieser leicht hervorgehoben und bewegt sich subtil. Die zugehörigen Verbindungslinien werden während dieser Bewegung aktualisiert.
+Beim Hover über einen Level-Node wird dieser leicht hervorgehoben. Die Verbindungslinien werden während der kurzen Physics-Simulation beim Laden aktualisiert.
 
 Die Physics dient ausschließlich der visuellen Darstellung. Die fachliche Reihenfolge der Level wird weiterhin durch die Backend-Daten bestimmt.
 
@@ -398,6 +400,7 @@ Ein Level enthält aktuell unter anderem:
 - eine Programmiersprache
 - die für die Lösung vorgesehenen Code-Blöcke
 - die konfigurierte Anzahl der jeweiligen Code-Blöcke
+- einen erwarteten ExecutionLog zur serverseitigen Prüfung der Lösung
 
 Die Kombination aus Kategorie, Levelnummer und Programmiersprache dient zur strukturierten Einordnung eines Levels.
 
@@ -423,7 +426,7 @@ Die zusätzlichen Blöcke werden ausschließlich für die sichtbare Palette erze
 
 Bereits im Level vorhandene Blocktypen werden bei der Auswahl der zusätzlichen Blöcke ausgeschlossen.
 
-Als mögliche zusätzliche Blocktypen werden nur Blocktypen verwendet, die das Frontend über die zentralen `BLOCK_DEFINITIONS` aktuell unterstützt.
+Als mögliche zusätzliche Blocktypen werden nur Blocktypen verwendet, die das Frontend über die zentralen `BLOCK\_DEFINITIONS` aktuell unterstützt.
 
 Die gesamte Palette wird anschließend mit einem Fisher-Yates-Shuffle zufällig angeordnet.
 
@@ -470,15 +473,12 @@ auth-service
      ├── Authentifizierung
      ├── Benutzer
      └── Klassen
-
 common
      │
      └── gemeinsam verwendete Typen
-
 game-service
      │
      └── Interpreter
-
 level-service
      │
      ├── Level
@@ -487,7 +487,6 @@ level-service
      ├── Components
      ├── Level-Bootstrap
      └── Fortschritt
-
 lernspiel-app
      │
      ├── Spring-Boot-Anwendung
@@ -544,7 +543,7 @@ Zusätzlich befindet sich dort mit `paletteBuilder.js` die Logik für den dynami
 Der `paletteBuilder`:
 
 - übernimmt die vom Backend gelieferten Level-Komponenten
-- bestimmt weitere verfügbare Blocktypen über `BLOCK_DEFINITIONS`
+- bestimmt weitere verfügbare Blocktypen über `BLOCK\_DEFINITIONS`
 - schließt bereits vorhandene Typen als zusätzliche Blöcke aus
 - ergänzt zufällig zwei bis drei zusätzliche Blocktypen
 - mischt die vollständige Palette
@@ -668,7 +667,7 @@ Ausführung des Programms
     ↓
 ExecutionLog
     ↓
-List<String>
+strukturierte LogFile-Einträge
     ↓
 Interpreter-Konsole im Frontend
 ```
@@ -685,11 +684,35 @@ Die verfügbaren Blocktypen werden modulübergreifend durch `CodeType` im Modul 
 
 Die polymorphe Deserialisierung der Code-Blöcke erfolgt über Jackson.
 
-Die während der Ausführung erzeugten Meldungen werden in einem `ExecutionLog` gesammelt und anschließend als `List<String>` an das Frontend zurückgegeben.
+Die während der Ausführung erzeugten Meldungen werden als strukturierte `LogFile`-Einträge in einem `ExecutionLog` gesammelt und an das Frontend zurückgegeben. `ExecutionLog`, `LogFile` und `LogType` befinden sich im Modul `common`, da die Ausführungsdaten sowohl vom Interpreter als auch von der Level-Verifikation verwendet werden.
 
 Dadurch können sowohl die Sandbox als auch die Level-Seite erfolgreiche Verarbeitungsschritte und vom Interpreter erkannte Fehler direkt anzeigen.
 
 ---
+
+## Level-Verifikation
+
+Nach der Ausführung eines Levels wird der vom Interpreter erzeugte `ExecutionLog` serverseitig mit dem für das Level hinterlegten erwarteten `ExecutionLog` verglichen.
+
+```text
+Level-Seite
+    ↓
+Interpreter
+    ↓
+tatsächlicher ExecutionLog
+    ↓
+LevelVerificationController
+    ↓
+LevelVerificationService
+    ↓
+erwarteter ExecutionLog aus dem Level
+    ↓
+Level erfolgreich / nicht erfolgreich
+```
+
+Das Frontend sendet für die Prüfung ausschließlich die Level-ID und den tatsächlich erzeugten `ExecutionLog`. Der erwartete ExecutionLog wird nicht an das Schüler-Frontend ausgeliefert, sondern im Backend anhand der Level-ID geladen.
+
+Bei erfolgreicher Verifikation wird das Level anschließend über die Progress-Schnittstelle für den aktuell authentifizierten Benutzer als abgeschlossen gespeichert.
 
 ## Level-Service
 
@@ -700,6 +723,7 @@ Ein Level ist mit:
 - einer Programmiersprache
 - einer Kategorie
 - verfügbaren Code-Komponenten
+- einem erwarteten `ExecutionLog`
 
 verknüpft.
 
@@ -722,6 +746,8 @@ Level
 ```
 
 `CodeType` befindet sich im Modul `common`, da die Definition der Blocktypen sowohl vom Interpreter als auch vom Level-Service verwendet wird.
+
+Der erwartete `ExecutionLog` eines Levels wird über den `ExecutionLogConverter` als JSON in der Datenbank gespeichert. Er ist Bestandteil der Leveldefinition, wird jedoch nicht über die normalen Level-Responses an das Schüler-Frontend ausgeliefert.
 
 ### LevelCategory
 
@@ -775,6 +801,8 @@ List<LevelDefinitionProvider>
       ↓
 JavaBasicLevels
 JavaVariableLevels
+JavaExpressionLevels
+JavaAssignmentLevels
 weitere zukünftige Provider
       ↓
 LevelService
@@ -799,6 +827,8 @@ Die einzelnen Levelgruppen, aktuell beispielsweise:
 ```text
 JavaBasicLevels
 JavaVariableLevels
+JavaExpressionLevels
+JavaAssignmentLevels
 ```
 
 implementieren dieses Interface und werden als Spring-Komponenten registriert.
@@ -843,6 +873,10 @@ Nach Abschluss des Bootstraps wird im Terminal ausgegeben, ob alle Level bereits
 
 Die Bootstrap-Definitionen dienen damit als zentrale Definition der mitgelieferten Standardlevel.
 
+Zusätzlich stellt `ExpectedExecutionLogs` Hilfsmethoden für die erwarteten strukturierten Ausführungslogs der Standardlevel bereit. Die Provider definieren damit neben Aufgabenstellung und verfügbaren Komponenten auch die für eine erfolgreiche Lösung erwarteten Interpreter-Ereignisse.
+
+Der Bootstrap legt aktuell ausschließlich fehlende Level an. Bereits vorhandene Level werden beim Start nicht automatisch mit geänderten Bootstrap-Definitionen synchronisiert.
+
 Der REST-Endpunkt zum manuellen Anlegen von Leveln bleibt unabhängig davon weiterhin vorhanden.
 
 ---
@@ -884,6 +918,8 @@ progressApi.js
 ```
 
 geladen.
+
+Nach erfolgreicher Level-Verifikation wird das Level über die Progress-Schnittstelle für den aktuell authentifizierten Benutzer als abgeschlossen gespeichert.
 
 Der Skilltree kann damit feststellen, welche Level für den aktuell angemeldeten Benutzer bereits abgeschlossen wurden.
 
@@ -955,9 +991,9 @@ Die wichtigsten Bestandteile sind:
 LernspielKB/
 │
 ├── auth-service/       # Authentifizierung sowie Benutzer- und Klassenverwaltung
-├── common/             # Modulübergreifend verwendete Typen und Komponenten
+├── common/             # Modulübergreifend verwendete Code- und ExecutionLog-Typen
 ├── game-service/       # Interpreter und Ausführung der erstellten Programme
-├── level-service/      # Level, Bootstrap, Kategorien, Programmiersprachen und Fortschritt
+├── level-service/      # Level, Bootstrap, Verifikation, Kategorien, Programmiersprachen und Fortschritt
 ├── lernspiel-app/      # Spring-Boot-Hauptanwendung und Frontend
 │
 ├── .gitignore          # Von Git ignorierte Dateien und Ordner
@@ -974,15 +1010,15 @@ LernspielKB/
 ```text
 LernspielKB/
 │
-├── .gitignore                                      # Definiert Dateien und Ordner, die von Git ignoriert werden
-├── dev.ps1                                         # PowerShell-Skript zum Bauen, Starten und Ausführen von Entwicklungstools
-├── xss-check.ps1                                   # Durchsucht das Frontend nach potenziellen XSS-Sinks
-├── pom.xml                                         # Parent-POM zur Verwaltung der Maven-Module
-├── README.md                                       # Projektdokumentation
+├── .gitignore                                           # Definiert Dateien und Ordner, die von Git ignoriert werden
+├── dev.ps1                                              # PowerShell-Skript zum Bauen, Starten und Ausführen von Entwicklungstools
+├── xss-check.ps1                                        # Durchsucht das Frontend nach potenziellen XSS-Sinks
+├── pom.xml                                              # Parent-POM zur Verwaltung der Maven-Module
+├── README.md                                            # Projektdokumentation
 │
-├── auth-service/                                   # Authentifizierung, Benutzer- und Klassenverwaltung
+├── auth-service/                                        # Authentifizierung, Benutzer- und Klassenverwaltung
 │   ├── .gitkeep
-│   ├── pom.xml                                     # Maven-Konfiguration des Auth-Moduls
+│   ├── pom.xml                                          # Maven-Konfiguration des Auth-Moduls
 │   │
 │   └── src/
 │       └── main/
@@ -991,45 +1027,45 @@ LernspielKB/
 │                   └── lernspiel/
 │                       └── auth/
 │                           │
-│                           ├── config/                              # Konfiguration von Authentifizierung und Sicherheit
-│                           │   ├── AdminBootstrap.java              # Erstellt beim ersten Start automatisch einen Administrator
-│                           │   ├── JwtConfig.java                   # Konfiguriert die für JWT benötigten Komponenten
-│                           │   └── SecurityConfig.java              # Definiert Zugriffsregeln und Spring-Security-Konfiguration
+│                           ├── config/                                  # Konfiguration von Authentifizierung und Sicherheit
+│                           │   ├── AdminBootstrap.java                  # Erstellt beim ersten Start automatisch einen Administrator
+│                           │   ├── JwtConfig.java                       # Konfiguriert die für JWT benötigten Komponenten
+│                           │   └── SecurityConfig.java                  # Definiert Zugriffsregeln und Spring-Security-Konfiguration
 │                           │
-│                           ├── controller/                          # REST-Schnittstellen des Auth-Moduls
-│                           │   ├── DebugController.java             # Hilfsendpunkte für lokale Entwicklung und Diagnose
-│                           │   ├── SchoolClassController.java       # REST-Endpunkte für die Verwaltung von Klassen
-│                           │   └── UserController.java              # REST-Endpunkte für Login und Benutzerverwaltung
+│                           ├── controller/                              # REST-Schnittstellen des Auth-Moduls
+│                           │   ├── DebugController.java                 # Hilfsendpunkte für lokale Entwicklung und Diagnose
+│                           │   ├── SchoolClassController.java           # REST-Endpunkte für die Verwaltung von Klassen
+│                           │   └── UserController.java                  # REST-Endpunkte für Login und Benutzerverwaltung
 │                           │
-│                           ├── dto/                                 # Request- und Response-Objekte
-│                           │   ├── LoginRequest.java                # Zugangsdaten für den Login
-│                           │   ├── RegisterRequest.java             # Gemeinsame Registrierungsdaten
-│                           │   ├── SchoolClassRequest.java          # Request zum Erstellen einer Klasse
-│                           │   ├── SchoolClassResponse.java         # Response einer Klasse
-│                           │   ├── StudentRegisterRequest.java      # Request zum Anlegen eines Schülers
-│                           │   ├── TeacherRegisterRequest.java      # Request zum Anlegen eines Lehrers
-│                           │   └── UserResponse.java                # Response-Daten eines Benutzers
+│                           ├── dto/                                     # Request- und Response-Objekte
+│                           │   ├── LoginRequest.java                    # Zugangsdaten für den Login
+│                           │   ├── RegisterRequest.java                 # Gemeinsame Registrierungsdaten
+│                           │   ├── SchoolClassRequest.java              # Request zum Erstellen einer Klasse
+│                           │   ├── SchoolClassResponse.java             # Response einer Klasse
+│                           │   ├── StudentRegisterRequest.java          # Request zum Anlegen eines Schülers
+│                           │   ├── TeacherRegisterRequest.java          # Request zum Anlegen eines Lehrers
+│                           │   └── UserResponse.java                    # Response-Daten eines Benutzers
 │                           │
-│                           ├── entity/                              # JPA-Entitäten des Auth-Moduls
-│                           │   ├── SchoolClass.java                 # Datenbankmodell einer Schulklasse
-│                           │   ├── User.java                        # Datenbankmodell eines Benutzers
-│                           │   └── UserType.java                    # Definiert ADMIN, TEACHER und STUDENT
+│                           ├── entity/                                  # JPA-Entitäten des Auth-Moduls
+│                           │   ├── SchoolClass.java                     # Datenbankmodell einer Schulklasse
+│                           │   ├── User.java                            # Datenbankmodell eines Benutzers
+│                           │   └── UserType.java                        # Definiert ADMIN, TEACHER und STUDENT
 │                           │
-│                           ├── repository/                          # Datenbankzugriff über Spring Data JPA
-│                           │   ├── SchoolClassRepository.java       # Repository für Schulklassen
-│                           │   └── UserRepository.java              # Repository für Benutzer
+│                           ├── repository/                              # Datenbankzugriff über Spring Data JPA
+│                           │   ├── SchoolClassRepository.java           # Repository für Schulklassen
+│                           │   └── UserRepository.java                  # Repository für Benutzer
 │                           │
-│                           ├── security/                            # JWT-basierte Authentifizierungslogik
-│                           │   ├── JwtAuthenticationFilter.java     # Prüft JWTs bei eingehenden Requests
-│                           │   └── JwtUtils.java                    # Erstellt, liest und validiert JWTs
+│                           ├── security/                                # JWT-basierte Authentifizierungslogik
+│                           │   ├── JwtAuthenticationFilter.java         # Prüft JWTs bei eingehenden Requests
+│                           │   └── JwtUtils.java                        # Erstellt, liest und validiert JWTs
 │                           │
-│                           └── service/                             # Geschäftslogik
-│                               ├── SchoolClassService.java          # Geschäftslogik für Schulklassen
-│                               └── UserService.java                 # Login und Benutzeroperationen
+│                           └── service/                                 # Geschäftslogik
+│                               ├── SchoolClassService.java              # Geschäftslogik für Schulklassen
+│                               └── UserService.java                     # Login und Benutzeroperationen
 │
-├── common/                                         # Modulübergreifend verwendete Definitionen
+├── common/                                              # Modulübergreifend verwendete Definitionen
 │   ├── .gitkeep
-│   ├── pom.xml                                     # Maven-Konfiguration des Common-Moduls
+│   ├── pom.xml                                          # Maven-Konfiguration des Common-Moduls
 │   │
 │   └── src/
 │       └── main/
@@ -1038,11 +1074,14 @@ LernspielKB/
 │                   └── lernspiel/
 │                       └── common/
 │                           └── code/
-│                               └── CodeType.java   # Zentrale Definition gemeinsam verwendeter Code-Blocktypen
+│                               ├── CodeType.java                        # Zentrale Definition gemeinsam verwendeter Code-Blocktypen
+│                               ├── ExecutionLog.java                    # Sammelt strukturierte Einträge einer Programmausführung
+│                               ├── LogFile.java                         # Einzelner strukturierter Eintrag eines ExecutionLogs
+│                               └── LogType.java                         # Definiert die unterschiedlichen Arten von Log-Einträgen
 │
-├── game-service/                                   # Spiellogik und eigener Code-Interpreter
+├── game-service/                                        # Spiellogik und eigener Code-Interpreter
 │   ├── .gitkeep
-│   ├── pom.xml                                     # Maven-Konfiguration des Game-Moduls
+│   ├── pom.xml                                          # Maven-Konfiguration des Game-Moduls
 │   │
 │   └── src/
 │       └── main/
@@ -1052,23 +1091,22 @@ LernspielKB/
 │                       └── game/
 │                           │
 │                           ├── controller/
-│                           │   └── InterpreterController.java       # REST-Endpunkt zum Ausführen eines Programms
+│                           │   └── InterpreterController.java           # REST-Endpunkt zum Ausführen eines Programms
 │                           │
-│                           ├── dto/                                 # Datenmodell des visuellen Programms
-│                           │   ├── CodeBlock.java                   # Basisklasse aller Code-Blöcke
-│                           │   ├── ElseStatementBlock.java          # Repräsentiert einen Else-Block
-│                           │   ├── ExecutionLog.java                # Sammelt Meldungen während der Ausführung
-│                           │   ├── IfStatementBlock.java            # Repräsentiert einen If-Block
-│                           │   ├── ProgramRequest.java              # Vom Frontend übermitteltes Gesamtprogramm
-│                           │   ├── ValueBlock.java                  # Repräsentiert einen konkreten Wert
-│                           │   ├── Variable.java                    # Kapselt Wert und Datentyp einer Variable
-│                           │   └── VarNameBlock.java                # Repräsentiert einen Variablennamen
+│                           ├── dto/                                     # Datenmodell des visuellen Programms
+│                           │   ├── CodeBlock.java                       # Basisklasse aller Code-Blöcke
+│                           │   ├── ElseStatementBlock.java              # Repräsentiert einen Else-Block
+│                           │   ├── IfStatementBlock.java                # Repräsentiert einen If-Block
+│                           │   ├── ProgramRequest.java                  # Vom Frontend übermitteltes Gesamtprogramm
+│                           │   ├── ValueBlock.java                      # Repräsentiert einen konkreten Wert
+│                           │   ├── Variable.java                        # Kapselt Wert und Datentyp einer Variable
+│                           │   └── VarNameBlock.java                    # Repräsentiert einen Variablennamen
 │                           │
 │                           └── service/
-│                               └── InterpreterService.java          # Interpretiert und verarbeitet die Code-Blöcke
+│                               └── InterpreterService.java              # Interpretiert und verarbeitet die Code-Blöcke
 │
-├── level-service/                                  # Levelverwaltung, Bootstrap, Skilltree-Daten und Lernfortschritt
-│   ├── pom.xml                                     # Maven-Konfiguration des Level-Moduls
+├── level-service/                                       # Levelverwaltung, Bootstrap, Skilltree-Daten, Verifikation und Lernfortschritt
+│   ├── pom.xml                                          # Maven-Konfiguration des Level-Moduls
 │   │
 │   └── src/
 │       └── main/
@@ -1077,49 +1115,58 @@ LernspielKB/
 │                   └── lernspiel/
 │                       └── level/
 │                           │
-│                           ├── config/                              # Konfiguration und Bootstrap der Standardlevel
-│                           │   ├── LevelBootstrap.java              # Prüft und erstellt Standardlevel beim Anwendungsstart
+│                           ├── config/                                  # Konfiguration und Bootstrap der Standardlevel
+│                           │   ├── LevelBootstrap.java                  # Prüft und erstellt Standardlevel beim Anwendungsstart
 │                           │   │
-│                           │   └── bootstrap/                       # Definition der automatisch angelegten Levelgruppen
-│                           │       ├── LevelDefinitionProvider.java # Gemeinsame Schnittstelle aller Levelgruppen
-│                           │       ├── JavaBasicLevels.java         # Vordefinierte Java-Level der Kategorie BASICS
-│                           │       └── JavaVariableLevels.java      # Vordefinierte Java-Level der Kategorie VARIABLES
+│                           │   └── bootstrap/                           # Definition der automatisch angelegten Levelgruppen
+│                           │       ├── ExpectedExecutionLogs.java       # Hilfsmethoden für erwartete ExecutionLogs der Standardlevel
+│                           │       ├── JavaAssignmentLevels.java        # Vordefinierte Java-Level der Kategorie ASSIGNMENTS
+│                           │       ├── JavaBasicLevels.java             # Vordefinierte Java-Level der Kategorie BASICS
+│                           │       ├── JavaExpressionLevels.java        # Vordefinierte Java-Level der Kategorie EXPRESSIONS
+│                           │       ├── JavaVariableLevels.java          # Vordefinierte Java-Level der Kategorie VARIABLES
+│                           │       └── LevelDefinitionProvider.java     # Gemeinsame Schnittstelle aller Levelgruppen
 │                           │
-│                           ├── controller/                          # REST-Schnittstellen der Levelverwaltung
-│                           │   ├── LevelController.java             # Erstellen, Laden und Übersicht von Leveln
-│                           │   └── LevelProgressController.java     # REST-Schnittstelle für Level-Fortschritt
+│                           ├── controller/                              # REST-Schnittstellen der Levelverwaltung
+│                           │   ├── LevelController.java                 # Erstellen, Laden und Übersicht von Leveln
+│                           │   ├── LevelProgressController.java         # REST-Schnittstelle für Level-Fortschritt
+│                           │   └── LevelVerificationController.java     # REST-Schnittstelle zur Prüfung einer Level-Lösung
 │                           │
-│                           ├── dto/                                 # Request- und Response-Objekte
-│                           │   ├── CreateLevelRequest.java          # Daten zum Anlegen eines Levels
-│                           │   ├── LevelComponentRequest.java       # Komponente beim Erstellen eines Levels
-│                           │   ├── LevelComponentResponse.java      # Komponente eines geladenen Levels
-│                           │   ├── LevelOverviewResponse.java       # Kompakte Leveldaten für Übersichten und Skilltree
-│                           │   ├── LevelProgressResponse.java       # Response für benutzerbezogenen Level-Fortschritt
-│                           │   └── LevelResponse.java               # Vollständige Leveldaten für die Level-Seite
+│                           ├── converter/                               # Konvertierung persistierter komplexer Leveldaten
+│                           │   └── ExecutionLogConverter.java           # Speichert erwartete ExecutionLogs als JSON in der Datenbank
 │                           │
-│                           ├── entity/                              # JPA-Entitäten der Levelverwaltung
-│                           │   ├── CompletedLevel.java              # Speichert ein abgeschlossenes Level eines Benutzers
-│                           │   ├── Component.java                   # Datenbankmodell eines Code-Blocktyps
-│                           │   ├── Level.java                       # Datenbankmodell eines Levels
-│                           │   ├── LevelCategory.java               # Kategorie und Reihenfolge im Lernpfad
-│                           │   ├── LevelComponent.java              # Verknüpft Level und Component inklusive Anzahl
-│                           │   └── ProgrammingLanguage.java         # Unterstützte Programmiersprache
+│                           ├── dto/                                     # Request- und Response-Objekte
+│                           │   ├── CreateLevelRequest.java              # Daten zum Anlegen eines Levels inklusive erwarteter Ausführung
+│                           │   ├── LevelComponentRequest.java           # Komponente beim Erstellen eines Levels
+│                           │   ├── LevelComponentResponse.java          # Komponente eines geladenen Levels
+│                           │   ├── LevelOverviewResponse.java           # Kompakte Leveldaten für Übersichten und Skilltree
+│                           │   ├── LevelProgressResponse.java           # Response für benutzerbezogenen Level-Fortschritt
+│                           │   ├── LevelResponse.java                   # Vollständige Leveldaten für die Level-Seite
+│                           │   └── LevelVerificationRequest.java        # Level-ID und tatsächlicher ExecutionLog für die Prüfung
 │                           │
-│                           ├── repository/                          # Datenbankzugriff über Spring Data JPA
-│                           │   ├── CompletedLevelRepository.java    # Zugriff auf abgeschlossene Level
-│                           │   ├── ComponentRepository.java         # Zugriff auf Code-Komponenten
-│                           │   ├── LevelCategoryRepository.java     # Zugriff auf Level-Kategorien
-│                           │   ├── LevelComponentRepository.java    # Zugriff auf Level-Component-Zuordnungen
-│                           │   ├── LevelRepository.java             # Zugriff auf Level
-│                           │   └── ProgrammingLanguageRepository.java # Zugriff auf Programmiersprachen
+│                           ├── entity/                                  # JPA-Entitäten der Levelverwaltung
+│                           │   ├── CompletedLevel.java                  # Speichert ein abgeschlossenes Level eines Benutzers
+│                           │   ├── Component.java                       # Datenbankmodell eines Code-Blocktyps
+│                           │   ├── Level.java                           # Datenbankmodell eines Levels inklusive erwarteter Ausführung
+│                           │   ├── LevelCategory.java                   # Kategorie und Reihenfolge im Lernpfad
+│                           │   ├── LevelComponent.java                  # Verknüpft Level und Component inklusive Anzahl
+│                           │   └── ProgrammingLanguage.java             # Unterstützte Programmiersprache
 │                           │
-│                           └── service/
-│                               ├── LevelProgressService.java        # Geschäftslogik des Level-Fortschritts
-│                               └── LevelService.java                # Erstellt und lädt Level und Übersichten
+│                           ├── repository/                              # Datenbankzugriff über Spring Data JPA
+│                           │   ├── CompletedLevelRepository.java        # Zugriff auf abgeschlossene Level
+│                           │   ├── ComponentRepository.java             # Zugriff auf Code-Komponenten
+│                           │   ├── LevelCategoryRepository.java         # Zugriff auf Level-Kategorien
+│                           │   ├── LevelComponentRepository.java        # Zugriff auf Level-Component-Zuordnungen
+│                           │   ├── LevelRepository.java                 # Zugriff auf Level
+│                           │   └── ProgrammingLanguageRepository.java   # Zugriff auf Programmiersprachen
+│                           │
+│                           └── service/                                 # Geschäftslogik
+│                               ├── LevelProgressService.java            # Geschäftslogik des Level-Fortschritts
+│                               ├── LevelService.java                    # Erstellt und lädt Level und Übersichten
+│                               └── LevelVerificationService.java        # Vergleicht tatsächliche und erwartete ExecutionLogs
 │
-└── lernspiel-app/                                  # Ausführbare Spring-Boot-Anwendung und Web-Frontend
+└── lernspiel-app/                                       # Ausführbare Spring-Boot-Anwendung und Web-Frontend
     ├── .gitkeep
-    ├── pom.xml                                     # Maven-Konfiguration der Hauptanwendung
+    ├── pom.xml                                          # Maven-Konfiguration der Hauptanwendung
     │
     └── src/
         └── main/
@@ -1127,60 +1174,62 @@ LernspielKB/
             ├── java/
             │   └── de/
             │       └── lernspiel/
-            │           └── LernspielApplication.java               # Einstiegspunkt der Spring-Boot-Anwendung
+            │           └── LernspielApplication.java                   # Einstiegspunkt der Spring-Boot-Anwendung
             │
             └── resources/
                 │
-                ├── application.properties                          # Spring-Boot- und Datenbankkonfiguration
+                ├── application.properties                             # Spring-Boot- und Datenbankkonfiguration
                 │
-                └── static/                                        # Statische Dateien des Web-Frontends
+                └── static/                                            # Statische Dateien des Web-Frontends
                     │
-                    ├── admin.html                                  # Administratoroberfläche
-                    ├── index.html                                  # Login-Seite
-                    ├── level.html                                  # Dynamische Level-Seite mit Code-Editor
-                    ├── sandbox.html                                # Frei nutzbarer Code-Editor
-                    ├── skilltree.html                              # Visueller Lernpfad für Schüler
-                    ├── student.html                                # Frühere/separate Schülerseite
-                    ├── teacher.html                                # Lehreroberfläche
+                    ├── admin.html                                      # Administratoroberfläche
+                    ├── index.html                                      # Login-Seite
+                    ├── level.html                                      # Dynamische Level-Seite mit Code-Editor
+                    ├── sandbox.html                                    # Frei nutzbarer Code-Editor
+                    ├── skilltree.html                                  # Visueller Lernpfad für Schüler
+                    ├── student.html                                    # Frühere/separate Schülerseite
+                    ├── teacher.html                                    # Lehreroberfläche
                     │
                     ├── css/
-                    │   └── style.css                               # Gemeinsames Styling der Webanwendung
+                    │   └── style.css                                   # Gemeinsames Styling der Webanwendung
                     │
                     └── js/
                         │
-                        ├── api/                                    # Frontend-Backend-Kommunikation
-                        │   ├── api.js                              # Allgemeine Requests, JWT und Rollenlogik
-                        │   ├── interpreterApi.js                   # API-Aufruf des Interpreters
-                        │   ├── levelApi.js                         # API-Aufrufe für Level und Übersichten
-                        │   └── progressApi.js                      # API-Aufrufe für Level-Fortschritt
+                        ├── api/                                        # Frontend-Backend-Kommunikation
+                        │   ├── api.js                                  # Allgemeine Requests, JWT und Rollenlogik
+                        │   ├── interpreterApi.js                       # API-Aufruf des Interpreters
+                        │   ├── levelApi.js                             # API-Aufrufe für Level und Übersichten
+                        │   ├── levelVerificationApi.js                 # API-Aufruf zur serverseitigen Level-Verifikation
+                        │   └── progressApi.js                          # API-Aufrufe für Level-Fortschritt
                         │
-                        ├── auth/                                   # Vorgesehen für gemeinsame Authentifizierungslogik
+                        ├── auth/                                       # Vorgesehen für gemeinsame Authentifizierungslogik
                         │
-                        ├── editor/                                 # Wiederverwendbare Editor- und Palette-Komponenten
-                        │   ├── blockDefinitions.js                 # Definition und Darstellung der Code-Blöcke
-                        │   ├── blockFactory.js                     # Erzeugt Blockobjekte für das Programm
-                        │   ├── consoleTheme.js                     # Darstellungsmodi der Interpreter-Konsole
-                        │   ├── dragDrop.js                         # Drag & Drop, Verschieben und Löschen
-                        │   ├── editorState.js                      # Zustand des visuellen Programms
-                        │   ├── paletteBuilder.js                   # Ergänzt Distraktoren und mischt die Level-Palette
-                        │   └── renderer.js                         # Rendert den Editor-State
+                        ├── editor/                                     # Wiederverwendbare Editor- und Palette-Komponenten
+                        │   ├── blockDefinitions.js                     # Definition und Darstellung der Code-Blöcke
+                        │   ├── blockFactory.js                         # Erzeugt Blockobjekte für das Programm
+                        │   ├── blockInput.js                           # Eingabedialoge für konfigurierbare Code-Blöcke
+                        │   ├── consoleTheme.js                         # Darstellungsmodi der Interpreter-Konsole
+                        │   ├── dragDrop.js                             # Drag & Drop, Verschieben und Löschen
+                        │   ├── editorState.js                          # Zustand des visuellen Programms
+                        │   ├── paletteBuilder.js                       # Ergänzt Distraktoren und mischt die Level-Palette
+                        │   └── renderer.js                             # Rendert den Editor-State
                         │
                         ├── navigation/
-                        │   └── navigation.js                       # Gemeinsame Navigation und Logout
+                        │   └── navigation.js                           # Gemeinsame Navigation und Logout
                         │
-                        ├── pages/                                  # Seitenspezifische JavaScript-Einstiegspunkte
-                        │   ├── admin.js                            # Logik der Administrator-Seite
-                        │   ├── level.js                            # Dynamisches Level und Editor
-                        │   ├── login.js                            # Login und Rollenweiterleitung
-                        │   ├── sandbox.js                          # Sandbox, Editor und Interpreter
-                        │   ├── skilltree.js                        # Lädt und steuert den Skilltree
-                        │   ├── student.js                          # Logik der separaten Schülerseite
-                        │   └── teacher.js                          # Logik der Lehrer-Seite
+                        ├── pages/                                      # Seitenspezifische JavaScript-Einstiegspunkte
+                        │   ├── admin.js                                # Logik der Administrator-Seite
+                        │   ├── level.js                                # Dynamisches Level, Verifikation und Fortschritt
+                        │   ├── login.js                                # Login und Rollenweiterleitung
+                        │   ├── sandbox.js                              # Sandbox, Editor und Interpreter
+                        │   ├── skilltree.js                            # Lädt und steuert den Skilltree
+                        │   ├── student.js                              # Logik der separaten Schülerseite
+                        │   └── teacher.js                              # Logik der Lehrer-Seite
                         │
-                        └── skilltree/                              # Wiederverwendbare Skilltree-Logik
-                            ├── skilltreePhysics.js                  # Physik und leichte Node-Bewegungen
-                            ├── skilltreeRenderer.js                 # Rendert Kategorien, Level und Verbindungen
-                            └── skilltreeState.js                    # Verwaltet den Zustand des Skilltrees
+                        └── skilltree/                                  # Wiederverwendbare Skilltree-Logik
+                            ├── skilltreePhysics.js                      # Physik und leichte Node-Bewegungen beim Laden
+                            ├── skilltreeRenderer.js                     # Rendert Kategorien, Level und Verbindungen
+                            └── skilltreeState.js                        # Verwaltet den Zustand des Skilltrees
 ```
 
 > **Hinweis:** Generierte Build-Artefakte (`target/`) sowie lokale Entwicklungsdateien und Tool-Caches sind in dieser Übersicht bewusst nicht aufgeführt.
@@ -1282,7 +1331,7 @@ Beispiel:
       "amount": 1
     },
     {
-      "type": "VAR_NAME",
+      "type": "VAR\_NAME",
       "amount": 1
     },
     {
@@ -1327,7 +1376,7 @@ Beispiel für das manuelle Anlegen eines Levels:
       "amount": 1
     },
     {
-      "type": "VAR_NAME",
+      "type": "VAR\_NAME",
       "amount": 1
     },
     {
@@ -1397,6 +1446,13 @@ progressApi.js
 
 Der Skilltree verwendet diese Daten, um bereits abgeschlossene Level zu erkennen und visuell darzustellen.
 
+Die wichtigsten Progress-Endpunkte sind:
+
+| Methode | Endpunkt | Beschreibung |
+| ------- | -------- | ------------ |
+| `GET` | `/api/progress/completed-levels` | Lädt die abgeschlossenen Level des aktuell authentifizierten Benutzers |
+| `POST` | `/api/progress/levels/{levelID}/complete` | Markiert ein Level als abgeschlossen |
+
 Die Progress-Schnittstelle bildet aktuell die technische Grundlage für:
 
 - Speichern abgeschlossener Level
@@ -1404,6 +1460,20 @@ Die Progress-Schnittstelle bildet aktuell die technische Grundlage für:
 - Markieren abgeschlossener Level im Skilltree
 
 Eine fachliche Freischaltlogik für nachfolgende Level ist davon bewusst getrennt und aktuell noch nicht endgültig definiert.
+
+</details>
+
+<details>
+
+<summary><strong>Level-Verifikation anzeigen</strong></summary>
+
+### Level-Verifikation
+
+| Methode | Endpunkt | Beschreibung |
+| ------- | -------- | ------------ |
+| `POST` | `/api/levelVerification/verify` | Vergleicht den tatsächlichen ExecutionLog mit der serverseitig gespeicherten erwarteten Ausführung des Levels |
+
+Das Frontend sendet ausschließlich die Level-ID und den tatsächlichen `ExecutionLog`. Der erwartete ExecutionLog wird serverseitig anhand der Level-ID geladen. Die Response ist ein Boolean.
 
 </details>
 
@@ -1431,7 +1501,7 @@ Beispiel:
       "type": "INT"
     },
     {
-      "type": "VAR_NAME",
+      "type": "VAR\_NAME",
       "name": "x"
     },
     {
@@ -1451,15 +1521,27 @@ Beispiel:
 }
 ```
 
-Die Antwort besteht aktuell aus einer Liste von Meldungen des Interpreters.
+Die Antwort besteht aus einem strukturierten `ExecutionLog`.
 
 Beispiel:
 
 ```json
-[
-  "variableDeclaration gestartet mit 5 Blöcken",
-  "Variable x INT mit Initialwert deklariert: 8"
-]
+{
+  "entries": [
+    {
+      "logType": "PROGRAM_START",
+      "data": {}
+    },
+    {
+      "logType": "VARIABLE_DECLARATION_ASSIGNMENT",
+      "data": {
+        "variableType": "INT",
+        "variableName": "x",
+        "variableValue": 8
+      }
+    }
+  ]
+}
 ```
 
 </details>
@@ -1479,7 +1561,7 @@ Sie sind nicht für den produktiven Betrieb vorgesehen.
 | `GET` | `/debug/db-info` | Zeigt Informationen über die aktuell verbundene Datenbank |
 | `GET` | `/debug/create-test-user` | Erstellt einen Testbenutzer |
 | `GET` | `/debug/list-users` | Gibt alle gespeicherten Benutzer zurück |
-| `DELETE` | `/debug/drop-user` | Löscht für einen lokalen Datenbank-Reset die Tabellen `school_class` und `user` |
+| `DELETE` | `/debug/drop-user` | Löscht für einen lokalen Datenbank-Reset die Tabellen `school\_class` und `user` |
 
 > **Achtung:** Die Debug-Endpunkte dienen ausschließlich der lokalen Entwicklung und sollten später entfernt bzw. außerhalb einer Entwicklungsumgebung nicht verfügbar gemacht werden.
 
@@ -1568,9 +1650,8 @@ Beispiel:
 
 ```text
 [REVIEW] innerHTML
-
 lernspiel-app\src\main\resources\static\js\pages\admin.js:128
-  row.innerHTML = `
+  row\.innerHTML = `
 ```
 
 Ein Treffer bedeutet ausdrücklich **nicht automatisch, dass eine XSS-Sicherheitslücke vorhanden ist**.
@@ -1617,6 +1698,7 @@ Aktuell umgesetzt sind unter anderem:
 - `lernspiel-app`
 - `common` für modulübergreifend verwendete Definitionen
 - zentraler `CodeType` für gemeinsam verwendete Code-Blocktypen
+- gemeinsame `ExecutionLog`-, `LogFile`- und `LogType`-Definitionen
 
 ### Interpreter
 
@@ -1678,6 +1760,9 @@ Aktuell umgesetzt sind unter anderem:
 - getrennte Definition von Levelgruppen
 - `JavaBasicLevels`
 - `JavaVariableLevels`
+- `JavaExpressionLevels`
+- `JavaAssignmentLevels`
+- `ExpectedExecutionLogs` für erwartete Ausführungen
 - automatische Erkennung aller Provider durch Spring
 - keine manuelle Registrierung neuer Provider im `LevelBootstrap`
 - Terminal-Ausgabe über neu angelegte bzw. bereits vorhandene Level
@@ -1703,6 +1788,17 @@ Aktuell umgesetzt sind unter anderem:
 - Aktualisierung der Verbindungslinien während der Bewegung
 - visuelle Darstellung abgeschlossener Level
 
+### Level-Verifikation
+
+- erwarteter `ExecutionLog` als Bestandteil eines Levels
+- JSON-Persistierung über `ExecutionLogConverter`
+- `LevelVerificationController`
+- `LevelVerificationService`
+- `LevelVerificationRequest`
+- `levelVerificationApi.js`
+- serverseitiger Vergleich von tatsächlicher und erwarteter Ausführung
+- erwartete Lösung wird nicht an das Schüler-Frontend ausgeliefert
+
 ### Level-Fortschritt
 
 - `CompletedLevel`
@@ -1713,6 +1809,7 @@ Aktuell umgesetzt sind unter anderem:
 - `progressApi.js`
 - benutzerbezogenes Laden abgeschlossener Level
 - Integration des Fortschritts in den Skilltree
+- automatische Speicherung nach erfolgreicher Level-Verifikation
 
 ### Navigation
 
@@ -1754,14 +1851,6 @@ Skilltree
 ## Noch offene Punkte
 
 Einige Funktionen sind bewusst noch nicht abschließend umgesetzt oder fachlich noch nicht festgelegt.
-
-### Level-Lösungen
-
-Der Interpreter kann Programme bereits ausführen und Fehler zurückgeben.
-
-Noch offen ist die vollständige automatische Prüfung, ob die konkrete Aufgabenstellung eines Levels erfolgreich gelöst wurde.
-
-Darauf aufbauend soll ein erfolgreich gelöstes Level automatisch als abgeschlossen gespeichert werden.
 
 ### Begrenzung verfügbarer Blöcke
 

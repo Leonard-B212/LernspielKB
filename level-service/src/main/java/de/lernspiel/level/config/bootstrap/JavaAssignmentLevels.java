@@ -59,8 +59,10 @@ public class JavaAssignmentLevels implements LevelDefinitionProvider {
                         component(CodeType.BREAK, 2)
                 ),
                 log(
-                        assignment(CodeType.INT, "x", 5),
-                        expressionAssignment(
+                        declaration(CodeType.INT, "x"),
+                        declaration(CodeType.INT, "y"),
+                        valueAssignment(CodeType.INT, "x", 5),
+                        expressionValueAssignment(
                                 CodeType.INT,
                                 "y",
                                 5,
