@@ -222,13 +222,13 @@ runButton.addEventListener("click", async () => {
    INTERPRETER-AUSGABE
    ========================================================= */
 
-// Zeigt die Einträge des vom Interpreter erzeugten ExecutionLogs an.
+// Zeigt den lesbaren Interpreter-Log in der Konsole an.
 function renderInterpreterOutput(executionLog) {
     interpreterOutput.innerHTML = "";
 
-    const entries = executionLog?.entries ?? [];
+    const readableLog = executionLog?.readableLog ?? [];
 
-    if (entries.length === 0) {
+    if (readableLog.length === 0) {
         const placeholder = document.createElement("span");
 
         placeholder.classList.add("interpreter-output-placeholder");
@@ -238,22 +238,11 @@ function renderInterpreterOutput(executionLog) {
         return;
     }
 
-    entries.forEach((entry) => {
+    readableLog.forEach((entry) => {
         const line = document.createElement("div");
 
         line.classList.add("interpreter-output-line");
-
-        if (entry.logType === "ERROR") {
-            line.classList.add("error");
-        }
-
-        const contents = Object.entries(entry.contents ?? {})
-            .map(([key, value]) => `${key}: ${value}`)
-            .join(", ");
-
-        line.textContent = contents
-            ? `${entry.logType}: ${contents}`
-            : entry.logType;
+        line.textContent = entry;
 
         interpreterOutput.appendChild(line);
     });
