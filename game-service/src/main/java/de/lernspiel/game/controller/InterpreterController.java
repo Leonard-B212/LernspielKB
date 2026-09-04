@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.lernspiel.common.code.CodeType;
 import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.common.code.LogFile;
 import de.lernspiel.game.dto.ProgramRequest;
@@ -39,16 +40,24 @@ public class InterpreterController {
                     readableLog.add("Programmdurchlauf gestartet");
                     break;
                 case SIMPLE_VARIABLE_DECLARATION:
-                    readableLog.add("Variable " + (String) log.getContents().get("variableName") + " wurde deklariert");
+                    readableLog.add("Variable " + '"' + (String) log.getContents().get("variableName") + '"' + " wurde deklariert");
                     break;
                 case VARIABLE_DECLARATION_ASSIGNMENT:
-                    readableLog.add("Variable " + (String) log.getContents().get("variableName") + " wurde mit dem Wert " + log.getContents().get("variableValue") + " deklariert");
+                    if(log.getContents().get("variableType").equals(CodeType.STRING)){
+                        readableLog.add("Variable " + '"' + (String) log.getContents().get("variableName") + '"' + " wurde deklariert und mit dem Wert " + '"' + log.getContents().get("variableValue") + '"' + " initialisiert");
+                    } else {
+                        readableLog.add("Variable " + '"' + (String) log.getContents().get("variableName") + '"' + " wurde deklariert und mit dem Wert " + log.getContents().get("variableValue") + " initialisiert");
+                    }
                     break;
                 case VARIABLE_VALUE_ASSIGNMENT:
-                    readableLog.add("Variable " + (String) log.getContents().get("variableName") + " wurde der Wert " + log.getContents().get("variableValue") + " zugewiesen");
+                    if(log.getContents().get("variableType").equals(CodeType.STRING)){
+                        readableLog.add("Variable " + '"' + (String) log.getContents().get("variableName") + '"' + " wurde der Wert " + '"' + log.getContents().get("variableValue") + '"' + " zugewiesen");
+                    } else {
+                        readableLog.add("Variable " + '"' + (String) log.getContents().get("variableName") + '"' + " wurde der Wert " + log.getContents().get("variableValue") + " zugewiesen");
+                    }
                     break;
                 case ERROR:
-                    readableLog.add("Fehler: " + (String) log.getContents().get("errorMessage"));
+                    readableLog.add("Fehler: " + '"' + (String) log.getContents().get("errorMessage") + '"');
                 case PROGRAM_END:
                     readableLog.add("Programmdurchlauf beendet");
                 default:
