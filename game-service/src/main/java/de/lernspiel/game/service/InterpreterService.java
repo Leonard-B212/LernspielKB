@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import de.lernspiel.common.code.LogType;
 public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
+    private static final Set<CodeType> COMPARISON_OPERATORS = EnumSet.of(CodeType.GREATER_THAN, CodeType.SMALLER_THAN, CodeType.EQUALS);
+
 
     public ExecutionLog run(ProgramRequest programRequest) {
         ExecutionLog output = new ExecutionLog();
@@ -256,27 +259,83 @@ public class InterpreterService {
 
     public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
         List<CodeBlock> expression = ifBlock.getExpression();
-        if(expression.size() == 1){
-            CodeBlock cb = expression.getFirst();
-            if(cb.getType().equals(CodeType.VAR_NAME)){
-                VarNameBlock varNameBlock = (VarNameBlock) cb;
-                if(!variableAlreadyDeclared(varNameBlock.getName(), variables)){
-                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " wurde nicht deklariert");
-                } else if(!variables.get(varNameBlock.getName()).getType().equals(CodeType.BOOLEAN)){
-                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " ist kein Boolean");
-                }
-                return (boolean) variables.get(varNameBlock.getName()).getValue();
-            } else if(cb.getType().equals(CodeType.VALUE)){
-                ValueBlock valueBlock = (ValueBlock) cb;
-                Variable var = valueBlock.getValue();
-                if(!var.getType().equals(CodeType.BOOLEAN)){
-                    throw new IllegalArgumentException("Wert " + var.getValue() + " ist kein Boolean");
-                }
-                return (boolean) var.getValue();
+
+        int operatorIndex = findComparisonOperatorIndex(expression);
+
+        if (operatorIndex == -1) {
+            if (expression.size() != 1) {
+                throw new IllegalArgumentException(
+                        "Erwarte entweder einen einzelnen Boolean-Wert/-Variable oder einen Vergleich ('>', '<', '=='), "
+                    + "aber es wurden " + expression.size() + " Blöcke ohne erkennbaren Vergleichsoperator gefunden");
             }
-        }   
-        // TODO Auto-generated method stub
-        return true;
+            return evaluateBooleanOperand(expression.get(0), variables, output);
+        }
+
+        CodeType operator = expression.get(operatorIndex).getType();
+        int operatorLength = 1;
+
+        if (operator == CodeType.EQUALS) {
+            if (operatorIndex + 1 >= expression.size() || expression.get(operatorIndex + 1).getType() != CodeType.EQUALS) {
+                throw new IllegalArgumentException("Erwarte '==' (zwei aufeinanderfolgende EQUALS-Blöcke)");
+            }
+            operatorLength = 2;
+        }
+
+        List<CodeBlock> leftBlocks = expression.subList(0, operatorIndex);
+        List<CodeBlock> rightBlocks = expression.subList(operatorIndex + operatorLength, expression.size());
+
+        if (leftBlocks.isEmpty() || rightBlocks.isEmpty()) {
+            throw new IllegalArgumentException("Erwarte einen Operanden auf beiden Seiten von '" + operator.getLabel() + "'");
+        }
+
+        CodeType operandType = operandType(leftBlocks.get(0), variables);
+        Variable<?> left = determineVariableValue(leftBlocks, variables, operandType, output);
+        Variable<?> right = determineVariableValue(rightBlocks, variables, operandType, output);
+
+        return switch (operator) {
+            case EQUALS -> Objects.equals(left.getValue(), right.getValue());
+            case GREATER_THAN, SMALLER_THAN -> {
+                if (operandType != CodeType.INT) {
+                    throw new IllegalArgumentException(
+                            "Ordnungsvergleich ('" + operator.getLabel() + "') ist nur für INT erlaubt, war aber: " + operandType);
+                }
+                int cmp = Integer.compare((Integer) left.getValue(), (Integer) right.getValue());
+                yield operator == CodeType.GREATER_THAN ? cmp > 0 : cmp < 0;
+            }
+            default -> throw new IllegalStateException("Unreachable: " + operator);
+        };
+    }
+
+    /** Findet die Position des ersten Vergleichsoperators (>, <, =) in einer flachen Ausdrucksliste, -1 falls keiner vorhanden. */
+    private int findComparisonOperatorIndex(List<CodeBlock> expression) {
+        for (int i = 0; i < expression.size(); i++) {
+            if (COMPARISON_OPERATORS.contains(expression.get(i).getType())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean evaluateBooleanOperand(CodeBlock cb, Map<String, Variable<?>> variables, ExecutionLog output) {
+        if (!cb.getType().equals(CodeType.VAR_NAME) && !cb.getType().equals(CodeType.VALUE)) {
+            throw new IllegalArgumentException("Erwarte Boolean-Wert oder -Variable, war aber: " + cb.getType());
+        }
+        return (boolean) resolveSingleOperand(cb, CodeType.BOOLEAN, variables, output).getValue();
+    }
+
+    /** Bestimmt den Typ eines Operanden (Wert oder deklarierte Variable), ohne ihn gegen einen erwarteten Typ zu prüfen. */
+    private CodeType operandType(CodeBlock block, Map<String, Variable<?>> variables) {
+        if (block instanceof ValueBlock valueBlock) {
+            return valueBlock.getValue().getType();
+        }
+        if (block instanceof VarNameBlock varNameBlock) {
+            String name = varNameBlock.getName();
+            if (!variableAlreadyDeclared(name, variables)) {
+                throw new IllegalArgumentException("Use of undeclared variable: " + name);
+            }
+            return variables.get(name).getType();
+        }
+        throw new IllegalArgumentException("Erwarte Wert oder Variable als Operand, war aber: " + block.getType());
     }
 
 
