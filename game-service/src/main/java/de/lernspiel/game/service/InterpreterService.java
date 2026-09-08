@@ -99,7 +99,7 @@ public class InterpreterService {
 
         for (CodeBlock block : program) {
             current.add(block);
-            if (block.getType().equals(CodeType.BREAK)) {
+            if (block.getType().equals(CodeType.BREAK) || block.getType().equals(CodeType.ELSE_STATEMENT)) {
                 result.add(current.toArray(new CodeBlock[0]));
                 current = new ArrayList<>();
             }
@@ -250,10 +250,6 @@ public class InterpreterService {
                 executeConditionalProgram(elseBlock.getProgram(), variables, output);
                 return;
             }
-        }
-        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length-1, "Erwarte ein Break am Ende eines Code-Abschnitts", output);
-        if(!terminator.getType().equals(CodeType.BREAK)){
-            throw new IllegalArgumentException("Erwarte Break, war aber : " + terminator.getType());
         }
     }
 
