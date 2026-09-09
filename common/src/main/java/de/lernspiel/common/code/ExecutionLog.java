@@ -10,6 +10,15 @@ import java.util.List;
 public class ExecutionLog {
 
     private List<LogFile> entries = new ArrayList<>();
+    private List<String> readableLog = new ArrayList<>();
+
+    public List<String> getReadableLog() {
+        return readableLog;
+    }
+
+    public void setReadableLog(List<String> readableLog) {
+        this.readableLog = readableLog;
+    }
 
     public void add(LogFile logFile) {
         entries.add(logFile);
