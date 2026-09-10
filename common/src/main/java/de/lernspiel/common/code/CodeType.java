@@ -14,7 +14,7 @@ public enum CodeType {
     ELSE_STATEMENT(6, "else-statement"),
     EQUALS(7, "="),
     GREATER_THAN(8, ">"),
-    SMALLER__THAN(9, "<"),
+    SMALLER_THAN(9, "<"),
     ADD(10, "+"),
     SUBTRACT(11, "-"),
     MULTIPLY(12, "*"),

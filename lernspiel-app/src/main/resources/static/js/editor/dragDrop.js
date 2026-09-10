@@ -13,7 +13,6 @@
 
 import { createBlockData } from "./blockFactory.js";
 
-// Erstellt den Drag-&-Drop-Controller für einen Editor.
 export function createDragDropController({
     palette,
     programDropzone,
@@ -24,21 +23,23 @@ export function createDragDropController({
 }) {
     let draggedElement = null;
     let draggedSource = null;
-    let currentDropIndex = null;
+    let draggedContainerPath = null;
+    let draggedIndex = null;
+    let currentDrop = null; // { containerPathKey, index }
 
-    // Registriert alle benötigten Drag-&-Drop-Eventlistener.
     function initialize() {
         initializePalette();
         initializeProgramDropzone();
         initializeTrashDropzone();
     }
 
-    // Macht alle Blöcke aus der Palette als neue Blöcke ziehbar.
     function initializePalette() {
         palette.querySelectorAll(".code-block").forEach((block) => {
             block.addEventListener("dragstart", (event) => {
                 draggedElement = block;
                 draggedSource = "palette";
+                draggedContainerPath = null;
+                draggedIndex = null;
 
                 event.dataTransfer.effectAllowed = "copy";
                 event.dataTransfer.setData("text/plain", block.dataset.type);
@@ -52,47 +53,49 @@ export function createDragDropController({
         });
     }
 
-    // Registriert die Drop-Events der eigentlichen Programmfläche.
     function initializeProgramDropzone() {
         programDropzone.addEventListener("dragover", handleProgramDragOver);
         programDropzone.addEventListener("dragleave", handleProgramDragLeave);
         programDropzone.addEventListener("drop", handleProgramDrop);
     }
 
-    // Ermittelt während des Ziehens die aktuell vorgesehene Einfügeposition.
+    // Findet die am tiefsten verschachtelte Dropzone unter dem Mauszeiger und ermittelt
+    // darin die Einfügeposition - genau wie zuvor, nur pro Container statt global.
     function handleProgramDragOver(event) {
         event.preventDefault();
+
+        const dropzone = event.target.closest("[data-container-path]");
+        if (!dropzone) {
+            return;
+        }
+
         programDropzone.classList.add("drag-over");
+        const containerPathKey = dropzone.dataset.containerPath;
 
         const indicator = event.target.closest(".drop-indicator");
-
-        if (indicator) {
-            activateDropIndicator(Number(indicator.dataset.insertIndex));
+        if (indicator && indicator.dataset.containerPath === containerPathKey) {
+            activateDropIndicator(containerPathKey, Number(indicator.dataset.insertIndex));
             return;
         }
 
         const block = event.target.closest(".program-block");
-
-        if (block) {
+        if (block && block.dataset.containerPath === containerPathKey) {
             const index = Number(block.dataset.index);
             const rect = block.getBoundingClientRect();
             const mouseIsRightHalf = event.clientX > rect.left + rect.width / 2;
-
-            activateDropIndicator(mouseIsRightHalf ? index + 1 : index);
+            activateDropIndicator(containerPathKey, mouseIsRightHalf ? index + 1 : index);
             return;
         }
 
         const line = event.target.closest(".code-line");
-
-        if (line) {
-            activateDropIndicator(Number(line.dataset.endIndex));
+        if (line && line.dataset.containerPath === containerPathKey) {
+            activateDropIndicator(containerPathKey, Number(line.dataset.endIndex));
             return;
         }
 
-        activateDropIndicator(editorState.getLength());
+        activateDropIndicator(containerPathKey, Number(dropzone.dataset.length ?? 0));
     }
 
-    // Entfernt Drop-Markierungen, sobald die Programmfläche verlassen wird.
     function handleProgramDragLeave(event) {
         if (!programDropzone.contains(event.relatedTarget)) {
             programDropzone.classList.remove("drag-over");
@@ -100,58 +103,72 @@ export function createDragDropController({
         }
     }
 
-    // Fügt einen neuen Block ein oder verschiebt einen vorhandenen Programmblock.
     async function handleProgramDrop(event) {
-    event.preventDefault();
-    programDropzone.classList.remove("drag-over");
+        event.preventDefault();
+        programDropzone.classList.remove("drag-over");
 
-    const insertIndex = currentDropIndex ?? editorState.getLength();
+        const targetPath = currentDrop ? JSON.parse(currentDrop.containerPathKey) : [];
+        const targetIndex = currentDrop ? currentDrop.index : editorState.getLength(targetPath);
 
-    if (draggedSource === "palette") {
-        await addPaletteBlock(insertIndex);
-    } else if (draggedSource === "program") {
-        moveProgramBlock(insertIndex);
+        if (draggedSource === "palette") {
+            await addPaletteBlock(targetPath, targetIndex);
+        } else if (draggedSource === "program") {
+            moveProgramBlock(targetPath, targetIndex);
+        }
+
+        resetDragState();
+        clearDropIndicators();
     }
 
-    resetDragState();
-    clearDropIndicators();
-}
+    async function addPaletteBlock(targetPath, targetIndex) {
+        const type = draggedElement.dataset.type;
+        const blockData = await createBlockData(type, showError);
 
-    // Erzeugt einen neuen Block aus der Palette und fügt ihn in den State ein.
-    async function addPaletteBlock(insertIndex) {
-    const type = draggedElement.dataset.type;
-    const blockData = await createBlockData(type, showError);
+        if (!blockData) {
+            return;
+        }
 
-    if (!blockData) {
-        return;
-    }
-
-    editorState.insertBlock(insertIndex, blockData);
-    renderProgram();
-}
-
-    // Verschiebt einen bereits vorhandenen Block innerhalb des Programms.
-    function moveProgramBlock(insertIndex) {
-        const oldIndex = Number(draggedElement.dataset.index);
-
-        editorState.moveBlock(oldIndex, insertIndex);
+        editorState.insertBlock(targetPath, targetIndex, blockData);
         renderProgram();
     }
 
-    // Registriert den Mülleimer als Drop-Zone zum Löschen von Programmblöcken.
+    let draggedSpanCount = 1;
+
+    function handleProgramBlockDragStart(event, element, path, index, spanCount = 1) {
+        draggedElement = element;
+        draggedSource = "program";
+        draggedContainerPath = path;
+        draggedIndex = index;
+        draggedSpanCount = spanCount;
+
+        element.classList.add("dragging");
+        programDropzone.classList.add("drag-active");
+
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", String(index));
+    }
+
+    function moveProgramBlock(targetPath, targetIndex) {
+        if (isOwnDescendant(targetPath)) return;
+        editorState.moveBlock(draggedContainerPath, draggedIndex, targetPath, targetIndex, draggedSpanCount);
+        renderProgram();
+    }
+
+    function isOwnDescendant(targetPath) {
+        if (draggedContainerPath === null || targetPath.length < draggedContainerPath.length + 1) return false;
+        for (let i = 0; i < draggedContainerPath.length; i++) {
+            if (targetPath[i].index !== draggedContainerPath[i].index || targetPath[i].field !== draggedContainerPath[i].field) return false;
+        }
+        const childIndex = targetPath[draggedContainerPath.length].index;
+        return childIndex >= draggedIndex && childIndex < draggedIndex + draggedSpanCount;
+    }
+
     function initializeTrashDropzone() {
         trashDropzone.addEventListener("dragover", (event) => {
-            if (draggedSource !== "program") {
-                return;
-            }
-
+            if (draggedSource !== "program") return;
             event.preventDefault();
             trashDropzone.classList.add("drag-over");
             clearDropIndicators();
-        });
-
-        trashDropzone.addEventListener("dragleave", () => {
-            trashDropzone.classList.remove("drag-over");
         });
 
         trashDropzone.addEventListener("drop", (event) => {
@@ -163,59 +180,39 @@ export function createDragDropController({
                 return;
             }
 
-            const index = Number(draggedElement.dataset.index);
-
-            editorState.removeBlock(index);
+            editorState.removeBlock(draggedContainerPath, draggedIndex, draggedSpanCount);
             renderProgram();
             resetDragState();
         });
     }
 
-    // Initialisiert den Drag-Vorgang eines vorhandenen Programmblocks.
-    function handleProgramBlockDragStart(event, element, index) {
-        draggedElement = element;
-        draggedSource = "program";
-
-        element.classList.add("dragging");
-        programDropzone.classList.add("drag-active");
-
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", String(index));
-    }
-
-    // Räumt nach dem Ziehen eines vorhandenen Programmblocks den Drag-State auf.
     function handleProgramBlockDragEnd(element) {
         element.classList.remove("dragging");
         resetDragState();
         clearDropIndicators();
     }
 
-    // Markiert visuell die Position, an der der Block eingefügt würde.
-    function activateDropIndicator(index) {
-        currentDropIndex = index;
+    function activateDropIndicator(containerPathKey, index) {
+        currentDrop = { containerPathKey, index };
 
-        programDropzone.querySelectorAll(".drop-indicator").forEach((indicator) => {
-            const indicatorIndex = Number(indicator.dataset.insertIndex);
-            indicator.classList.toggle("active", indicatorIndex === index);
+        programDropzone.querySelectorAll(".drop-indicator").forEach((ind) => {
+            const matches = ind.dataset.containerPath === containerPathKey && Number(ind.dataset.insertIndex) === index;
+            ind.classList.toggle("active", matches);
         });
     }
 
-    // Entfernt sämtliche sichtbaren Einfüge-Markierungen.
     function clearDropIndicators() {
-        currentDropIndex = null;
-
-        programDropzone.querySelectorAll(".drop-indicator.active").forEach((indicator) => {
-            indicator.classList.remove("active");
-        });
-
+        currentDrop = null;
+        programDropzone.querySelectorAll(".drop-indicator.active").forEach((ind) => ind.classList.remove("active"));
         programDropzone.classList.remove("drag-active");
     }
 
-    // Setzt die internen Informationen des aktuellen Drag-Vorgangs zurück.
     function resetDragState() {
         draggedElement = null;
         draggedSource = null;
-        currentDropIndex = null;
+        draggedContainerPath = null;
+        draggedIndex = null;
+        draggedSpanCount = 1;
         programDropzone.classList.remove("drag-over");
     }
 

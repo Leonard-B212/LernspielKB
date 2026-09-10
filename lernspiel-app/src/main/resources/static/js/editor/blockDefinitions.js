@@ -57,6 +57,26 @@ export const BLOCK_DEFINITIONS = {
         type: "BREAK",
         label: ";",
         cssClass: "block-break"
+    },
+    IF_STATEMENT: {
+        type: "IF_STATEMENT",
+        label: "if",
+        cssClass: "block-control"
+    },
+    ELSE_STATEMENT: {
+        type: "ELSE_STATEMENT",
+        label: "else",
+        cssClass: "block-control"
+    },
+    GREATER_THAN: {
+        type: "GREATER_THAN",
+        label: ">",
+        cssClass: "block-operator"
+    },
+    SMALLER_THAN: {
+        type: "SMALLER_THAN",
+        label: "<",
+        cssClass: "block-operator"
     }
 };
 

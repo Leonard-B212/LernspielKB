@@ -7,6 +7,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import de.lernspiel.common.code.LogType;
 public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
+    private static final Set<CodeType> COMPARISON_OPERATORS = EnumSet.of(CodeType.GREATER_THAN, CodeType.SMALLER_THAN, CodeType.EQUALS);
+
 
     public ExecutionLog run(ProgramRequest programRequest) {
         ExecutionLog output = new ExecutionLog();
@@ -92,21 +95,53 @@ public class InterpreterService {
 
     public List<CodeBlock[]> parseCode(List<CodeBlock> program, ExecutionLog output) {
         List<CodeBlock[]> result = new ArrayList<>();
-        List<CodeBlock> current = new ArrayList<>();
+        int i = 0;
 
-        for (CodeBlock block : program) {
-            current.add(block);
-            if (block.getType().equals(CodeType.BREAK)) {
-                result.add(current.toArray(new CodeBlock[0]));
-                current = new ArrayList<>();
+        while (i < program.size()) {
+            CodeBlock block = program.get(i);
+
+            if (block.getType().equals(CodeType.IF_STATEMENT)) {
+                int chainEnd = findConditionalChainEnd(program, i);
+                result.add(program.subList(i, chainEnd).toArray(new CodeBlock[0]));
+                i = chainEnd;
+                continue;
             }
-        }
 
-        if (!current.isEmpty()) {
-            throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + current.getLast().getType());
+            int lineStart = i;
+            while (i < program.size() && !program.get(i).getType().equals(CodeType.BREAK)) {
+                if (program.get(i).getType().equals(CodeType.IF_STATEMENT)) {
+                    throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.IF_STATEMENT);
+                }
+                i++;
+            }
+
+            if (i == program.size()) {
+                throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + program.get(program.size() - 1).getType());
+            }
+
+            i++; // BREAK selbst noch mit in die Zeile aufnehmen
+            result.add(program.subList(lineStart, i).toArray(new CodeBlock[0]));
         }
 
         return result;
+    }
+
+    private int findConditionalChainEnd(List<CodeBlock> program, int startIndex) {
+        int index = startIndex + 1; // das IF_STATEMENT selbst gehört bereits zur Kette
+
+        while (index < program.size() && program.get(index).getType().equals(CodeType.ELSE_STATEMENT)) {
+            int afterElse = index + 1;
+            if (afterElse < program.size() && program.get(afterElse).getType().equals(CodeType.IF_STATEMENT)) {
+                // else-if: Kette geht weiter
+                index = afterElse + 1;
+            } else {
+                // abschließendes "else" (ohne folgendes IF_STATEMENT)
+                index = afterElse;
+                break;
+            }
+        }
+
+        return index;
     }
 
     /**
@@ -227,56 +262,112 @@ public class InterpreterService {
         }
 
         int position = 1;
-        while(position < lineOfCode.length - 1){
-            CodeBlock currentBlock = requireBlock(lineOfCode, position, "Conditional Statement", output);
+        while(position < lineOfCode.length){
+            CodeBlock currentBlock = lineOfCode[position];
             if(!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)){
                 throw new IllegalArgumentException("Erwarte Else-Statement, war aber : " + currentBlock.getType());
             }
-            CodeBlock nextBlock = requireBlock(lineOfCode, position + 1, "Conditional Statement", output);
-            if(nextBlock.getType().equals(CodeType.IF_STATEMENT)){
+
+            boolean hasNext = position + 1 < lineOfCode.length;
+            CodeBlock nextBlock = hasNext ? lineOfCode[position + 1] : null;
+
+            if(hasNext && nextBlock.getType().equals(CodeType.IF_STATEMENT)){
                 IfStatementBlock ifBlock = (IfStatementBlock) nextBlock;
                 if(checkExpression(ifBlock, variables, output)){
                     executeConditionalProgram(ifBlock.getProgram(), variables, output);
                     return;
                 }
-                position +=2;
-            } else if(!nextBlock.getType().equals(CodeType.BREAK)){
-                throw new IllegalArgumentException("Erwarte Else-If-Statement oder Else Statement, war aber : " + nextBlock.getType());
+                position += 2;
+            } else if(hasNext){
+                throw new IllegalArgumentException("Erwarte Else-If-Statement (weiteres IF_STATEMENT) nach Else, war aber: " + nextBlock.getType());
             } else {
+                // currentBlock ist das letzte Element der Kette -> abschließendes "else"
                 ElseStatementBlock elseBlock = (ElseStatementBlock) currentBlock;
                 executeConditionalProgram(elseBlock.getProgram(), variables, output);
                 return;
             }
         }
-        CodeBlock terminator = requireBlock(lineOfCode, lineOfCode.length-1, "Erwarte ein Break am Ende eines Code-Abschnitts", output);
-        if(!terminator.getType().equals(CodeType.BREAK)){
-            throw new IllegalArgumentException("Erwarte Break, war aber : " + terminator.getType());
-        }
     }
-
+    
     public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
         List<CodeBlock> expression = ifBlock.getExpression();
-        if(expression.size() == 1){
-            CodeBlock cb = expression.getFirst();
-            if(cb.getType().equals(CodeType.VAR_NAME)){
-                VarNameBlock varNameBlock = (VarNameBlock) cb;
-                if(!variableAlreadyDeclared(varNameBlock.getName(), variables)){
-                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " wurde nicht deklariert");
-                } else if(!variables.get(varNameBlock.getName()).getType().equals(CodeType.BOOLEAN)){
-                    throw new IllegalArgumentException("Variable " + varNameBlock.getName() + " ist kein Boolean");
-                }
-                return (boolean) variables.get(varNameBlock.getName()).getValue();
-            } else if(cb.getType().equals(CodeType.VALUE)){
-                ValueBlock valueBlock = (ValueBlock) cb;
-                Variable var = valueBlock.getValue();
-                if(!var.getType().equals(CodeType.BOOLEAN)){
-                    throw new IllegalArgumentException("Wert " + var.getValue() + " ist kein Boolean");
-                }
-                return (boolean) var.getValue();
+
+        int operatorIndex = findComparisonOperatorIndex(expression);
+
+        if (operatorIndex == -1) {
+            if (expression.size() != 1) {
+                throw new IllegalArgumentException(
+                        "Erwarte entweder einen einzelnen Boolean-Wert/-Variable oder einen Vergleich ('>', '<', '=='), "
+                    + "aber es wurden " + expression.size() + " Blöcke ohne erkennbaren Vergleichsoperator gefunden");
             }
-        }   
-        // TODO Auto-generated method stub
-        return true;
+            return evaluateBooleanOperand(expression.get(0), variables, output);
+        }
+
+        CodeType operator = expression.get(operatorIndex).getType();
+        int operatorLength = 1;
+
+        if (operator == CodeType.EQUALS) {
+            if (operatorIndex + 1 >= expression.size() || expression.get(operatorIndex + 1).getType() != CodeType.EQUALS) {
+                throw new IllegalArgumentException("Erwarte '==' (zwei aufeinanderfolgende EQUALS-Blöcke)");
+            }
+            operatorLength = 2;
+        }
+
+        List<CodeBlock> leftBlocks = expression.subList(0, operatorIndex);
+        List<CodeBlock> rightBlocks = expression.subList(operatorIndex + operatorLength, expression.size());
+
+        if (leftBlocks.isEmpty() || rightBlocks.isEmpty()) {
+            throw new IllegalArgumentException("Erwarte einen Operanden auf beiden Seiten von '" + operator.getLabel() + "'");
+        }
+
+        CodeType operandType = operandType(leftBlocks.get(0), variables);
+        Variable<?> left = determineVariableValue(leftBlocks, variables, operandType, output);
+        Variable<?> right = determineVariableValue(rightBlocks, variables, operandType, output);
+
+        return switch (operator) {
+            case EQUALS -> Objects.equals(left.getValue(), right.getValue());
+            case GREATER_THAN, SMALLER_THAN -> {
+                if (operandType != CodeType.INT) {
+                    throw new IllegalArgumentException(
+                            "Ordnungsvergleich ('" + operator.getLabel() + "') ist nur für INT erlaubt, war aber: " + operandType);
+                }
+                int cmp = Integer.compare((Integer) left.getValue(), (Integer) right.getValue());
+                yield operator == CodeType.GREATER_THAN ? cmp > 0 : cmp < 0;
+            }
+            default -> throw new IllegalStateException("Unreachable: " + operator);
+        };
+    }
+
+    /** Findet die Position des ersten Vergleichsoperators (>, <, =) in einer flachen Ausdrucksliste, -1 falls keiner vorhanden. */
+    private int findComparisonOperatorIndex(List<CodeBlock> expression) {
+        for (int i = 0; i < expression.size(); i++) {
+            if (COMPARISON_OPERATORS.contains(expression.get(i).getType())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean evaluateBooleanOperand(CodeBlock cb, Map<String, Variable<?>> variables, ExecutionLog output) {
+        if (!cb.getType().equals(CodeType.VAR_NAME) && !cb.getType().equals(CodeType.VALUE)) {
+            throw new IllegalArgumentException("Erwarte Boolean-Wert oder -Variable, war aber: " + cb.getType());
+        }
+        return (boolean) resolveSingleOperand(cb, CodeType.BOOLEAN, variables, output).getValue();
+    }
+
+    /** Bestimmt den Typ eines Operanden (Wert oder deklarierte Variable), ohne ihn gegen einen erwarteten Typ zu prüfen. */
+    private CodeType operandType(CodeBlock block, Map<String, Variable<?>> variables) {
+        if (block instanceof ValueBlock valueBlock) {
+            return valueBlock.getValue().getType();
+        }
+        if (block instanceof VarNameBlock varNameBlock) {
+            String name = varNameBlock.getName();
+            if (!variableAlreadyDeclared(name, variables)) {
+                throw new IllegalArgumentException("Use of undeclared variable: " + name);
+            }
+            return variables.get(name).getType();
+        }
+        throw new IllegalArgumentException("Erwarte Wert oder Variable als Operand, war aber: " + block.getType());
     }
 
 

@@ -325,6 +325,132 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
     cursor: grabbing;
 }
 
+/* -------------------------
+   Kontrollblöcke (wenn / sonst)
+   ------------------------- */
+
+/*
+ * Kontrollblöcke sind keine einzeiligen Chips wie die übrigen
+ * .code-block-Typen, sondern zusammengesetzte Container mit
+ * Kopfzeile und eingerücktem Programmkörper. Die generischen
+ * .code-block-Regeln (inline-flex, zentriert, feste min-width)
+ * werden hier deshalb gezielt zurückgesetzt.
+ */
+.code-block.block-control {
+    display: block;
+
+    min-width: 200px;
+
+    padding: 0;
+
+    cursor: default;
+
+    background: #eef2ff;
+    color: #312e81;
+}
+
+.code-block.block-control:hover {
+    transform: none;
+}
+
+.code-block.block-control:active {
+    cursor: default;
+}
+
+
+/*
+ * Nur die Kopfzeile ist tatsächlich greifbar -
+ * dort liegt der dragstart-Listener des gesamten Blocks.
+ */
+.control-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: .5rem;
+
+    padding: .55rem .8rem;
+
+    cursor: grab;
+
+    transition:
+        box-shadow .12s ease;
+}
+
+.control-header:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
+}
+
+.control-header:active {
+    cursor: grabbing;
+}
+
+.control-keyword {
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+}
+
+.control-syntax {
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+    color: #312e81;
+}
+
+.conditional-segment + .conditional-segment {
+    border-top: 1px dashed rgba(21, 94, 117, .25);
+}
+
+.control-closing-brace {
+    padding: .3rem .8rem .55rem;
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+    color: #312e81;
+}
+
+/* -------------------------
+   Bedingung (inline im Kopf)
+   ------------------------- */
+
+.expression-dropzone {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 2px;
+
+    min-width: 40px;
+    min-height: 28px;
+
+    padding: .2rem .5rem;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, .55);
+}
+
+.empty-expression-hint {
+    color: #312e81;
+    opacity: .65;
+    
+    font-size: .8rem;
+
+    pointer-events: none;
+    user-select: none;
+}
+
+
+/* -------------------------
+   Programmkörper (eingerückt)
+   ------------------------- */
+
+.control-body {
+    margin: 0 .6rem .6rem 1.4rem;
+    padding: .3rem 0 .3rem .8rem;
+
+    border-left: 3px solid rgba(21, 94, 117, .3);
+
+    min-height: 30px;
+}
 
 /* Datentypen */
 
