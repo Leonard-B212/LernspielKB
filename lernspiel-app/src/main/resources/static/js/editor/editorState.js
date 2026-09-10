@@ -15,40 +15,43 @@
 export function createEditorState() {
     let program = [];
 
-    // Liefert das aktuelle Programm als Blockliste.
-    function getProgram() {
-        return program;
+    function resolveContainer(path) {
+        return path.reduce((container, step) => container[step.index][step.field], program);
     }
 
-    // Liefert die aktuelle Anzahl der Blöcke.
-    function getLength() {
-        return program.length;
+    function getProgram(path = []) {
+        return resolveContainer(path);
     }
 
-    // Fügt einen neuen Block an einer bestimmten Position ein.
-    function insertBlock(index, block) {
-        program.splice(index, 0, block);
+    function getLength(path = []) {
+        return resolveContainer(path).length;
     }
 
-    // Verschiebt einen bestehenden Block innerhalb des Programms.
-    function moveBlock(oldIndex, newIndex) {
-        const movedBlock = program.splice(oldIndex, 1)[0];
+    function insertBlock(path, index, block) {
+        resolveContainer(path).splice(index, 0, block);
+    }
 
-        if (newIndex > oldIndex) {
-            newIndex--;
+    function moveBlock(fromPath, fromIndex, toPath, toIndex, count = 1) {
+        const movedBlocks = resolveContainer(fromPath).splice(fromIndex, count);
+        let targetIndex = toIndex;
+
+        if (pathsEqual(fromPath, toPath) && targetIndex > fromIndex) {
+            targetIndex -= count;
         }
 
-        program.splice(newIndex, 0, movedBlock);
+        resolveContainer(toPath).splice(targetIndex, 0, ...movedBlocks);
     }
 
-    // Entfernt einen Block anhand seines Index.
-    function removeBlock(index) {
-        program.splice(index, 1);
+    function removeBlock(path, index, count = 1) {
+        resolveContainer(path).splice(index, count);
     }
 
-    // Löscht das komplette aktuelle Programm.
     function clear() {
         program = [];
+    }
+
+    function pathsEqual(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
     }
 
     return {

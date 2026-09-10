@@ -95,21 +95,53 @@ public class InterpreterService {
 
     public List<CodeBlock[]> parseCode(List<CodeBlock> program, ExecutionLog output) {
         List<CodeBlock[]> result = new ArrayList<>();
-        List<CodeBlock> current = new ArrayList<>();
+        int i = 0;
 
-        for (CodeBlock block : program) {
-            current.add(block);
-            if (block.getType().equals(CodeType.BREAK) || block.getType().equals(CodeType.ELSE_STATEMENT)) {
-                result.add(current.toArray(new CodeBlock[0]));
-                current = new ArrayList<>();
+        while (i < program.size()) {
+            CodeBlock block = program.get(i);
+
+            if (block.getType().equals(CodeType.IF_STATEMENT)) {
+                int chainEnd = findConditionalChainEnd(program, i);
+                result.add(program.subList(i, chainEnd).toArray(new CodeBlock[0]));
+                i = chainEnd;
+                continue;
             }
-        }
 
-        if (!current.isEmpty()) {
-            throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + current.getLast().getType());
+            int lineStart = i;
+            while (i < program.size() && !program.get(i).getType().equals(CodeType.BREAK)) {
+                if (program.get(i).getType().equals(CodeType.IF_STATEMENT)) {
+                    throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.IF_STATEMENT);
+                }
+                i++;
+            }
+
+            if (i == program.size()) {
+                throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + program.get(program.size() - 1).getType());
+            }
+
+            i++; // BREAK selbst noch mit in die Zeile aufnehmen
+            result.add(program.subList(lineStart, i).toArray(new CodeBlock[0]));
         }
 
         return result;
+    }
+
+    private int findConditionalChainEnd(List<CodeBlock> program, int startIndex) {
+        int index = startIndex + 1; // das IF_STATEMENT selbst gehört bereits zur Kette
+
+        while (index < program.size() && program.get(index).getType().equals(CodeType.ELSE_STATEMENT)) {
+            int afterElse = index + 1;
+            if (afterElse < program.size() && program.get(afterElse).getType().equals(CodeType.IF_STATEMENT)) {
+                // else-if: Kette geht weiter
+                index = afterElse + 1;
+            } else {
+                // abschließendes "else" (ohne folgendes IF_STATEMENT)
+                index = afterElse;
+                break;
+            }
+        }
+
+        return index;
     }
 
     /**
@@ -230,29 +262,33 @@ public class InterpreterService {
         }
 
         int position = 1;
-        while(position < lineOfCode.length - 1){
-            CodeBlock currentBlock = requireBlock(lineOfCode, position, "Conditional Statement", output);
+        while(position < lineOfCode.length){
+            CodeBlock currentBlock = lineOfCode[position];
             if(!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)){
                 throw new IllegalArgumentException("Erwarte Else-Statement, war aber : " + currentBlock.getType());
             }
-            CodeBlock nextBlock = requireBlock(lineOfCode, position + 1, "Conditional Statement", output);
-            if(nextBlock.getType().equals(CodeType.IF_STATEMENT)){
+
+            boolean hasNext = position + 1 < lineOfCode.length;
+            CodeBlock nextBlock = hasNext ? lineOfCode[position + 1] : null;
+
+            if(hasNext && nextBlock.getType().equals(CodeType.IF_STATEMENT)){
                 IfStatementBlock ifBlock = (IfStatementBlock) nextBlock;
                 if(checkExpression(ifBlock, variables, output)){
                     executeConditionalProgram(ifBlock.getProgram(), variables, output);
                     return;
                 }
-                position +=2;
-            } else if(!nextBlock.getType().equals(CodeType.BREAK)){
-                throw new IllegalArgumentException("Erwarte Else-If-Statement oder Else Statement, war aber : " + nextBlock.getType());
+                position += 2;
+            } else if(hasNext){
+                throw new IllegalArgumentException("Erwarte Else-If-Statement (weiteres IF_STATEMENT) nach Else, war aber: " + nextBlock.getType());
             } else {
+                // currentBlock ist das letzte Element der Kette -> abschließendes "else"
                 ElseStatementBlock elseBlock = (ElseStatementBlock) currentBlock;
                 executeConditionalProgram(elseBlock.getProgram(), variables, output);
                 return;
             }
         }
     }
-
+    
     public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
         List<CodeBlock> expression = ifBlock.getExpression();
 

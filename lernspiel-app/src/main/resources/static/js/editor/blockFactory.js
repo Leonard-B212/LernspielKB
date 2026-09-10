@@ -9,10 +9,12 @@ export async function createBlockData(type, onError = () => {}) {
     switch (type) {
         case "VAR_NAME":
             return createVariableBlock(onError);
-
         case "VALUE":
             return createValueBlock(onError);
-
+        case "IF_STATEMENT":
+            return { type: "IF_STATEMENT", expression: [], program: [] };
+        case "ELSE_STATEMENT":
+            return { type: "ELSE_STATEMENT", program: [] };
         default:
             return { type };
     }
