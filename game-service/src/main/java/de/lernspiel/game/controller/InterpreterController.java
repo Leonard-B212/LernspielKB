@@ -29,12 +29,19 @@ public class InterpreterController {
 
         createReadableLog(output);
 
+        for(LogFile log : output.getEntries()){
+            System.out.println("LogEntry: " + log.getLogType() + "; Previewed: " + log.isPreviewed() + " -> " + log.getContents());
+        }
+
         return ResponseEntity.ok(output);
     }
 
     public void createReadableLog(ExecutionLog output){
         List<String> readableLog = new ArrayList<>();
         for(LogFile log : output.getEntries()){
+            if (log.isPreviewed()) {
+                continue; // nur strukturelle Vorschau eines nicht betretenen Zweigs - nie wirklich passiert
+            }
             switch(log.getLogType()){
                 case PROGRAM_START:
                     readableLog.add("Programmdurchlauf gestartet");
@@ -58,8 +65,10 @@ public class InterpreterController {
                     break;
                 case ERROR:
                     readableLog.add("Fehler: " + '"' + (String) log.getContents().get("errorMessage") + '"');
+                    break;
                 case PROGRAM_END:
                     readableLog.add("Programmdurchlauf beendet");
+                    break;
                 default:
                     break;
             }
