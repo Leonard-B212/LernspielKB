@@ -52,140 +52,171 @@ export function createProgramRenderer({
     }
 
     function createCodeLine(lineData, lineIndex, path) {
-    const line = document.createElement("div");
-    line.classList.add("code-line");
-    line.dataset.containerPath = JSON.stringify(path);
-    line.dataset.endIndex = lineData.endIndex;
+        const line = document.createElement("div");
+        line.classList.add("code-line");
+        line.dataset.containerPath = JSON.stringify(path);
+        line.dataset.endIndex = lineData.endIndex;
 
-    const lineNumber = document.createElement("div");
-    lineNumber.classList.add("line-number");
-    lineNumber.textContent = lineIndex + 1;
-    line.appendChild(lineNumber);
+        const lineNumber = document.createElement("div");
+        lineNumber.classList.add("line-number");
+        lineNumber.textContent = lineIndex + 1;
+        line.appendChild(lineNumber);
 
-    const content = document.createElement("div");
-    content.classList.add("code-line-content");
-    content.appendChild(createDropIndicator(path, lineData.startIndex));
+        const content = document.createElement("div");
+        content.classList.add("code-line-content");
+        content.appendChild(createDropIndicator(path, lineData.startIndex));
 
-    if (lineData.blocks.length > 0 && lineData.blocks[0].block.type === "IF_STATEMENT") {
-        content.appendChild(createConditionalChain(lineData.blocks, path));
-        content.appendChild(createDropIndicator(path, lineData.endIndex));
-    } else {
-        lineData.blocks.forEach(({ block, index }) => {
-            content.appendChild(createLeafBlock(block, index, path));
-            content.appendChild(createDropIndicator(path, index + 1));
-        });
+        if (lineData.blocks.length > 0 && lineData.blocks[0].block.type === "IF_STATEMENT") {
+            content.appendChild(createConditionalChain(lineData.blocks, path));
+            content.appendChild(createDropIndicator(path, lineData.endIndex));
+        } else if (lineData.blocks.length > 0 && lineData.blocks[0].block.type === "WHILE_LOOP") {
+            const { block, index } = lineData.blocks[0];
+            content.appendChild(createWhileLoop(block, index, path));
+            content.appendChild(createDropIndicator(path, lineData.endIndex));
+        } else {
+            lineData.blocks.forEach(({ block, index }) => {
+                content.appendChild(createLeafBlock(block, index, path));
+                content.appendChild(createDropIndicator(path, index + 1));
+            });
+        }
+
+        if (lineData.blocks.length === 0) {
+            const hint = document.createElement("span");
+            hint.classList.add("empty-line-hint");
+            hint.textContent = lineIndex === 0 ? "Ziehe Code-Blöcke hier hinein" : "Nächste Codezeile";
+            content.appendChild(hint);
+        }
+
+        line.appendChild(content);
+        return line;
     }
 
-    if (lineData.blocks.length === 0) {
-        const hint = document.createElement("span");
-        hint.classList.add("empty-line-hint");
-        hint.textContent = lineIndex === 0 ? "Ziehe Code-Blöcke hier hinein" : "Nächste Codezeile";
-        content.appendChild(hint);
-    }
+    // Rendert eine vollständige if -> else-if -> ... -> else Kette als EIN zusammenhängendes
+    // Java-artiges Element, statt als mehrere separat gestapelte Blöcke.
+    function createConditionalChain(blocksWithIndex, path) {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("code-block", "program-block", "block-control", "conditional-chain");
+        wrapper.dataset.containerPath = JSON.stringify(path);
+        wrapper.dataset.index = blocksWithIndex[0].index;
+        wrapper.draggable = true;
 
-    line.appendChild(content);
-    return line;
-}
+        const spanCount = blocksWithIndex.length;
+        bindDrag(wrapper, path, blocksWithIndex[0].index, spanCount);
 
-// Rendert eine vollständige if -> else-if -> ... -> else Kette als EIN zusammenhängendes
-// Java-artiges Element, statt als mehrere separat gestapelte Blöcke.
-function createConditionalChain(blocksWithIndex, path) {
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("code-block", "program-block", "block-control", "conditional-chain");
-    wrapper.dataset.containerPath = JSON.stringify(path);
-    wrapper.dataset.index = blocksWithIndex[0].index;
-    wrapper.draggable = true;
+        let i = 0;
+        while (i < blocksWithIndex.length) {
+            const { block, index } = blocksWithIndex[i];
+            const isFirst = i === 0;
 
-    const spanCount = blocksWithIndex.length;
-    bindDrag(wrapper, path, blocksWithIndex[0].index, spanCount);
-
-    let i = 0;
-    while (i < blocksWithIndex.length) {
-        const { block, index } = blocksWithIndex[i];
-        const isFirst = i === 0;
-
-        if (block.type === "IF_STATEMENT") {
-            wrapper.appendChild(createConditionalSegment({
-                keyword: isFirst ? "if" : "else if",
-                expression: block.expression,
-                expressionPath: [...path, { index, field: "expression" }],
-                body: block.program,
-                bodyPath: [...path, { index, field: "program" }],
-                isFirst
-            }));
-        } else if (block.type === "ELSE_STATEMENT") {
-            // Nur rendern, wenn es KEIN reiner Kettenmarker vor einem folgenden IF_STATEMENT
-            // ist - dessen eigenes .program wird vom Interpreter ignoriert (siehe oben).
-            const isChainMarker = i + 1 < blocksWithIndex.length && blocksWithIndex[i + 1].block.type === "IF_STATEMENT";
-            if (!isChainMarker) {
+            if (block.type === "IF_STATEMENT") {
                 wrapper.appendChild(createConditionalSegment({
-                    keyword: "else",
+                    keyword: isFirst ? "if" : "else if",
+                    expression: block.expression,
+                    expressionPath: [...path, { index, field: "expression" }],
                     body: block.program,
                     bodyPath: [...path, { index, field: "program" }],
                     isFirst
                 }));
+            } else if (block.type === "ELSE_STATEMENT") {
+                // Nur rendern, wenn es KEIN reiner Kettenmarker vor einem folgenden IF_STATEMENT
+                // ist - dessen eigenes .program wird vom Interpreter ignoriert (siehe oben).
+                const isChainMarker = i + 1 < blocksWithIndex.length && blocksWithIndex[i + 1].block.type === "IF_STATEMENT";
+                if (!isChainMarker) {
+                    wrapper.appendChild(createConditionalSegment({
+                        keyword: "else",
+                        body: block.program,
+                        bodyPath: [...path, { index, field: "program" }],
+                        isFirst
+                    }));
+                }
             }
+            i++;
         }
-        i++;
+
+        const closingBrace = document.createElement("div");
+        closingBrace.classList.add("control-closing-brace");
+        closingBrace.textContent = "}";
+        wrapper.appendChild(closingBrace);
+
+        return wrapper;
     }
 
-    const closingBrace = document.createElement("div");
-    closingBrace.classList.add("control-closing-brace");
-    closingBrace.textContent = "}";
-    wrapper.appendChild(closingBrace);
+    function createConditionalSegment({ keyword, expression, expressionPath, body, bodyPath, isFirst }) {
+        const segment = document.createElement("div");
+        segment.classList.add("conditional-segment");
 
-    return wrapper;
-}
+        const header = document.createElement("div");
+        header.classList.add("control-header");
 
-function createConditionalSegment({ keyword, expression, expressionPath, body, bodyPath, isFirst }) {
-    const segment = document.createElement("div");
-    segment.classList.add("conditional-segment");
+        if (!isFirst) {
+            const closeBrace = document.createElement("span");
+            closeBrace.classList.add("control-syntax");
+            closeBrace.textContent = "}";
+            header.appendChild(closeBrace);
+        }
 
-    const header = document.createElement("div");
-    header.classList.add("control-header");
+        const keywordSpan = document.createElement("span");
+        keywordSpan.classList.add("control-keyword");
+        keywordSpan.textContent = keyword;
+        header.appendChild(keywordSpan);
 
-    if (!isFirst) {
-        const closeBrace = document.createElement("span");
-        closeBrace.classList.add("control-syntax");
-        closeBrace.textContent = "}";
-        header.appendChild(closeBrace);
+        if (expression) {
+            const openParen = document.createElement("span");
+            openParen.classList.add("control-syntax");
+            openParen.textContent = "(";
+
+            const expressionZone = document.createElement("div");
+            expressionZone.classList.add("expression-dropzone");
+
+            const closeParen = document.createElement("span");
+            closeParen.classList.add("control-syntax");
+            closeParen.textContent = ")";
+
+            header.append(openParen, expressionZone, closeParen);
+            renderInlineExpression(expressionZone, expression, expressionPath);
+        }
+
+        const openBrace = document.createElement("span");
+        openBrace.classList.add("control-syntax");
+        openBrace.textContent = "{";
+        header.appendChild(openBrace);
+
+        segment.appendChild(header);
+
+        const bodyZone = document.createElement("div");
+        bodyZone.classList.add("control-body");
+        segment.appendChild(bodyZone);
+        renderLines(bodyZone, body, bodyPath);
+
+        return segment;
     }
 
-    const keywordSpan = document.createElement("span");
-    keywordSpan.classList.add("control-keyword");
-    keywordSpan.textContent = keyword;
-    header.appendChild(keywordSpan);
+    // Rendert eine while-Schleife als eigenständiges, geschlossenes Element - analog zu einer
+    // if/else-Kette, aber immer nur EIN Segment (kein else-if/else möglich).
+    function createWhileLoop(block, index, path) {
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("code-block", "program-block", "block-control", "while-loop");
+        wrapper.dataset.containerPath = JSON.stringify(path);
+        wrapper.dataset.index = index;
+        wrapper.draggable = true;
+        bindDrag(wrapper, path, index, 1);
 
-    if (expression) {
-        const openParen = document.createElement("span");
-        openParen.classList.add("control-syntax");
-        openParen.textContent = "(";
+        wrapper.appendChild(createConditionalSegment({
+            keyword: "while",
+            expression: block.expression,
+            expressionPath: [...path, { index, field: "expression" }],
+            body: block.program,
+            bodyPath: [...path, { index, field: "program" }],
+            isFirst: true
+        }));
 
-        const expressionZone = document.createElement("div");
-        expressionZone.classList.add("expression-dropzone");
+        const closingBrace = document.createElement("div");
+        closingBrace.classList.add("control-closing-brace");
+        closingBrace.textContent = "}";
+        wrapper.appendChild(closingBrace);
 
-        const closeParen = document.createElement("span");
-        closeParen.classList.add("control-syntax");
-        closeParen.textContent = ")";
-
-        header.append(openParen, expressionZone, closeParen);
-        renderInlineExpression(expressionZone, expression, expressionPath);
+        return wrapper;
     }
-
-    const openBrace = document.createElement("span");
-    openBrace.classList.add("control-syntax");
-    openBrace.textContent = "{";
-    header.appendChild(openBrace);
-
-    segment.appendChild(header);
-
-    const bodyZone = document.createElement("div");
-    bodyZone.classList.add("control-body");
-    segment.appendChild(bodyZone);
-    renderLines(bodyZone, body, bodyPath);
-
-    return segment;
-}
 
     function createLeafBlock(blockData, index, path) {
         const element = document.createElement("div");
@@ -234,7 +265,9 @@ function buildProgramLines(program) {
 
         if (program[index].type === "IF_STATEMENT") {
             index = findConditionalChainEnd(program, index);
-        } else {
+        } else if (program[index].type === "WHILE_LOOP") {
+            index = index + 1;
+        }else {
             index = scanRegularLine(program, index);
         }
 
@@ -266,7 +299,8 @@ function scanRegularLine(program, start) {
     while (index < program.length
         && program[index].type !== "BREAK"
         && program[index].type !== "IF_STATEMENT"
-        && program[index].type !== "ELSE_STATEMENT") {
+        && program[index].type !== "ELSE_STATEMENT"
+        && program[index].type !== "WHILE_LOOP") {
         index++;
     }
 
@@ -294,7 +328,7 @@ function findConditionalChainEnd(program, startIndex) {
 }
 
 function isLineComplete(lastBlock) {
-    return lastBlock.type === "BREAK" || lastBlock.type === "IF_STATEMENT" || lastBlock.type === "ELSE_STATEMENT";
+    return lastBlock.type === "BREAK" || lastBlock.type === "IF_STATEMENT" || lastBlock.type === "ELSE_STATEMENT" || lastBlock.type === "WHILE_LOOP";
 }
 
 function toLineData(program, startIndex, endIndex) {

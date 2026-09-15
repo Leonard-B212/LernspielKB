@@ -19,7 +19,8 @@ public enum CodeType {
     SUBTRACT(11, "-"),
     MULTIPLY(12, "*"),
     DIVIDE(13, "/"),
-    VALUE(14, "value");
+    VALUE(14, "value"),
+    WHILE_LOOP(15, "while-loop");
 
     private final int id;
     private final String label;

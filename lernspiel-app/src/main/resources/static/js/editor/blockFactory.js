@@ -15,6 +15,8 @@ export async function createBlockData(type, onError = () => {}) {
             return { type: "IF_STATEMENT", expression: [], program: [] };
         case "ELSE_STATEMENT":
             return { type: "ELSE_STATEMENT", program: [] };
+        case "WHILE_LOOP":
+            return { type: "WHILE_LOOP", expression: [], program: [] };
         default:
             return { type };
     }

@@ -19,6 +19,7 @@ import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
 import de.lernspiel.game.dto.VarNameBlock;
 import de.lernspiel.game.dto.Variable;
+import de.lernspiel.game.dto.WhileLoopBlock;
 
 import de.lernspiel.common.code.CodeType;
 import de.lernspiel.common.code.ExecutionLog;
@@ -31,6 +32,7 @@ public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
     private static final Set<CodeType> COMPARISON_OPERATORS = EnumSet.of(CodeType.GREATER_THAN, CodeType.SMALLER_THAN, CodeType.EQUALS);
+    private static final int MAX_WHILE_LOOP_ITERATIONS = 10_000;
 
 
     public ExecutionLog run(ProgramRequest programRequest) {
@@ -88,6 +90,9 @@ public class InterpreterService {
             case IF_STATEMENT:
                 conditionalStatement(lineOfCode, variables, output);
                 break;
+            case WHILE_LOOP:
+                whileLoop(lineOfCode, variables, output);
+                break;
             default:
                 throw new IllegalArgumentException("Unexpected Start of Line: " + firstBlock.getType());
         }
@@ -107,10 +112,19 @@ public class InterpreterService {
                 continue;
             }
 
+            if (block.getType().equals(CodeType.WHILE_LOOP)) {
+                result.add(new CodeBlock[]{ block });
+                i++;
+                continue;
+            }
+
             int lineStart = i;
             while (i < program.size() && !program.get(i).getType().equals(CodeType.BREAK)) {
                 if (program.get(i).getType().equals(CodeType.IF_STATEMENT)) {
                     throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.IF_STATEMENT);
+                }
+                if (program.get(i).getType().equals(CodeType.WHILE_LOOP)) {
+                    throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.WHILE_LOOP);
                 }
                 i++;
             }
@@ -293,6 +307,44 @@ public class InterpreterService {
         if (chosenSegment == null) {
             output.add(new LogFile(new HashMap<>(), LogType.NO_BRANCH_ENTERED));
         }
+    }
+
+    /**
+     * Führt eine while-Schleife aus. Die Bedingungsprüfung nutzt dieselbe Logik wie if-Statements
+     * (checkExpression/describeCondition), da beide dieselbe flache Ausdrucksform verwenden. Der
+     * Schleifenkörper läuft über executeConditionalProgram, damit lokal deklarierte Variablen nach
+     * jedem Durchlauf wieder aus dem Scope entfernt werden und in der nächsten Iteration erneut
+     * deklariert werden können.
+     *
+     * Läuft die Schleife nie (Bedingung ist von Anfang an falsch), wird der Körper zusätzlich einmal
+     * strukturell "previewed" (siehe previewConditionalProgram) - sonst gäbe es für "was wäre wenn"-
+     * Level, deren Testwert die Schleife nie betritt, keinerlei Möglichkeit, die Körper-Logik zu
+     * prüfen. Läuft die Schleife mindestens einmal echt, ist das nicht nötig, da ihr Inhalt dann
+     * bereits real geloggt wurde.
+     */
+    private void whileLoop(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output) {
+        WhileLoopBlock whileBlock = (WhileLoopBlock) lineOfCode[0];
+
+        Map<String, Object> enteredContents = new HashMap<>();
+        enteredContents.putAll(describeCondition(whileBlock.getExpression(), variables));
+        output.add(new LogFile(enteredContents, LogType.WHILE_LOOP_ENTERED));
+
+        int iterations = 0;
+        while (checkExpression(whileBlock.getExpression(), variables, output)) {
+            if (++iterations > MAX_WHILE_LOOP_ITERATIONS) {
+                throw new IllegalStateException(
+                    "While-Schleife hat die maximale Anzahl an Durchläufen (" + MAX_WHILE_LOOP_ITERATIONS + ") überschritten");
+            }
+            executeConditionalProgram(whileBlock.getProgram(), variables, output);
+        }
+
+        if (iterations == 0) {
+            previewConditionalProgram(whileBlock.getProgram(), variables, output);
+        }
+
+        Map<String, Object> finishedContents = new HashMap<>();
+        finishedContents.put("iterationCount", iterations);
+        output.add(new LogFile(finishedContents, LogType.WHILE_LOOP_FINISHED));
     }
 
     private LogType branchLogType(SegmentKind kind, boolean wasChosen) {
