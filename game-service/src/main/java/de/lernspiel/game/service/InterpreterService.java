@@ -19,6 +19,7 @@ import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.dto.ValueBlock;
 import de.lernspiel.game.dto.VarNameBlock;
 import de.lernspiel.game.dto.Variable;
+import de.lernspiel.game.dto.WhileLoopBlock;
 
 import de.lernspiel.common.code.CodeType;
 import de.lernspiel.common.code.ExecutionLog;
@@ -31,6 +32,7 @@ public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
     private static final Set<CodeType> STRING_CONCAT_OPERATORS = EnumSet.of(CodeType.ADD);
     private static final Set<CodeType> COMPARISON_OPERATORS = EnumSet.of(CodeType.GREATER_THAN, CodeType.SMALLER_THAN, CodeType.EQUALS);
+    private static final int MAX_WHILE_LOOP_ITERATIONS = 10_000;
 
 
     public ExecutionLog run(ProgramRequest programRequest) {
@@ -88,6 +90,9 @@ public class InterpreterService {
             case IF_STATEMENT:
                 conditionalStatement(lineOfCode, variables, output);
                 break;
+            case WHILE_LOOP:
+                whileLoop(lineOfCode, variables, output);
+                break;
             default:
                 throw new IllegalArgumentException("Unexpected Start of Line: " + firstBlock.getType());
         }
@@ -107,10 +112,19 @@ public class InterpreterService {
                 continue;
             }
 
+            if (block.getType().equals(CodeType.WHILE_LOOP)) {
+                result.add(new CodeBlock[]{ block });
+                i++;
+                continue;
+            }
+
             int lineStart = i;
             while (i < program.size() && !program.get(i).getType().equals(CodeType.BREAK)) {
                 if (program.get(i).getType().equals(CodeType.IF_STATEMENT)) {
                     throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.IF_STATEMENT);
+                }
+                if (program.get(i).getType().equals(CodeType.WHILE_LOOP)) {
+                    throw new IllegalArgumentException("Expecting ';' on end of line, instead got: " + CodeType.WHILE_LOOP);
                 }
                 i++;
             }
@@ -253,46 +267,158 @@ public class InterpreterService {
         output.add(new LogFile(logContents, LogType.VARIABLE_VALUE_ASSIGNMENT));
     }
 
-    public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
-        IfStatementBlock firstIfBlock = (IfStatementBlock) lineOfCode[0];
+    private enum SegmentKind { IF, ELSE_IF, ELSE }
+    private record ConditionalSegment(SegmentKind kind, Integer branchIndex, List<CodeBlock> expression, List<CodeBlock> program) {}
 
-        if(checkExpression(firstIfBlock, variables, output)){
-            executeConditionalProgram(firstIfBlock.getProgram(), variables, output);
-            return;
+    public void conditionalStatement(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output){
+        List<ConditionalSegment> segments = extractSegments(lineOfCode);
+
+        ConditionalSegment chosenSegment = null;
+        for (ConditionalSegment segment : segments) {
+            if (segment.kind() == SegmentKind.ELSE) {
+                chosenSegment = segment;
+                break;
+            }
+            if (checkExpression(segment.expression(), variables, output)) {
+                chosenSegment = segment;
+                break;
+            }
         }
 
+        for (ConditionalSegment segment : segments) {
+            boolean isChosen = segment == chosenSegment;
+
+            Map<String, Object> logContents = new HashMap<>();
+            if (segment.branchIndex() != null) {
+                logContents.put("branchIndex", segment.branchIndex());
+            }
+            if (segment.expression() != null) {
+                logContents.putAll(describeCondition(segment.expression(), variables));
+            }
+            output.add(new LogFile(logContents, branchLogType(segment.kind(), isChosen)));
+
+            if (isChosen) {
+                executeConditionalProgram(segment.program(), variables, output);
+            } else {
+                previewConditionalProgram(segment.program(), variables, output);
+            }
+        }
+
+        if (chosenSegment == null) {
+            output.add(new LogFile(new HashMap<>(), LogType.NO_BRANCH_ENTERED));
+        }
+    }
+
+    /**
+     * Führt eine while-Schleife aus. Die Bedingungsprüfung nutzt dieselbe Logik wie if-Statements
+     * (checkExpression/describeCondition), da beide dieselbe flache Ausdrucksform verwenden. Der
+     * Schleifenkörper läuft über executeConditionalProgram, damit lokal deklarierte Variablen nach
+     * jedem Durchlauf wieder aus dem Scope entfernt werden und in der nächsten Iteration erneut
+     * deklariert werden können.
+     *
+     * Läuft die Schleife nie (Bedingung ist von Anfang an falsch), wird der Körper zusätzlich einmal
+     * strukturell "previewed" (siehe previewConditionalProgram) - sonst gäbe es für "was wäre wenn"-
+     * Level, deren Testwert die Schleife nie betritt, keinerlei Möglichkeit, die Körper-Logik zu
+     * prüfen. Läuft die Schleife mindestens einmal echt, ist das nicht nötig, da ihr Inhalt dann
+     * bereits real geloggt wurde.
+     */
+    private void whileLoop(CodeBlock[] lineOfCode, Map<String, Variable<?>> variables, ExecutionLog output) {
+        WhileLoopBlock whileBlock = (WhileLoopBlock) lineOfCode[0];
+
+        Map<String, Object> enteredContents = new HashMap<>();
+        enteredContents.putAll(describeCondition(whileBlock.getExpression(), variables));
+        output.add(new LogFile(enteredContents, LogType.WHILE_LOOP_ENTERED));
+
+        int iterations = 0;
+        while (checkExpression(whileBlock.getExpression(), variables, output)) {
+            if (++iterations > MAX_WHILE_LOOP_ITERATIONS) {
+                throw new IllegalStateException(
+                    "While-Schleife hat die maximale Anzahl an Durchläufen (" + MAX_WHILE_LOOP_ITERATIONS + ") überschritten");
+            }
+            executeConditionalProgram(whileBlock.getProgram(), variables, output);
+        }
+
+        if (iterations == 0) {
+            previewConditionalProgram(whileBlock.getProgram(), variables, output);
+        }
+
+        Map<String, Object> finishedContents = new HashMap<>();
+        finishedContents.put("iterationCount", iterations);
+        output.add(new LogFile(finishedContents, LogType.WHILE_LOOP_FINISHED));
+    }
+
+    private LogType branchLogType(SegmentKind kind, boolean wasChosen) {
+        return switch (kind) {
+            case IF -> wasChosen ? LogType.IF_BRANCH_ENTERED : LogType.IF_BRANCH_PREVIEWED;
+            case ELSE_IF -> wasChosen ? LogType.ELSE_IF_BRANCH_ENTERED : LogType.ELSE_IF_BRANCH_PREVIEWED;
+            case ELSE -> wasChosen ? LogType.ELSE_BRANCH_ENTERED : LogType.ELSE_BRANCH_PREVIEWED;
+        };
+    }
+
+    /** Zerlegt eine geparste if/else-Zeile in ihre einzelnen Segmente (if, else-if..., ggf. abschließendes else). */
+    private List<ConditionalSegment> extractSegments(CodeBlock[] lineOfCode) {
+        List<ConditionalSegment> segments = new ArrayList<>();
+
+        IfStatementBlock firstIf = (IfStatementBlock) lineOfCode[0];
+        segments.add(new ConditionalSegment(SegmentKind.IF, null, firstIf.getExpression(), firstIf.getProgram()));
+
         int position = 1;
-        while(position < lineOfCode.length){
+        int elseIfIndex = 0;
+        while (position < lineOfCode.length) {
             CodeBlock currentBlock = lineOfCode[position];
-            if(!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)){
+            if (!currentBlock.getType().equals(CodeType.ELSE_STATEMENT)) {
                 throw new IllegalArgumentException("Erwarte Else-Statement, war aber : " + currentBlock.getType());
             }
 
             boolean hasNext = position + 1 < lineOfCode.length;
             CodeBlock nextBlock = hasNext ? lineOfCode[position + 1] : null;
 
-            if(hasNext && nextBlock.getType().equals(CodeType.IF_STATEMENT)){
+            if (hasNext && nextBlock.getType().equals(CodeType.IF_STATEMENT)) {
+                elseIfIndex++;
                 IfStatementBlock ifBlock = (IfStatementBlock) nextBlock;
-                if(checkExpression(ifBlock, variables, output)){
-                    executeConditionalProgram(ifBlock.getProgram(), variables, output);
-                    return;
-                }
+                segments.add(new ConditionalSegment(SegmentKind.ELSE_IF, elseIfIndex, ifBlock.getExpression(), ifBlock.getProgram()));
                 position += 2;
-            } else if(hasNext){
+            } else if (hasNext) {
                 throw new IllegalArgumentException("Erwarte Else-If-Statement (weiteres IF_STATEMENT) nach Else, war aber: " + nextBlock.getType());
             } else {
-                // currentBlock ist das letzte Element der Kette -> abschließendes "else"
                 ElseStatementBlock elseBlock = (ElseStatementBlock) currentBlock;
-                executeConditionalProgram(elseBlock.getProgram(), variables, output);
-                return;
+                segments.add(new ConditionalSegment(SegmentKind.ELSE, null, null, elseBlock.getProgram()));
+                position++;
+            }
+        }
+
+        return segments;
+    }
+
+    /**
+     * Führt einen NICHT gewählten Zweig auf einer Kopie des Variablen-Zustands aus, um seine Struktur
+     * (Deklarationen, Zuweisungen, verschachtelte Bedingungen) trotzdem zu loggen - ohne dass seine
+     * Effekte den echten Programmzustand beeinflussen.
+     */
+    private void previewConditionalProgram(List<CodeBlock> program, Map<String, Variable<?>> variables, ExecutionLog output) {
+        Map<String, Variable<?>> variablesCopy = new HashMap<>(variables);
+        int startIndex = output.getEntries().size();
+
+        try {
+            executeProgram(program, variablesCopy, new ArrayList<>(), output);
+        } finally {
+            List<LogFile> entries = output.getEntries();
+            for (int i = startIndex; i < entries.size(); i++) {
+                entries.get(i).setPreviewed(true);
             }
         }
     }
-    
-    public boolean checkExpression(IfStatementBlock ifBlock, Map<String, Variable<?>> variables, ExecutionLog output) {
-        List<CodeBlock> expression = ifBlock.getExpression();
 
+    private record ConditionParts(CodeType operator, Boolean allowEquals, List<CodeBlock> leftBlocks, List<CodeBlock> rightBlocks) {}
+
+    /**
+     * Zerlegt eine Bedingung in ihre Bestandteile. Für einen einzelnen Boolean-Operanden
+     * (VAR_NAME/VALUE ohne Vergleichsoperator) ist operator == null; die gesamte Bedingung
+     * steht dann in leftBlocks, rightBlocks ist leer.
+     */
+    private ConditionParts parseCondition(List<CodeBlock> expression) {
         int operatorIndex = findComparisonOperatorIndex(expression);
+        Boolean allowEquals = false;
 
         if (operatorIndex == -1) {
             if (expression.size() != 1) {
@@ -300,7 +426,7 @@ public class InterpreterService {
                         "Erwarte entweder einen einzelnen Boolean-Wert/-Variable oder einen Vergleich ('>', '<', '=='), "
                     + "aber es wurden " + expression.size() + " Blöcke ohne erkennbaren Vergleichsoperator gefunden");
             }
-            return evaluateBooleanOperand(expression.get(0), variables, output);
+            return new ConditionParts(null, null, expression, List.of());
         }
 
         CodeType operator = expression.get(operatorIndex).getType();
@@ -308,8 +434,12 @@ public class InterpreterService {
 
         if (operator == CodeType.EQUALS) {
             if (operatorIndex + 1 >= expression.size() || expression.get(operatorIndex + 1).getType() != CodeType.EQUALS) {
-                throw new IllegalArgumentException("Erwarte '==' (zwei aufeinanderfolgende EQUALS-Blöcke)");
+                throw new IllegalArgumentException("Erwarte '==' (zwei aufeinanderfolgende EQUALS-Blöcke) für einen Vergleich");
             }
+            allowEquals = true;
+            operatorLength = 2;
+        } else if(operatorIndex + 1 < expression.size() && expression.get(operatorIndex + 1).getType() == CodeType.EQUALS){
+            allowEquals = true;
             operatorLength = 2;
         }
 
@@ -320,21 +450,58 @@ public class InterpreterService {
             throw new IllegalArgumentException("Erwarte einen Operanden auf beiden Seiten von '" + operator.getLabel() + "'");
         }
 
-        CodeType operandType = operandType(leftBlocks.get(0), variables);
-        Variable<?> left = determineVariableValue(leftBlocks, variables, operandType, output);
-        Variable<?> right = determineVariableValue(rightBlocks, variables, operandType, output);
+        return new ConditionParts(operator, allowEquals, leftBlocks, rightBlocks);
+    }
 
-        return switch (operator) {
+    /**
+     * Beschreibt eine if-Bedingung strukturiert, damit die Levelprüfung nicht nur weiß, WELCHER
+     * Zweig betreten/durchlaufen wurde, sondern auch WORAUF die Bedingung sich stützte.
+     */
+    public Map<String, Object> describeCondition(List<CodeBlock> expression, Map<String, Variable<?>> variables) {
+        ConditionParts parts = parseCondition(expression);
+        Map<String, Object> description = new HashMap<>();
+
+        if (parts.operator() == null) {
+            description.put("conditionForm", "BOOLEAN_OPERAND");
+            description.putAll(describeValueAssignment(parts.leftBlocks(), CodeType.BOOLEAN));
+            return description;
+        }
+
+        CodeType operandType = operandType(parts.leftBlocks().get(0), variables);
+        description.put("conditionForm", "COMPARISON");
+        description.put("comparisonOperator", parts.operator().name());
+        description.put("allowEquals", parts.allowEquals());
+        description.put("left", describeValueAssignment(parts.leftBlocks(), operandType));
+        description.put("right", describeValueAssignment(parts.rightBlocks(), operandType));
+        return description;
+    }
+    
+    public boolean checkExpression(List<CodeBlock> expression, Map<String, Variable<?>> variables, ExecutionLog output) {
+        ConditionParts parts = parseCondition(expression);
+
+        if (parts.operator() == null) {
+            return evaluateBooleanOperand(parts.leftBlocks().get(0), variables, output);
+        }
+
+        CodeType operandType = operandType(parts.leftBlocks().get(0), variables);
+        Variable<?> left = determineVariableValue(parts.leftBlocks(), variables, operandType, output);
+        Variable<?> right = determineVariableValue(parts.rightBlocks(), variables, operandType, output);
+
+        return switch (parts.operator()) {
             case EQUALS -> Objects.equals(left.getValue(), right.getValue());
             case GREATER_THAN, SMALLER_THAN -> {
                 if (operandType != CodeType.INT) {
                     throw new IllegalArgumentException(
-                            "Ordnungsvergleich ('" + operator.getLabel() + "') ist nur für INT erlaubt, war aber: " + operandType);
+                            "Ordnungsvergleich ('" + parts.operator().getLabel() + "') ist nur für INT erlaubt, war aber: " + operandType);
                 }
                 int cmp = Integer.compare((Integer) left.getValue(), (Integer) right.getValue());
-                yield operator == CodeType.GREATER_THAN ? cmp > 0 : cmp < 0;
+                if(parts.allowEquals()){
+                    yield parts.operator() == CodeType.GREATER_THAN ? cmp >= 0 : cmp <= 0;
+                } else {
+                    yield parts.operator() == CodeType.GREATER_THAN ? cmp > 0 : cmp < 0;
+                }
             }
-            default -> throw new IllegalStateException("Unreachable: " + operator);
+            default -> throw new IllegalStateException("Unreachable: " + parts.operator());
         };
     }
 

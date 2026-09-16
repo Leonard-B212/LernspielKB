@@ -68,6 +68,11 @@ export const BLOCK_DEFINITIONS = {
         label: "else",
         cssClass: "block-control"
     },
+    WHILE_LOOP: {
+        type: "WHILE_LOOP",
+        label: "while",
+        cssClass: "block-control"
+    },
     GREATER_THAN: {
         type: "GREATER_THAN",
         label: ">",
