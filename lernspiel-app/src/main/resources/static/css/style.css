@@ -336,7 +336,18 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
  * .code-block-Regeln (inline-flex, zentriert, feste min-width)
  * werden hier deshalb gezielt zurückgesetzt.
  */
-.code-block.block-control {
+
+/* Kontrollblöcke */
+.block-control {
+    background: #eef2ff;
+    color: #312e81;
+}
+
+/*
+ * Kontrollblöcke im Programm werden als zusammengesetzte
+ * Container mit Kopfzeile und Programmkörper dargestellt.
+ */
+.program-block.block-control {
     display: block;
 
     min-width: 200px;
@@ -344,16 +355,13 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
     padding: 0;
 
     cursor: default;
-
-    background: #eef2ff;
-    color: #312e81;
 }
 
-.code-block.block-control:hover {
+.program-block.block-control:hover {
     transform: none;
 }
 
-.code-block.block-control:active {
+.program-block.block-control:active {
     cursor: default;
 }
 
@@ -426,6 +434,12 @@ th, td { text-align: left; padding: .7rem; border-bottom: 1px solid #e5e7eb; }
     border-radius: 999px;
 
     background: rgba(255, 255, 255, .55);
+}
+
+.expression-dropzone .drop-indicator {
+    height: 24px;
+    width: 6px;
+    margin: 0;
 }
 
 .empty-expression-hint {
