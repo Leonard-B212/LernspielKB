@@ -38,10 +38,10 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
   - [Entwicklungsfunktionen vor dem Deployment](#entwicklungsfunktionen-vor-dem-deployment)
 - [Entwicklung](#entwicklung)
   - [Manueller Start](#manueller-start)
+  - [Neue Level anlegen](#neue-level-anlegen)
   - [XSS Security Check](#xss-security-check)
   - [Aktueller Entwicklungsstand](#aktueller-entwicklungsstand)
   - [Noch offene Punkte](#noch-offene-punkte)
-
 ---
 
 # Überblick
@@ -1776,6 +1776,128 @@ Die Anwendung ist anschließend erreichbar unter:
 ```text
 http://localhost:8080
 ```
+
+---
+
+## Neue Level anlegen
+
+Neue Level können entweder als mitgelieferte Standardlevel über den `LevelBootstrap` definiert oder manuell über die REST-Schnittstelle angelegt werden.
+
+Für dauerhaft zum Lernspiel gehörende Level sollte grundsätzlich der Bootstrap verwendet werden.
+
+### Standardlevel über den Bootstrap anlegen
+
+Die Definitionen der mitgelieferten Standardlevel befinden sich unter:
+
+```text
+level-service/src/main/java/de/lernspiel/level/config/bootstrap/
+```
+
+Die Level sind dort nach Programmiersprache und Kategorie auf verschiedene `LevelDefinitionProvider` aufgeteilt.
+
+Aktuell existieren für Java beispielsweise:
+
+```text
+JavaBasicLevels.java
+JavaVariableLevels.java
+JavaExpressionLevels.java
+JavaAssignmentLevels.java
+JavaConditionalLevels.java
+JavaLoopLevels.java
+```
+
+Soll beispielsweise ein weiteres Level der Kategorie `LOOPS` angelegt werden, wird es in `JavaLoopLevels.java` ergänzt.
+
+Ein Level wird dort als `CreateLevelRequest` definiert. Dabei werden insbesondere folgende Informationen festgelegt:
+
+- Name und Aufgabenbeschreibung
+- Programmiersprache
+- Kategorie und `categoryOrder`
+- `levelNumber`
+- benötigte Code-Komponenten und deren Anzahl
+- erwarteter `ExecutionLog`
+
+Die `levelNumber` muss innerhalb der Kombination aus Programmiersprache und Kategorie eindeutig sein.
+
+Der erwartete `ExecutionLog` beschreibt die für eine erfolgreiche Lösung erwarteten Interpreter-Ereignisse. Wiederverwendbare Hilfsmethoden dafür befinden sich in:
+
+```text
+ExpectedExecutionLogs.java
+```
+
+Nach dem Hinzufügen eines Levels muss keine weitere Registrierung vorgenommen werden. Beim nächsten Start prüft der `LevelBootstrap`, ob das definierte Level bereits in der Datenbank vorhanden ist.
+
+```text
+LevelDefinitionProvider
+        ↓
+LevelBootstrap
+        ↓
+Prüfung über Sprache + Kategorie + Levelnummer
+        ↓
+Level fehlt?
+   ├── Ja   → Level wird angelegt
+   └── Nein → vorhandenes Level bleibt unverändert
+```
+
+### Neue Levelgruppe oder Kategorie hinzufügen
+
+Soll eine neue Levelgruppe angelegt werden, kann ein weiterer Provider erstellt werden.
+
+Beispielsweise:
+
+```text
+JavaArrayLevels.java
+```
+
+Dieser muss:
+
+- `LevelDefinitionProvider` implementieren
+- als Spring-Komponente registriert sein
+- seine Level über `createLevels()` bereitstellen
+
+Spring stellt dem `LevelBootstrap` automatisch alle vorhandenen `LevelDefinitionProvider` zur Verfügung. Der neue Provider muss deshalb nicht zusätzlich im `LevelBootstrap` eingetragen werden.
+
+### Wichtig bei Änderungen vorhandener Standardlevel
+
+Der aktuelle Bootstrap **synchronisiert bereits vorhandene Level nicht automatisch**.
+
+Er prüft ausschließlich, ob ein Level mit derselben Kombination aus:
+
+```text
+Programmiersprache
++
+Kategorie
++
+Levelnummer
+```
+
+bereits vorhanden ist.
+
+Wird beispielsweise nachträglich die Beschreibung, die Blockauswahl oder der erwartete `ExecutionLog` eines bereits angelegten Levels im Provider geändert, bleibt der bestehende Datenbankeintrag beim nächsten Start unverändert.
+
+Für die lokale Entwicklung muss ein solches bestehendes Level daher gegebenenfalls manuell angepasst bzw. neu erzeugt werden.
+
+Eine automatische Update-/Synchronisationslogik für bestehende Bootstrap-Level ist aktuell nicht implementiert.
+
+Während der Entwicklung können bestehende Level jedoch über den Debug-Endpunkt `DELETE /debug/drop-level-data` aus der Datenbank gelöscht werden. Beim nächsten Anwendungsstart erkennt der `LevelBootstrap`, dass die Level fehlen, und legt sie anhand der aktuellen Definitionen in den `LevelDefinitionProvider` erneut an.
+
+Dadurch können auch bereits angelegte Level während der Entwicklung angepasst werden, ohne eine separate Update-Logik für den Bootstrap zu benötigen.
+
+> **Hinweis:** Der Endpunkt dient ausschließlich der Entwicklung und löscht bestehende Leveldaten. Vor einem Deployment sollte der Debug-Endpunkt entfernt, deaktiviert oder entsprechend abgesichert werden.
+
+### Level manuell über die REST-Schnittstelle anlegen
+
+Alternativ können Level über folgenden Endpunkt angelegt werden:
+
+```text
+POST /api/levels
+```
+
+Der Request verwendet ebenfalls einen `CreateLevelRequest`.
+
+Dieser Weg eignet sich insbesondere zum manuellen Testen oder für zukünftig dynamisch verwaltete Level.
+
+Die dauerhaft mit der Anwendung ausgelieferten Standardlevel sollten dagegen über die `LevelDefinitionProvider` definiert werden, damit ihre Definition nachvollziehbar im Quellcode erhalten bleibt.
 
 ---
 
