@@ -105,7 +105,7 @@ async function loadClasses() {
     }
 }
 
-// Lädt die dem aktuellen Lehrer zugeordneten Schüler.
+// Lädt die dem aktuellen Lehrer zugeordneten Schüler inklusive Level-Fortschritt.
 async function loadStudents() {
     const table = document.getElementById("students-table");
     const message = document.getElementById("students-message");
@@ -113,15 +113,28 @@ async function loadStudents() {
     try {
         const students = await apiRequest("/api/benutzer/me/students");
 
+        const progress = students.length
+            ? await apiRequest("/api/progress/users", {
+                method: "POST",
+                body: JSON.stringify(students.map((student) => student.userID))
+            })
+            : [];
+
+        const progressByUserID = new Map(
+            progress.map((entry) => [entry.userID, entry])
+        );
+
         table.innerHTML = "";
 
         students.forEach((student) => {
             const row = document.createElement("tr");
+            const studentProgress = progressByUserID.get(student.userID);
 
             row.innerHTML = `
                 <td>${student.userID}</td>
                 <td>${escapeHtml(student.type)}</td>
                 <td>${student.classID ?? "Keine Klasse"}</td>
+                <td>${studentProgress?.completedLevels ?? 0} / ${studentProgress?.totalLevels ?? 0}</td>
             `;
 
             table.appendChild(row);

@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import de.lernspiel.level.dto.UserLevelProgressResponse;
 import de.lernspiel.level.dto.LevelProgressResponse;
 import de.lernspiel.level.service.LevelProgressService;
 
@@ -64,5 +66,12 @@ public class LevelProgressController {
         }
 
         return Integer.parseInt(principal.getName());
+    }
+
+    // Liefert Lehrern den Level-Fortschritt der übergebenen Benutzer.
+    //@PreAuthorize("hasRole('TEACHER')")
+    @PostMapping("/users")
+    public ResponseEntity<List<UserLevelProgressResponse>> getUserProgress(@RequestBody List<Integer> userIDs) {
+        return ResponseEntity.ok(levelProgressService.getUserProgress(userIDs));
     }
 }

@@ -9,6 +9,7 @@ import de.lernspiel.level.entity.CompletedLevel;
 import de.lernspiel.level.entity.Level;
 import de.lernspiel.level.repository.CompletedLevelRepository;
 import de.lernspiel.level.repository.LevelRepository;
+import de.lernspiel.level.dto.UserLevelProgressResponse;
 
 /**
  * Verwaltet den Fortschritt eines Benutzers innerhalb der Level.
@@ -55,6 +56,19 @@ public class LevelProgressService {
                 .findByUserID(userID)
                 .stream()
                 .map(completedLevel -> completedLevel.getLevel().getLevelID())
+                .toList();
+    }
+
+    // Liefert den Level-Fortschritt für mehrere Benutzer.
+    public List<UserLevelProgressResponse> getUserProgress(List<Integer> userIDs) {
+        long totalLevels = levelRepository.count();
+
+        return userIDs.stream()
+                .map(userID -> new UserLevelProgressResponse(
+                        userID,
+                        completedLevelRepository.countByUserID(userID),
+                        totalLevels
+                ))
                 .toList();
     }
 }
