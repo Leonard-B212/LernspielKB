@@ -41,7 +41,6 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
   - [Neue Level anlegen](#neue-level-anlegen)
   - [XSS Security Check](#xss-security-check)
   - [Aktueller Entwicklungsstand](#aktueller-entwicklungsstand)
-  - [Noch offene Punkte](#noch-offene-punkte)
 ---
 
 # Überblick
@@ -2121,13 +2120,21 @@ Aktuell umgesetzt sind unter anderem:
 
 ### Navigation
 
-- gemeinsame Navigation über `navigation.js`
-- Lernpfad als zentrale Schülerseite
-- Navigation vom Skilltree zur Sandbox
+- Lernpfad als zentrale Seite
+- Navigation vom Skilltree/Lernpfad zur Sandbox
 - Navigation vom Level zurück zum Lernpfad
 - Navigation vom Level zur Sandbox
 - Navigation von der Sandbox zurück zum Lernpfad
 - gemeinsamer Logout
+
+Die Navigation berücksichtigt zusätzlich die Rolle des angemeldeten Benutzers:
+
+- **Schüler:** navigieren zwischen Lernpfad, Level und Sandbox.
+- **Lehrer:** können aus dem Lernpfad zurück zum Lehrer-Dashboard wechseln. Das Dashboard zeigt die zugewiesenen Schüler einschließlich ihres Level-Fortschritts (`abgeschlossen / gesamt`).
+- **Administratoren:** können aus dem Lernpfad zurück zum Admin-Dashboard wechseln.
+- **Lehrer und Administratoren:** können ebenfalls Sandbox und Lernpfad verwenden.
+
+Die rollenabhängige Navigation wird zentral über `navigation.js` gesteuert. Dadurch müssen die einzelnen Seiten die Navigation zum jeweiligen Dashboard nicht separat implementieren.
 
 ### Entwicklungstools
 
@@ -2137,22 +2144,6 @@ Aktuell umgesetzt sind unter anderem:
 - rekursive Prüfung des statischen Frontends auf potenzielle XSS-Sinks
 - Ausgabe der Fundstellen inklusive Datei und Zeilennummer
 
-Der aktuelle Schülerfluss ist damit grundsätzlich vollständig navigierbar:
-
-```text
-Login
-  ↓
-Skilltree
-  ├────────────→ Sandbox
-  │                 │
-  │                 └────→ Skilltree
-  │
-  └────→ Level
-           │
-           ├────────→ Sandbox
-           │
-           └────────→ Skilltree
-```
 
 ---
 
@@ -2202,15 +2193,3 @@ Ein wesentlicher Teil der gefundenen `innerHTML`-Verwendungen wurde bereits manu
 Der Scanner bleibt als Entwicklungshilfe bestehen. Weitere oder neu hinzukommende Fundstellen sollten weiterhin manuell geprüft werden, da ein automatischer Treffer weder eine Sicherheitslücke beweist noch deren Abwesenheit garantiert.
 
 
-### Aufräumen vor Projektabschluss
-
-Vor dem endgültigen Projektabschluss sollten Entwicklungs- und Hilfskomponenten noch überprüft werden.
-
-Dazu gehören insbesondere:
-
-- nicht mehr benötigte Seiten überprüfen
-- Testdaten bereinigen
-- neu hinzugekommene XSS-Fundstellen überprüfen
-- nicht mehr benötigte Entwicklungsdateien und Hilfskomponenten prüfen
-
-Die für ein Deployment relevanten Sicherheits- und Konfigurationspunkte sind separat unter [Deployment und Sicherheit](#deployment-und-sicherheit) dokumentiert.
