@@ -10,7 +10,11 @@ import de.lernspiel.level.dto.LevelVerificationRequest;
 import de.lernspiel.level.service.LevelVerificationService;
 
 /**
- * Stellt den Endpunkt zur Prüfung ausgeführter Level bereit.
+ * REST-Controller für die Validierung von Programmcode gegen die tatsächlich gestellten Anforderungen eines Levels.
+ *
+ * Der Controller nimmt Anfragen zur Levelprüfung in form eines LevelVerificationRequests entgegen.
+ * Diese Anfrage wird zur Verarbeitung an den LevelVerficationService weitergeleitet 
+ * und das Ergebnis wird in Form eines Wahrheitswerts an das Frontend zurückgegeben.
  */
 @RestController
 @RequestMapping("/api/levelVerification")

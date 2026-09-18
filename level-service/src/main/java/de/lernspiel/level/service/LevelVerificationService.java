@@ -15,7 +15,11 @@ import de.lernspiel.level.entity.Level;
 import de.lernspiel.level.repository.LevelRepository;
 
 /**
- * Prüft den ExecutionLog eines ausgeführten Programms gegen die erwartete Lösung eines Levels.
+ * Service für das Verifizieren von erwarteten Level-Lösungen gegen das tatsächlich ausgeführte Program.
+ *
+ * Der Service holt sich die Leveldaten für die gegebene Level-ID aus der Datenbank.
+ * Der erwartete und der tatsächliche ExecutionLog werden normalisiert und gegeneinander geprüft. Wenn erwarteter Programmcode fehlt, 
+ * gibt die Funktion einen negativen, sonst einen positiven Wahrheitswert zurück.
  */
 @Service
 public class LevelVerificationService {

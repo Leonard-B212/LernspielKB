@@ -17,6 +17,14 @@ import de.lernspiel.common.code.LogFile;
 import de.lernspiel.game.dto.ProgramRequest;
 import de.lernspiel.game.service.InterpreterService;
 
+
+/**
+ * REST-Controller für die Verwaltung von Interpreter-Anfragen.
+ *
+ * Nimmt Anfragen mit Programmcode aus dem Frontend entgegen und schickt sie zur Verarbeitung an den Intepreter-Service.
+ * Nimmt die Rückmeldungen aus dem Interpreter-Service in Form eines ExecutionLog entgegen, erstellt daraus einen lesbaren Konsolen-Output und sendet beides zurück an das 
+ * Frontend.
+ */
 @RestController
 @RequestMapping("/game/interpreter")
 public class InterpreterController {

@@ -26,7 +26,12 @@ import de.lernspiel.common.code.ExecutionLog;
 import de.lernspiel.common.code.LogFile;
 import de.lernspiel.common.code.LogType;
 
-
+/**
+ * Verwaltet die Servicelogik für das Interpretieren von Code-Programmen.
+ *
+ * Der Service ermöglicht das Parsen von Programmcode in einzelne Zeilen mittels Zerlegung, und die schrittweise Auswertung dieser Zeilen.
+ * Alle relevanten Schritte werden durch den Service geloggt und von der run-Funktion zurückgegeben.
+ */
 @Service
 public class InterpreterService {
     private static final Set<CodeType> ARITHMETIC_OPERATORS = EnumSet.of(CodeType.ADD, CodeType.SUBTRACT, CodeType.MULTIPLY, CodeType.DIVIDE);
