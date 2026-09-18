@@ -86,6 +86,43 @@ public final class ExpectedExecutionLogs {
         return new LogFile(contents, LogType.VARIABLE_VALUE_ASSIGNMENT);
     }
 
+    public static LogFile conditional(LogType logType, CodeType operator, boolean allowEquals,
+        Map<String, Object> left, Map<String, Object> right) {
+
+    Map<String, Object> contents = new HashMap<>();
+
+    contents.put("conditionForm", "COMPARISON");
+    contents.put("comparisonOperator", operator.name());
+    contents.put("allowEquals", allowEquals);
+    contents.put("left", expressionDescription(left));
+    contents.put("right", expressionDescription(right));
+
+    return new LogFile(contents, logType);
+}
+
+public static LogFile whileFinished(int iterationCount) {
+    Map<String, Object> contents = new HashMap<>();
+
+    contents.put("iterationCount", iterationCount);
+
+    return new LogFile(contents, LogType.WHILE_LOOP_FINISHED);
+}
+
+private static Map<String, Object> expressionDescription(Map<String, Object> operand) {
+    Map<String, Object> description = new HashMap<>();
+
+    description.put(
+            "expressionForm",
+            "VARIABLE".equals(operand.get("source"))
+                    ? "VARIABLE_REFERENCE"
+                    : "SINGLE_VALUE"
+    );
+    description.put("expressionOperands", List.of(operand));
+    description.put("expressionOperators", List.of());
+
+    return description;
+}
+
     public static Map<String, Object> literal(Object value) {
         Map<String, Object> operand = new HashMap<>();
 
