@@ -5,6 +5,7 @@ Webbasiertes Lernspiel für Schülerinnen und Schüler der Klassenstufen 9–10 
 Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen visuellen Drag-&-Drop-Code-Editor mit einem eigenen Interpreter, dynamisch bereitgestellten Leveln und einem visuellen Skilltree.
 
 ![Lernspiel Level-Editor](lernspiel-app/src/main/resources/static/images/Screenshot_1.png)
+
 ---
 
 ## Inhalt
@@ -13,7 +14,6 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
 - [Schnellstart](#schnellstart)
   - [Voraussetzungen](#voraussetzungen)
   - [Repository klonen](#repository-klonen)
-  - [Anwendung konfigurieren](#anwendung-konfigurieren)
   - [Projekt starten](#projekt-starten)
   - [Test-Zugangsdaten](#test-zugangsdaten)
 - [Bedienung und Testen](#bedienung-und-testen)
@@ -32,6 +32,10 @@ Das Projekt entsteht im Rahmen eines Projekts an der DHBW und kombiniert einen v
   - [Datenbank](#datenbank)
 - [Projektstruktur](#projektstruktur)
 - [API-Endpunkte](#api-endpunkte)
+- [Deployment und Sicherheit](#deployment-und-sicherheit)
+  - [Konfiguration für ein Deployment](#konfiguration-für-ein-deployment)
+  - [Zugriffskontrolle](#zugriffskontrolle)
+  - [Entwicklungsfunktionen vor dem Deployment](#entwicklungsfunktionen-vor-dem-deployment)
 - [Entwicklung](#entwicklung)
   - [Manueller Start](#manueller-start)
   - [XSS Security Check](#xss-security-check)
@@ -84,6 +88,8 @@ Aktuell umgesetzt sind unter anderem:
 - visuelle Verbindungen zwischen Kategorien und Leveln
 - Speicherung abgeschlossener Level
 - benutzerbezogener Level-Fortschritt
+- Fortschrittsübersicht für Lehrer mit abgeschlossenen und insgesamt verfügbaren Leveln
+- Java-Level für Bedingungen und Schleifen
 - gemeinsame Navigation zwischen Lernpfad, Level und Sandbox
 - Logout über die gemeinsame Navigation
 - automatisierter XSS-Codecheck als Entwicklungshilfe
@@ -114,14 +120,6 @@ Für die lokale Ausführung werden folgende Komponenten benötigt:
 git clone https://github.com/Leonard-B212/LernspielKB
 cd LernspielKB
 ```
-
-## Anwendung konfigurieren
-
-Vor dem ersten Start die Datei `lernspiel-app/src/main/resources/application.properties.example` kopieren und in `application.properties` umbenennen.
-
-Anschließend die enthaltenen Platzhalter für Datenbankzugang, Passwörter und Secrets an die eigene Umgebung anpassen.
-
-Die `application.properties` wird über `.gitignore` nicht versioniert.
 
 ## Projekt starten
 
@@ -179,6 +177,8 @@ Beim ersten Start wird automatisch ein Administrator angelegt, sofern noch kein 
 | `1` | `admin123` |
 
 > **Hinweis:** Bei einer neu angelegten bzw. leeren Datenbank wird der Administrator beim Start automatisch erzeugt. In einer regulär neu erzeugten Datenbank erhält dieser dadurch die Benutzer-ID `1`.
+
+> **Deployment-Hinweis:** `admin123` ist ausschließlich als lokales Entwicklungs-/Testpasswort vorgesehen. Das Bootstrap-Passwort wird über `app.bootstrap-admin.password` konfiguriert und muss für ein Deployment durch ein eigenes sicheres Passwort ersetzt bzw. über die Deployment-Konfiguration bereitgestellt werden.
 
 ---
 
@@ -298,7 +298,7 @@ Beispiele können sein:
 ```text
 BASICS
 VARIABLES
-CONDITIONS
+CONDITIONALS
 LOOPS
 ...
 ```
@@ -368,11 +368,16 @@ Aktuell stehen unter anderem folgende Blöcke zur Verfügung:
 
 - Variablen
 - Werte
+- If-Blöcke
+- Else-Blöcke
+- While-Loops
 - `=`
 - `+`
 - `-`
 - `*`
 - `/`
+- `>`
+- `<`
 - `;`
 
 Die Sandbox unterstützt mehrere Codezeilen. Blöcke können innerhalb des Programms verschoben, zwischen vorhandenen Blöcken eingefügt und über eine Drop-Zone wieder gelöscht werden.
@@ -436,7 +441,7 @@ Die zusätzlichen Blöcke werden ausschließlich für die sichtbare Palette erze
 
 Bereits im Level vorhandene Blocktypen werden bei der Auswahl der zusätzlichen Blöcke ausgeschlossen.
 
-Als mögliche zusätzliche Blocktypen werden nur Blocktypen verwendet, die das Frontend über die zentralen `BLOCK\_DEFINITIONS` aktuell unterstützt.
+Als mögliche zusätzliche Blocktypen werden nur Blocktypen verwendet, die das Frontend über die zentralen `BLOCK_DEFINITIONS` aktuell unterstützt.
 
 Die gesamte Palette wird anschließend mit einem Fisher-Yates-Shuffle zufällig angeordnet.
 
@@ -553,7 +558,7 @@ Zusätzlich befindet sich dort mit `paletteBuilder.js` die Logik für den dynami
 Der `paletteBuilder`:
 
 - übernimmt die vom Backend gelieferten Level-Komponenten
-- bestimmt weitere verfügbare Blocktypen über `BLOCK\_DEFINITIONS`
+- bestimmt weitere verfügbare Blocktypen über `BLOCK_DEFINITIONS`
 - schließt bereits vorhandene Typen als zusätzliche Blöcke aus
 - ergänzt zufällig zwei bis drei zusätzliche Blocktypen
 - mischt die vollständige Palette
@@ -689,6 +694,9 @@ Für unterschiedliche Arten von Code-Blöcken existieren spezialisierte DTOs, be
 - `ValueBlock`
 - `IfStatementBlock`
 - `ElseStatementBlock`
+- `WhileLoopBlock`
+
+Der Java-Interpreter unterstützt aktuell unter anderem Variablendeklarationen und -zuweisungen, arithmetische Ausdrücke, String-Konkatenation, Bedingungen mit `if`, `else-if` und `else` sowie `while`-Schleifen. Bedingungen können Boolean-Operanden und Vergleiche mit `>`, `<`, `==`, `>=` und `<=` abbilden.
 
 Die verfügbaren Blocktypen werden modulübergreifend durch `CodeType` im Modul `common` definiert.
 
@@ -813,6 +821,8 @@ JavaBasicLevels
 JavaVariableLevels
 JavaExpressionLevels
 JavaAssignmentLevels
+JavaConditionalLevels
+JavaLoopLevels
 weitere zukünftige Provider
       ↓
 LevelService
@@ -839,6 +849,8 @@ JavaBasicLevels
 JavaVariableLevels
 JavaExpressionLevels
 JavaAssignmentLevels
+JavaConditionalLevels
+JavaLoopLevels
 ```
 
 implementieren dieses Interface und werden als Spring-Komponenten registriert.
@@ -850,7 +862,7 @@ Dadurch muss `LevelBootstrap` keine konkreten Levelgruppen kennen.
 Wird zukünftig beispielsweise eine weitere Gruppe angelegt:
 
 ```text
-JavaConditionLevels
+weitere Sprach- oder Levelgruppen
 ```
 
 muss diese lediglich:
@@ -932,6 +944,8 @@ geladen.
 Nach erfolgreicher Level-Verifikation wird das Level über die Progress-Schnittstelle für den aktuell authentifizierten Benutzer als abgeschlossen gespeichert.
 
 Der Skilltree kann damit feststellen, welche Level für den aktuell angemeldeten Benutzer bereits abgeschlossen wurden.
+
+Für die Lehreransicht kann der Fortschritt mehrerer Schüler zusätzlich kompakt als Anzahl abgeschlossener Level im Verhältnis zur Gesamtzahl vorhandener Level geladen werden. Dafür wird `UserLevelProgressResponse` verwendet.
 
 Wichtig ist die Trennung zwischen:
 
@@ -1110,7 +1124,8 @@ LernspielKB/
 │                           │   ├── ProgramRequest.java                  # Vom Frontend übermitteltes Gesamtprogramm
 │                           │   ├── ValueBlock.java                      # Repräsentiert einen konkreten Wert
 │                           │   ├── Variable.java                        # Kapselt Wert und Datentyp einer Variable
-│                           │   └── VarNameBlock.java                    # Repräsentiert einen Variablennamen
+│                           │   ├── VarNameBlock.java                    # Repräsentiert einen Variablennamen
+│                           │   └── WhileLoopBlock.java                   # Repräsentiert einen While-Schleifen-Block
 │                           │
 │                           └── service/
 │                               └── InterpreterService.java              # Interpretiert und verarbeitet die Code-Blöcke
@@ -1132,7 +1147,9 @@ LernspielKB/
 │                           │       ├── ExpectedExecutionLogs.java       # Hilfsmethoden für erwartete ExecutionLogs der Standardlevel
 │                           │       ├── JavaAssignmentLevels.java        # Vordefinierte Java-Level der Kategorie ASSIGNMENTS
 │                           │       ├── JavaBasicLevels.java             # Vordefinierte Java-Level der Kategorie BASICS
+│                           │       ├── JavaConditionalLevels.java       # Vordefinierte Java-Level der Kategorie CONDITIONALS
 │                           │       ├── JavaExpressionLevels.java        # Vordefinierte Java-Level der Kategorie EXPRESSIONS
+│                           │       ├── JavaLoopLevels.java              # Vordefinierte Java-Level der Kategorie LOOPS
 │                           │       ├── JavaVariableLevels.java          # Vordefinierte Java-Level der Kategorie VARIABLES
 │                           │       └── LevelDefinitionProvider.java     # Gemeinsame Schnittstelle aller Levelgruppen
 │                           │
@@ -1151,7 +1168,8 @@ LernspielKB/
 │                           │   ├── LevelOverviewResponse.java           # Kompakte Leveldaten für Übersichten und Skilltree
 │                           │   ├── LevelProgressResponse.java           # Response für benutzerbezogenen Level-Fortschritt
 │                           │   ├── LevelResponse.java                   # Vollständige Leveldaten für die Level-Seite
-│                           │   └── LevelVerificationRequest.java        # Level-ID und tatsächlicher ExecutionLog für die Prüfung
+│                           │   ├── LevelVerificationRequest.java        # Level-ID und tatsächlicher ExecutionLog für die Prüfung
+│                           │   └── UserLevelProgressResponse.java       # Kompakte Fortschrittsdaten eines Benutzers für die Lehreransicht
 │                           │
 │                           ├── entity/                                  # JPA-Entitäten der Levelverwaltung
 │                           │   ├── CompletedLevel.java                  # Speichert ein abgeschlossenes Level eines Benutzers
@@ -1188,11 +1206,13 @@ LernspielKB/
             │
             └── resources/
                 │
-                ├── application.properties                             # Spring-Boot- und Datenbankkonfiguration
+                ├── application.properties                             # Lokale Spring-Boot-, Datenbank- und Security-Konfiguration
+                ├── application.properties.example                     # Versionierbare Vorlage für die Anwendungskonfiguration
                 │
                 └── static/                                            # Statische Dateien des Web-Frontends
                     │
                     ├── admin.html                                      # Administratoroberfläche
+                    ├── favicon.png                                     # Favicon der Webanwendung
                     ├── index.html                                      # Login-Seite
                     ├── level.html                                      # Dynamische Level-Seite mit Code-Editor
                     ├── sandbox.html                                    # Frei nutzbarer Code-Editor
@@ -1202,6 +1222,9 @@ LernspielKB/
                     │
                     ├── css/
                     │   └── style.css                                   # Gemeinsames Styling der Webanwendung
+                    │
+                    ├── images/
+                    │   └── Screenshot_1.png                            # Screenshot für die Projektdokumentation
                     │
                     └── js/
                         │
@@ -1303,6 +1326,8 @@ Die wichtigsten Schnittstellen der Anwendung sind nachfolgend dokumentiert.
 
 Der Level-Service stellt Schnittstellen für vollständige Leveldaten sowie kompakte Levelübersichten bereit.
 
+> **Aktuelle Zugriffskontrolle:** `/api/levels/**` ist in der Entwicklungs-Konfiguration über `permitAll()` freigegeben. Für ein Deployment sollte geprüft werden, welche Level-Operationen öffentlich erreichbar sein sollen.
+
 Vollständige Leveldaten werden von der eigentlichen Level-Seite verwendet.
 
 Kompakte Übersichtsobjekte werden insbesondere für den Skilltree verwendet und enthalten nur die dort benötigten Informationen.
@@ -1341,7 +1366,7 @@ Beispiel:
       "amount": 1
     },
     {
-      "type": "VAR\_NAME",
+      "type": "VAR_NAME",
       "amount": 1
     },
     {
@@ -1386,7 +1411,7 @@ Beispiel für das manuelle Anlegen eines Levels:
       "amount": 1
     },
     {
-      "type": "VAR\_NAME",
+      "type": "VAR_NAME",
       "amount": 1
     },
     {
@@ -1458,16 +1483,20 @@ Der Skilltree verwendet diese Daten, um bereits abgeschlossene Level zu erkennen
 
 Die wichtigsten Progress-Endpunkte sind:
 
-| Methode | Endpunkt | Beschreibung |
-| ------- | -------- | ------------ |
-| `GET` | `/api/progress/completed-levels` | Lädt die abgeschlossenen Level des aktuell authentifizierten Benutzers |
-| `POST` | `/api/progress/levels/{levelID}/complete` | Markiert ein Level als abgeschlossen |
+| Methode | Endpunkt | Beschreibung | Aktuelle Zugriffskontrolle |
+| ------- | -------- | ------------ | -------------------------- |
+| `GET` | `/api/progress/completed-levels` | Lädt die abgeschlossenen Level des aktuell authentifizierten Benutzers | Authentifiziert |
+| `POST` | `/api/progress/levels/{levelID}/complete` | Markiert ein Level als abgeschlossen | Authentifiziert |
+| `POST` | `/api/progress/users` | Liefert für übergebene Benutzer-IDs jeweils abgeschlossene und insgesamt vorhandene Level | Authentifiziert; vorgesehene `TEACHER`-Beschränkung ist aktuell noch nicht aktiviert |
 
 Die Progress-Schnittstelle bildet aktuell die technische Grundlage für:
 
 - Speichern abgeschlossener Level
 - Laden des benutzerbezogenen Fortschritts
 - Markieren abgeschlossener Level im Skilltree
+- Anzeige des Fortschritts eigener Schüler in der Lehreroberfläche
+
+`POST /api/progress/users` erwartet eine Liste von Benutzer-IDs und liefert pro Benutzer `userID`, `completedLevels` und `totalLevels`.
 
 Eine fachliche Freischaltlogik für nachfolgende Level ist davon bewusst getrennt und aktuell noch nicht endgültig definiert.
 
@@ -1483,6 +1512,8 @@ Eine fachliche Freischaltlogik für nachfolgende Level ist davon bewusst getrenn
 | ------- | -------- | ------------ |
 | `POST` | `/api/levelVerification/verify` | Vergleicht den tatsächlichen ExecutionLog mit der serverseitig gespeicherten erwarteten Ausführung des Levels |
 
+> **Aktuelle Zugriffskontrolle:** Der Endpunkt ist in der Entwicklungs-Konfiguration über `permitAll()` freigegeben. Die gewünschte Zugriffspolitik für ein Deployment sollte vorab festgelegt werden.
+
 Das Frontend sendet ausschließlich die Level-ID und den tatsächlichen `ExecutionLog`. Der erwartete ExecutionLog wird serverseitig anhand der Level-ID geladen. Die Response ist ein Boolean.
 
 </details>
@@ -1496,6 +1527,8 @@ Das Frontend sendet ausschließlich die Level-ID und den tatsächlichen `Executi
 | Methode | Endpunkt | Beschreibung |
 | ------- | -------- | ------------ |
 | `POST` | `/game/interpreter/run` | Führt ein aus Code-Blöcken bestehendes Programm über den Interpreter aus |
+
+> **Aktuelle Zugriffskontrolle:** Der Endpunkt ist in der Entwicklungs-Konfiguration über `permitAll()` freigegeben. Die gewünschte Zugriffspolitik für ein Deployment sollte vorab festgelegt werden.
 
 Der Endpunkt erwartet einen `ProgramRequest` im Request-Body.
 
@@ -1511,7 +1544,7 @@ Beispiel:
       "type": "INT"
     },
     {
-      "type": "VAR\_NAME",
+      "type": "VAR_NAME",
       "name": "x"
     },
     {
@@ -1571,11 +1604,145 @@ Sie sind nicht für den produktiven Betrieb vorgesehen.
 | `GET` | `/debug/db-info` | Zeigt Informationen über die aktuell verbundene Datenbank |
 | `GET` | `/debug/create-test-user` | Erstellt einen Testbenutzer |
 | `GET` | `/debug/list-users` | Gibt alle gespeicherten Benutzer zurück |
-| `DELETE` | `/debug/drop-user` | Löscht für einen lokalen Datenbank-Reset die Tabellen `school\_class` und `user` |
+| `DELETE` | `/debug/drop-user` | Löscht für einen lokalen Datenbank-Reset die Tabellen `school_class` und `user` |
 
 > **Achtung:** Die Debug-Endpunkte dienen ausschließlich der lokalen Entwicklung und sollten später entfernt bzw. außerhalb einer Entwicklungsumgebung nicht verfügbar gemacht werden.
 
 </details>
+
+---
+
+
+# Deployment und Sicherheit
+
+Der aktuelle Stand des Projekts ist bewusst als **Entwicklungsstand** dokumentiert. Für eine Weiterentwicklung kann die Anwendung mit der vorhandenen Konfiguration lokal betrieben werden. Vor einem öffentlich erreichbaren oder produktiven Deployment sollten jedoch insbesondere Konfiguration, Debug-Funktionen und Zugriffskontrolle überprüft werden.
+
+## Konfiguration für ein Deployment
+
+Die lokale Konfiguration basiert auf:
+
+```text
+lernspiel-app/src/main/resources/application.properties
+```
+
+Als versionierbare Vorlage steht zusätzlich zur Verfügung:
+
+```text
+lernspiel-app/src/main/resources/application.properties.example
+```
+
+Die eigentliche `application.properties` ist nicht für die Ablage produktiver Zugangsdaten im Repository vorgesehen. Datenbankzugänge, Bootstrap-Passwort und JWT-Secrets sollten für die jeweilige Zielumgebung sicher bereitgestellt werden.
+
+Insbesondere sind folgende Einstellungen umgebungsspezifisch:
+
+```properties
+spring.datasource.url=...
+spring.datasource.username=...
+spring.datasource.password=...
+
+app.bootstrap-admin.password=...
+
+jwt.secret=...
+jwt.service.secret=...
+```
+
+Die in der Entwicklungsumgebung verwendeten Zugangsdaten und Secrets sind lediglich lokale bzw. beispielhafte Werte und dürfen nicht unverändert für ein Deployment übernommen werden.
+
+Der `AdminBootstrap` prüft beim Start, ob bereits ein Benutzer mit der Rolle `ADMIN` existiert. Ist dies nicht der Fall, wird automatisch ein Administrator mit dem über `app.bootstrap-admin.password` konfigurierten Passwort angelegt. Für ein Deployment muss dieses Passwort daher vor dem ersten Start der Zielumgebung sicher gesetzt werden.
+
+Zusätzlich sollten folgende Entwicklungseinstellungen für die jeweilige Zielumgebung bewusst geprüft werden:
+
+```properties
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+management.endpoints.web.exposure.include=*
+logging.level.org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping=DEBUG
+```
+
+`ddl-auto=update` ist für die aktuelle Entwicklung praktisch, da Hibernate das Schema anhand der Entities automatisch weiterentwickelt. Für ein produktives Deployment sollte die gewünschte Strategie zur Datenbankschema-Verwaltung bewusst festgelegt werden.
+
+SQL-Ausgabe, detailliertes Endpoint-Logging und die Freigabe sämtlicher Management-Endpunkte sind Entwicklungseinstellungen und sollten außerhalb einer Entwicklungsumgebung nur aktiviert bleiben, wenn sie ausdrücklich benötigt und entsprechend abgesichert werden.
+
+## Zugriffskontrolle
+
+Die zentrale Zugriffskontrolle befindet sich in:
+
+```text
+auth-service/src/main/java/de/lernspiel/auth/config/SecurityConfig.java
+```
+
+Innerhalb von `authorizeHttpRequests` wird festgelegt, welche Endpunkte öffentlich erreichbar sind und welche eine Authentifizierung benötigen.
+
+Beispiel:
+
+```java
+.requestMatchers("/api/benutzer/login").permitAll()
+.requestMatchers("/game/interpreter/run").authenticated()
+.anyRequest().authenticated()
+```
+
+Bedeutung der wichtigsten Regeln:
+
+- `permitAll()` - Endpunkt ist ohne Anmeldung erreichbar.
+- `authenticated()` - eine gültige Authentifizierung bzw. ein gültiges JWT ist erforderlich.
+- `hasRole("ADMIN")` - Zugriff nur für Benutzer mit der angegebenen Rolle.
+- `hasAnyRole("TEACHER", "ADMIN")` - Zugriff für mehrere angegebene Rollen.
+
+Bei `hasRole()` und `hasAnyRole()` wird das von Spring Security verwendete Präfix `ROLE_` automatisch ergänzt. Rollen werden daher beispielsweise als `"ADMIN"` und nicht als `"ROLE_ADMIN"` angegeben.
+
+Spezifische Regeln sollten vor allgemeineren Regeln definiert werden. Mit `.anyRequest().authenticated()` können anschließend alle Endpunkte, für die keine andere Regel definiert wurde, standardmäßig geschützt werden.
+
+Zusätzlich zur URL-basierten Zugriffskontrolle können einzelne Controller- oder Service-Methoden über `@PreAuthorize` geschützt werden. Die Methodensicherheit ist in der `SecurityConfig` bereits über `@EnableMethodSecurity` aktiviert.
+
+Beispiel:
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+public ResponseEntity<?> getAllUsers() {
+    ...
+}
+```
+
+Auch mehrere Rollen können zugelassen werden:
+
+```java
+@PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+public ResponseEntity<?> getStudents() {
+    ...
+}
+```
+
+Damit können fachlich spezifische Berechtigungen direkt an Methoden definiert werden, während allgemeine URL-Regeln zentral über die `SecurityConfig` festgelegt werden.
+
+**Wichtig für den aktuellen Stand:** Einige Endpunkte sind in der `SecurityConfig` für die Entwicklung ausdrücklich mit `permitAll()` freigegeben. Dazu gehören unter anderem Level-, Interpreter-, Verifikations- und Debug-Endpunkte. Vor einem Deployment muss für diese Endpunkte entschieden werden, welche davon öffentlich erreichbar sein sollen und welche eine Authentifizierung bzw. bestimmte Rollen benötigen.
+
+Beim Lehrer-Fortschrittsendpunkt `POST /api/progress/users` ist eine spätere Beschränkung auf die Rolle `TEACHER` bereits im Controller als auskommentiertes `@PreAuthorize` vorgesehen, aktuell aber noch nicht aktiv.
+
+Offizielle Dokumentation:
+
+- [Spring Security - Authorize HTTP Requests](https://docs.spring.io/spring-security/reference/servlet/authorization/authorize-http-requests.html)
+- [Spring Security - Method Security](https://docs.spring.io/spring-security/reference/servlet/authorization/method-security.html)
+
+## Entwicklungsfunktionen vor dem Deployment
+
+Der `DebugController` und die zugehörigen `/debug/**`-Endpunkte dienen ausschließlich der lokalen Entwicklung und Diagnose. Sie sollten in einer öffentlich erreichbaren Deployment-Umgebung entfernt, deaktiviert oder zuverlässig geschützt werden.
+
+In der aktuellen `SecurityConfig` sind einzelne Debug-Endpunkte explizit über `permitAll()` freigegeben. Wird der `DebugController` für ein Deployment entfernt oder deaktiviert, sollten auch die entsprechenden Freigaben aus der `SecurityConfig` entfernt werden.
+
+Vor einem Deployment sollten damit mindestens folgende Punkte geprüft werden:
+
+- sichere Datenbankzugänge für die Zielumgebung konfigurieren
+- Bootstrap-Admin-Passwort ändern und sicher bereitstellen
+- JWT-Secrets neu setzen bzw. rotieren
+- Debug-Endpunkte entfernen, deaktivieren oder absichern
+- aktuell öffentliche API-Endpunkte auf die gewünschte Zugriffspolitik umstellen
+- rollenabhängige Endpunkte gegebenenfalls über `@PreAuthorize` zusätzlich absichern
+- Management-Endpunkte nur soweit benötigt freigeben
+- SQL- und DEBUG-Logging für die Zielumgebung konfigurieren
+- Strategie für `spring.jpa.hibernate.ddl-auto` bewusst festlegen
+- lokale Testdaten vor einem produktiven Einsatz bereinigen
+
+Die Anwendung verwendet JWT-basierte Authentifizierung und `SessionCreationPolicy.STATELESS`. Serverseitige Login-Sessions werden daher nicht als Authentifizierungszustand verwendet.
 
 ---
 
@@ -1716,6 +1883,11 @@ Aktuell umgesetzt sind unter anderem:
 - polymorphe `CodeBlock`-DTOs
 - Verarbeitung von Programmen aus visuellen Code-Blöcken
 - `ExecutionLog`
+- Variablendeklarationen und Wertzuweisungen
+- arithmetische Ausdrücke und String-Konkatenation
+- Bedingungen mit `if`, `else-if` und `else`
+- `while`-Schleifen mit Schutz vor unbegrenzter Ausführung
+- strukturierte Logs für Bedingungen, Schleifen und Ausdrücke
 - Rückgabe von Interpreter-Meldungen an das Frontend
 
 ### Visueller Code-Editor
@@ -1772,6 +1944,8 @@ Aktuell umgesetzt sind unter anderem:
 - `JavaVariableLevels`
 - `JavaExpressionLevels`
 - `JavaAssignmentLevels`
+- `JavaConditionalLevels`
+- `JavaLoopLevels`
 - `ExpectedExecutionLogs` für erwartete Ausführungen
 - automatische Erkennung aller Provider durch Spring
 - keine manuelle Registrierung neuer Provider im `LevelBootstrap`
@@ -1794,7 +1968,7 @@ Aktuell umgesetzt sind unter anderem:
 - leichte Physics-Simulation
 - gegenseitige Abstoßung der Level-Nodes
 - Berücksichtigung der Kategorien als statische Hindernisse
-- Hover-Bewegung der Level-Nodes
+- leichte Hover-Hervorhebung der Level-Nodes
 - Aktualisierung der Verbindungslinien während der Bewegung
 - visuelle Darstellung abgeschlossener Level
 
@@ -1820,6 +1994,8 @@ Aktuell umgesetzt sind unter anderem:
 - benutzerbezogenes Laden abgeschlossener Level
 - Integration des Fortschritts in den Skilltree
 - automatische Speicherung nach erfolgreicher Level-Verifikation
+- kompakte Fortschrittsantwort über `UserLevelProgressResponse`
+- Fortschrittsanzeige `abgeschlossen / gesamt` in der Lehreroberfläche
 
 ### Navigation
 
@@ -1899,24 +2075,10 @@ Diese Darstellung ist aktuell bewusst noch nicht implementiert, da sie von der e
 
 Der automatisierte XSS Security Check kann potenziell relevante Stellen im Frontend erkennen und ausgeben.
 
-Die aktuell gefundenen `innerHTML`-Verwendungen müssen noch einzeln darauf geprüft werden, ob dort vom Benutzer oder über APIs gelieferte Daten unsicher in das DOM eingesetzt werden.
+Ein wesentlicher Teil der gefundenen `innerHTML`-Verwendungen wurde bereits manuell geprüft. Dabei wurden insbesondere reine DOM-Leerungen, statische Inhalte sowie Stellen betrachtet, an denen dynamische Inhalte vor der Ausgabe escaped oder über `textContent` gesetzt werden.
 
-Der Scanner dient dabei als Unterstützung für die manuelle Prüfung und nicht als automatischer Nachweis, dass eine Stelle sicher oder unsicher ist.
+Der Scanner bleibt als Entwicklungshilfe bestehen. Weitere oder neu hinzukommende Fundstellen sollten weiterhin manuell geprüft werden, da ein automatischer Treffer weder eine Sicherheitslücke beweist noch deren Abwesenheit garantiert.
 
-### Visueller Feinschliff
-
-Der Skilltree ist funktional und besitzt bereits eine grundlegende visuelle Darstellung inklusive Physics und Hover-Effekten.
-
-Weitere Anpassungen können später unter anderem betreffen:
-
-- Abstände
-- Node-Größen
-- Farben
-- Hover-Informationen
-- zusätzliche Levelinformationen
-- Darstellung des Fortschritts
-
-Diese Punkte betreffen hauptsächlich den visuellen Feinschliff und verändern die grundlegende Skilltree-Architektur nicht.
 
 ### Aufräumen vor Projektabschluss
 
@@ -1924,10 +2086,9 @@ Vor dem endgültigen Projektabschluss sollten Entwicklungs- und Hilfskomponenten
 
 Dazu gehören insbesondere:
 
-- Debug-Endpunkte entfernen oder absichern
 - nicht mehr benötigte Seiten überprüfen
-- Secrets und DB-Config aus application.properties löschen, rerollen und in Umgebungsvariable anlegen
 - Testdaten bereinigen
-- XSS-Fundstellen überprüfen
-- finale Security-Konfiguration prüfen
-- README auf den finalen Projektstand bringen
+- neu hinzugekommene XSS-Fundstellen überprüfen
+- nicht mehr benötigte Entwicklungsdateien und Hilfskomponenten prüfen
+
+Die für ein Deployment relevanten Sicherheits- und Konfigurationspunkte sind separat unter [Deployment und Sicherheit](#deployment-und-sicherheit) dokumentiert.
