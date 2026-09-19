@@ -1000,10 +1000,15 @@ CompletedLevel
 
 Die Datenbankstruktur ergibt sich damit direkt aus dem aktuellen Stand der Entity-Klassen.
 
+Das folgende Diagramm zeigt die aktuell persistierten Entitäten, ihre Attribute und Beziehungen:
+
+![Datenbankmodell](lernspiel-app/src/main/resources/static/images/DB-Modell.png)
+
+Durchgezogene Verbindungen stellen direkte JPA-Beziehungen und damit Fremdschlüsselbeziehungen in der Datenbank dar. Gestrichelte Verbindungen zeigen fachliche Referenzen, bei denen lediglich die jeweilige ID gespeichert wird. Dadurch können insbesondere Beziehungen zwischen `auth-service` und `level-service` abgebildet werden, ohne eine direkte JPA-Abhängigkeit zwischen den Services zu erzeugen.
+
 Zusätzlich werden die mitgelieferten Standardlevel über den `LevelBootstrap` geprüft und bei Bedarf angelegt.
 
 ---
-
 # Projektstruktur
 
 Das Projekt ist als Maven-Multi-Module-Anwendung aufgebaut.
