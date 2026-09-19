@@ -53,45 +53,18 @@ Die eigentliche Schüleroberfläche wird über einen visuellen Skilltree dargest
 
 Aktuell umgesetzt sind unter anderem:
 
-- Authentifizierung über JWT
-- Benutzerverwaltung
-- Rollen für Administratoren, Lehrer und Schüler
-- Klassenverwaltung
-- visueller Drag-&-Drop-Code-Editor
-- mehrzeilige Programme
-- Verschieben und Löschen von Code-Blöcken
-- eigener Interpreter
-- Übertragung der Programme an das Backend
-- Interpreter-Ausgabe direkt im Frontend
-- Darstellung von Interpreterfehlern
-- verschiedene Darstellungsmodi der Interpreter-Konsole
-- Datenbankmodell für dynamische Level
-- Verwaltung von Leveln und verfügbaren Code-Komponenten
-- REST-Schnittstellen zum Anlegen und Laden von Leveln
-- dynamisches Laden von Leveln im Frontend
-- dynamische Bereitstellung der für ein Level verfügbaren Code-Blöcke
-- automatische Ergänzung zufälliger zusätzlicher Code-Blöcke
-- zufällige Anordnung der Block-Palette
-- Programmiersprachen als eigene Datenbankobjekte
-- Level-Kategorien mit definierter Reihenfolge
-- automatischer Bootstrap vordefinierter Level
-- automatische Erkennung neuer Levelgruppen über Spring
-- Level-Übersicht für den Skilltree
-- visueller Skilltree als zentrale Schüleroberfläche
-- Wechsel zwischen verschiedenen Programmiersprachen im Skilltree
-- dynamische Gruppierung von Leveln nach Kategorien
-- physikbasierte leichte Bewegung der Skilltree-Nodes
-- strukturierte ExecutionLogs mit typisierten Log-Einträgen
-- serverseitige automatische Level-Verifikation
-- automatische Speicherung erfolgreich abgeschlossener Level
-- visuelle Verbindungen zwischen Kategorien und Leveln
-- Speicherung abgeschlossener Level
-- benutzerbezogener Level-Fortschritt
-- Fortschrittsübersicht für Lehrer mit abgeschlossenen und insgesamt verfügbaren Leveln
-- Java-Level für Bedingungen und Schleifen
-- gemeinsame Navigation zwischen Lernpfad, Level und Sandbox
-- Logout über die gemeinsame Navigation
-- automatisierter XSS-Codecheck als Entwicklungshilfe
+- JWT-basierte Authentifizierung mit Administrator-, Lehrer- und Schülerrollen
+- Benutzer-, Klassen- und Lehrer-Fortschrittsverwaltung
+- visueller Drag-&-Drop-Code-Editor mit wiederverwendbaren Editor-Komponenten
+- eigener Interpreter für Variablen, Ausdrücke, Bedingungen und Schleifen
+- dynamisch aus der Datenbank geladene Level und Code-Komponenten
+- automatischer Bootstrap der mitgelieferten Standardlevel
+- visueller Skilltree mit Programmiersprachen, Kategorien und Level-Fortschritt
+- serverseitige Level-Verifikation über strukturierte `ExecutionLog`-Daten
+- Speicherung abgeschlossener Level und benutzerbezogener Lernfortschritt
+- gemeinsame und rollenabhängige Navigation zwischen den zentralen Bereichen
+
+Die einzelnen Funktionen und ihre technische Umsetzung werden in den folgenden Abschnitten detaillierter beschrieben.
 
 Die Code-Sandbox dient weiterhin als frei nutzbare technische Umgebung für den visuellen Editor und Interpreter.
 
@@ -341,11 +314,7 @@ Abgeschlossene Level können benutzerbezogen gespeichert werden.
 
 Der Skilltree kann dadurch erkennen, welche Level der aktuell angemeldete Schüler bereits abgeschlossen hat und diese entsprechend darstellen.
 
-Eine endgültige fachliche Regelung zur Freischaltung bzw. Sperrung zukünftiger Level ist aktuell noch nicht festgelegt.
-
-Insbesondere existiert derzeit bewusst keine feste `requires`-Abhängigkeit zwischen einzelnen Leveln.
-
-Die Architektur wurde so gehalten, dass eine spätere Progress- oder Unlock-Logik ergänzt werden kann, ohne die grundlegende Skilltree-Darstellung neu aufbauen zu müssen.
+Eine feste Freischaltlogik für nachfolgende Level ist aktuell bewusst noch nicht definiert. Der aktuelle Stand und mögliche Varianten sind unter [Freischaltung von Leveln](#freischaltung-von-leveln) beschrieben.
 
 ---
 
@@ -470,6 +439,8 @@ an.
 Die in der Datenbank gespeicherte Anzahl der vorgesehenen Komponenten wird bereits an das Frontend übertragen.
 
 Eine tatsächliche Begrenzung der maximal verwendbaren Blockanzahl im Editor ist aktuell noch nicht vollständig umgesetzt.
+
+Die mitgelieferten Standardlevel werden beim Start der Anwendung automatisch bereitgestellt. Die technische Funktionsweise ist unter [Level-Bootstrap](#level-bootstrap) beschrieben.
 
 ---
 
@@ -946,32 +917,9 @@ Der Skilltree kann damit feststellen, welche Level für den aktuell angemeldeten
 
 Für die Lehreransicht kann der Fortschritt mehrerer Schüler zusätzlich kompakt als Anzahl abgeschlossener Level im Verhältnis zur Gesamtzahl vorhandener Level geladen werden. Dafür wird `UserLevelProgressResponse` verwendet.
 
-Wichtig ist die Trennung zwischen:
+Die Speicherung des Lernfortschritts ist technisch von einer möglichen Freischaltlogik für Level getrennt. Aktuell existiert bewusst keine feste `requires`-Beziehung zwischen einzelnen Leveln.
 
-```text
-Fortschritt speichern
-```
-
-und:
-
-```text
-Level freischalten / sperren
-```
-
-Die technische Grundlage zur Speicherung abgeschlossener Level ist vorhanden.
-
-Eine endgültige fachliche Unlock-Logik ist dagegen noch nicht festgelegt.
-
-Es gibt aktuell bewusst keine feste `requires`-Beziehung zwischen einzelnen Leveln.
-
-Dadurch kann später entschieden werden, ob beispielsweise:
-
-- alle Level frei verfügbar sind
-- Kategorien nacheinander freigeschaltet werden
-- Level anhand vorheriger Level freigeschaltet werden
-- Fortschritt nur visuell dargestellt wird
-
-ohne die grundlegende Level- und Skilltree-Architektur ersetzen zu müssen.
+Die noch offene fachliche Entscheidung zur Freischaltung ist unter [Freischaltung von Leveln](#freischaltung-von-leveln) dokumentiert.
 
 ---
 
@@ -985,10 +933,10 @@ Die Datenbankstruktur wird beim Start automatisch von Hibernate anhand der vorha
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-Über JPA-Entities werden unter anderem verwaltet:
+Die aktuelle Datenbankstruktur basiert auf folgenden JPA-Entities:
 
 ```text
-User
+Users
 SchoolClass
 Level
 LevelCategory
@@ -1787,7 +1735,7 @@ http://localhost:8080
 
 Neue Level können entweder als mitgelieferte Standardlevel über den `LevelBootstrap` definiert oder manuell über die REST-Schnittstelle angelegt werden.
 
-Für dauerhaft zum Lernspiel gehörende Level sollte grundsätzlich der Bootstrap verwendet werden.
+Für dauerhaft zum Lernspiel gehörende Level sollte grundsätzlich der Bootstrap verwendet werden. Die grundlegende Architektur und Funktionsweise des Bootstraps ist unter [Level-Bootstrap](#level-bootstrap) beschrieben. Dieser Abschnitt konzentriert sich auf das konkrete Hinzufügen und Ändern von Leveln.
 
 ### Standardlevel über den Bootstrap anlegen
 
@@ -1829,19 +1777,7 @@ Der erwartete `ExecutionLog` beschreibt die für eine erfolgreiche Lösung erwar
 ExpectedExecutionLogs.java
 ```
 
-Nach dem Hinzufügen eines Levels muss keine weitere Registrierung vorgenommen werden. Beim nächsten Start prüft der `LevelBootstrap`, ob das definierte Level bereits in der Datenbank vorhanden ist.
-
-```text
-LevelDefinitionProvider
-        ↓
-LevelBootstrap
-        ↓
-Prüfung über Sprache + Kategorie + Levelnummer
-        ↓
-Level fehlt?
-   ├── Ja   → Level wird angelegt
-   └── Nein → vorhandenes Level bleibt unverändert
-```
+Nach dem Hinzufügen eines Levels muss keine weitere Registrierung vorgenommen werden. Beim nächsten Start wird der Provider automatisch berücksichtigt und das Level bei Bedarf angelegt. Weitere Details zum Ablauf befinden sich unter [Level-Bootstrap](#level-bootstrap).
 
 ### Neue Levelgruppe oder Kategorie hinzufügen
 
@@ -2139,7 +2075,7 @@ Die Navigation berücksichtigt zusätzlich die Rolle des angemeldeten Benutzers:
 - **Administratoren:** können aus dem Lernpfad zurück zum Admin-Dashboard wechseln.
 - **Lehrer und Administratoren:** können ebenfalls Sandbox und Lernpfad verwenden.
 
-Die rollenabhängige Navigation wird zentral über `navigation.js` gesteuert. Dadurch müssen die einzelnen Seiten die Navigation zum jeweiligen Dashboard nicht separat implementieren.
+Die rollenabhängige Rücknavigation vom Lernpfad zum jeweiligen Dashboard wird über `navigation.js` gesteuert.
 
 ### Entwicklungstools
 
