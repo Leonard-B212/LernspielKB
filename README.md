@@ -946,8 +946,6 @@ LevelComponent
 CompletedLevel
 ```
 
-Die Datenbankstruktur ergibt sich damit direkt aus dem aktuellen Stand der Entity-Klassen.
-
 Das folgende Diagramm zeigt die aktuell persistierten Entitäten, ihre Attribute und Beziehungen:
 
 ![Datenbankmodell](lernspiel-app/src/main/resources/static/images/DB-Modell.png)
